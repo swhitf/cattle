@@ -1,1 +1,50 @@
-Test
+<!doctype html>
+<html>
+    <head>
+        <title>Cattle</title>
+        <style type="text/css">
+
+            body {
+                position: relative;
+                padding: 50px 50px 0;
+                font-family: 'Segoe UI';
+                line-height: 1.2em;
+                background: whitesmoke;
+            }
+
+            canvas
+            {
+                background: white;
+            }
+
+            .grid-selector
+            {
+                border: solid 1px #4285f4;
+                box-sizing: border-box;
+
+                transition: all 100ms ease-out;
+            }
+
+            .grid-selector.grid-selector-primary
+            {
+                border: solid 2px #4285f4;
+            }
+
+            .grid-input
+            {
+                /*margin: -2px !important;*/
+                /*padding: 2px !important;*/
+                /*box-shadow: 0 2px 5px rgba(0,0,0,0.4) !important;*/
+                /*background: none;*/
+            }
+
+        </style>
+    </head>
+    <body>
+        <div style="width: 800px; height: 600px;" id="x"></div>
+    </body>
+    <script src="https://code.jquery.com/jquery-3.1.1.js"
+            integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript" src="dist/code.js"></script>
+</html>

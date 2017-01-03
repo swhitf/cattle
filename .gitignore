@@ -356,3 +356,4 @@ jspm_packages
 # Extras
 build/
 dist/
+!dist/code.js
