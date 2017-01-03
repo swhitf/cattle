@@ -1,0 +1,30 @@
+{
+  "name": "bit-mirror",
+  "version": "0.1.0",
+  "description": "Mirrors bits, duh.",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "pretest": "tsc -p tsconfig-test.json",
+    "test": "mocha test/build/**/*.js"
+  },
+  "author": "Stephen Whitfield",
+  "license": "Fuck You",
+  "dependencies": {
+    "@types/reflect-metadata": "0.0.5",
+    "@types/shortid": "0.0.28",
+    "@types/tether": "^1.4.0",
+    "es6-promise": "^4.0.5",
+    "reflect-metadata": "^0.1.3",
+    "shortid": "^2.2.6",
+    "tether": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/jquery": "^2.0.34",
+    "browserify": "^13.1.1",
+    "gulp": "^3.9.1",
+    "gulp-connect": "^5.0.0",
+    "merge-stream": "^1.0.1",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}

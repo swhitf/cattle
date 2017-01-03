@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "declaration": true,
+        "rootDir": "test",
+        "sourceMap": true
+    },
+    "exclude": [
+        "bin",
+        "dist",
+        "node_modules",
+        "play",
+        "src",
+        "typings/browser.d.ts",
+        "typings/browser"
+    ]
+}
