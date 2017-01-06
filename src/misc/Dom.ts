@@ -35,3 +35,10 @@ export function toggle(e:HTMLElement, visible:boolean):HTMLElement
 {
     return visible ? show(e) : hide(e);
 }
+
+export function singleTransition(e:HTMLElement, prop:string, millis:number, ease:string = 'linear'):void
+{
+    e.style.transition = `${prop} ${millis}ms ${ease}`;
+    console.log(e.style.transition);
+    setTimeout(() => e.style.transition = '', millis);
+}

@@ -48,16 +48,18 @@ export class SelectorExtension
             .on('CTRL+LEFT_ARROW', () => this.selectEdge(Vectors.west))
             .on('CTRL+UP_ARROW', () => this.selectEdge(Vectors.north))
             .on('CTRL+DOWN_ARROW', () => this.selectEdge(Vectors.south))
+            .on('CTRL+A', () => this.selectAll())
         ;
 
         MouseDragEventSupport.enable(grid.root);
         MouseInput.for(grid)
+            .on('DOWN:PRIMARY+SHIFT', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
             .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
             .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
         ;
 
         grid.on('invalidate', () => this.reselect(false));
-        grid.on('scroll', () => this.alignSelectors());
+        grid.on('scroll', () => this.alignSelectors(false));
 
         kernel.commands.define('select',
             (cells:string[], autoScroll:boolean) => this.select(cells || [], autoScroll));
@@ -78,9 +80,12 @@ export class SelectorExtension
     private createElements(target:HTMLElement):void
     {
         let layer = document.createElement('div');
-        layer.style.pointerEvents = 'none';
-        layer.style.width = target.clientWidth + 'px';
-        layer.style.height = target.clientHeight + 'px';
+        Dom.css(layer, {
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            width: target.clientWidth + 'px',
+            height: target.clientHeight + 'px',
+        });
         target.parentElement.insertBefore(layer, target);
 
         let t = new Tether({
@@ -125,7 +130,12 @@ export class SelectorExtension
             }
         });
 
-        this.alignSelectors();
+        this.alignSelectors(true);
+    }
+
+    private selectAll():void
+    {
+        this.select(this.grid.model.cells.map(x => x.ref));
     }
 
     private selectEdge(vector:Point, autoScroll = true):void
@@ -169,6 +179,25 @@ export class SelectorExtension
                 this.select([resultCell.ref], autoScroll);
             }
         }
+    }
+
+    private selectLine(gridPt:Point, autoScroll = true):void
+    {
+        let { grid } = this;
+
+        let ref = this.selection[0] || null;
+        if (!ref)
+            return;
+
+
+        let startPt = grid.getCellGridRect(ref).topLeft();
+        let lineRect = Rect.fromPoints(startPt, gridPt);
+
+        let cellRefs = grid.getCellsInGridRect(lineRect).map(x => x.ref);
+        cellRefs.splice(cellRefs.indexOf(ref), 1);
+        cellRefs.splice(0, 0, ref);
+
+        this.select(cellRefs, autoScroll);
     }
 
     private selectNeighbor(vector:Point, autoScroll = true):void
@@ -242,20 +271,19 @@ export class SelectorExtension
         this.select(cellRefs, cellRefs.length == 1);
     }
 
-    private alignSelectors():void
+    private alignSelectors(animate:boolean):void
     {
         let { grid, selection, primarySelector, captureSelector } = this;
 
         if (selection.length)
         {
             let primaryRect = grid.getCellViewRect(selection[0]);
-            primarySelector.goto(primaryRect);
-            primarySelector.show();
+            primarySelector.goto(primaryRect, animate);
 
             //TODO: Improve the shit out of this:
             let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
-            captureSelector.goto(captureRect);
-            captureSelector.show();
+            captureSelector.goto(captureRect, animate);
+            captureSelector.toggle(selection.length > 1);
         }
         else
         {
@@ -339,9 +367,15 @@ class Selector
         this.root.remove();
     }
 
-    public goto(rect:RectLike):void
+    public goto(rect:RectLike, animate:boolean):void
     {
         Dom.show(this.root);
+
+        if (animate)
+        {
+            Dom.singleTransition(this.root, 'all', 100, 'ease-out');
+        }
+
         Dom.css(this.root, {
             left: `${rect.left - 1}px`,
             top: `${rect.top - 1}px`,
@@ -369,5 +403,10 @@ class Selector
     public hide():void
     {
         Dom.hide(this.root);
+    }
+
+    public toggle(visible:boolean):void
+    {
+        Dom.toggle(this.root, visible)
     }
 }
