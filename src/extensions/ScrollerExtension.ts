@@ -5,14 +5,17 @@ import * as Dom from '../misc/Dom';
 
 export class ScrollerExtension
 {
+    private grid:GridElement;
+
     private layer:HTMLDivElement;
     private scrollerX:HTMLDivElement;
     private scrollerY:HTMLDivElement;
     private wedgeX:HTMLDivElement;
     private wedgeY:HTMLDivElement;
 
-    constructor(private grid:GridElement, private kernel:GridKernel)
+    public init(grid:GridElement, kernel:GridKernel)
     {
+        this.grid = grid;
         this.createElements(grid.root);
 
         grid.on('invalidate', () => this.alignElements());

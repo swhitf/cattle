@@ -7,8 +7,10 @@ import { Point } from '../geom/Point';
 import { RectLike, Rect } from '../geom/Rect';
 import { MouseInput } from '../input/MouseInput';
 import { MouseDragEventSupport } from '../input/MouseDragEventSupport';
+import { command, routine } from '../ui/Extensibility';
 import * as Tether from 'tether';
 import * as Dom from '../misc/Dom';
+import { Widget, AbsWidgetBase } from '../ui/Widget';
 
 
 const Vectors = {
@@ -24,8 +26,14 @@ interface SelectGesture
     end:string;
 }
 
+export interface SelectorWidget extends Widget
+{
+
+}
+
 export class SelectorExtension
 {
+    private grid:GridElement;
     private layer:HTMLElement;
 
     private selection:string[] = [];
@@ -33,8 +41,9 @@ export class SelectorExtension
     private captureSelector:Selector;
     private selectGesture:SelectGesture;
 
-    constructor(private grid:GridElement, private kernel:GridKernel)
+    public init(grid:GridElement, kernel:GridKernel)
     {
+        this.grid = grid;
         this.createElements(grid.root);
 
         KeyInput.for(grid)
@@ -61,20 +70,14 @@ export class SelectorExtension
         grid.on('invalidate', () => this.reselect(false));
         grid.on('scroll', () => this.alignSelectors(false));
 
-        kernel.commands.define('select',
-            (cells:string[], autoScroll:boolean) => this.select(cells || [], autoScroll));
-        kernel.commands.define('selectNeighbor',
-            (vector:Point, autoScroll:boolean) => this.selectNeighbor(vector || Vectors.east, autoScroll));
-        kernel.commands.define('selectEdge',
-            (vector:Point, autoScroll:boolean) => this.selectEdge(vector || Vectors.east, autoScroll));
-
         kernel.variables.define('selection', { get: () => this.selection });
-        kernel.variables.define('primarySelector', { get: () => this.primarySelector.rect() })
+        kernel.variables.define('primarySelector', { get: () => this.primarySelector });
+        kernel.variables.define('captureSelector', { get: () => this.captureSelector });
     }
 
     private get index():GridModelIndex
     {
-        return this.kernel.variables.get('modelIndex');
+        return this.grid.kernel.variables.get('modelIndex');
     }
 
     private createElements(target:HTMLElement):void
@@ -103,41 +106,20 @@ export class SelectorExtension
         this.captureSelector = Selector.create(layer, false);
     }
 
+    @command()
     private select(cells:string[], autoScroll = true):void
     {
-        let { grid, kernel } = this;
-
-        //if (!this.endEdit())
-        //    return;
-
-        kernel.signal('select', [cells, autoScroll],
-            (cells:string[], autoScroll = true) =>
-        {
-            if (cells.length)
-            {
-                this.selection = cells;
-
-                if (autoScroll)
-                {
-                    let primaryRect = grid.getCellViewRect(cells[0]);
-                    grid.scrollTo(primaryRect);
-                }
-            }
-            else
-            {
-                this.selection = [];
-                this.selectGesture = null;
-            }
-        });
-
+        this.doSelect(cells, autoScroll);
         this.alignSelectors(true);
     }
 
+    @command()
     private selectAll():void
     {
         this.select(this.grid.model.cells.map(x => x.ref));
     }
 
+    @command()
     private selectEdge(vector:Point, autoScroll = true):void
     {
         vector = vector.normalize();
@@ -181,6 +163,7 @@ export class SelectorExtension
         }
     }
 
+    @command()
     private selectLine(gridPt:Point, autoScroll = true):void
     {
         let { grid } = this;
@@ -200,6 +183,7 @@ export class SelectorExtension
         this.select(cellRefs, autoScroll);
     }
 
+    @command()
     private selectNeighbor(vector:Point, autoScroll = true):void
     {
         vector = vector.normalize();
@@ -271,6 +255,28 @@ export class SelectorExtension
         this.select(cellRefs, cellRefs.length == 1);
     }
 
+    @routine()
+    private doSelect(cells:string[] = [], autoScroll:boolean = true):void
+    {
+        let { grid } = this;
+
+        if (cells.length)
+        {
+            this.selection = cells;
+
+            if (autoScroll)
+            {
+                let primaryRect = grid.getCellViewRect(cells[0]);
+                grid.scrollTo(primaryRect);
+            }
+        }
+        else
+        {
+            this.selection = [];
+            this.selectGesture = null;
+        }
+    }
+
     private alignSelectors(animate:boolean):void
     {
         let { grid, selection, primarySelector, captureSelector } = this;
@@ -291,56 +297,9 @@ export class SelectorExtension
             captureSelector.hide();
         }
     }
-
-    //private beginEdit(override:string = null):boolean
-    //{
-    //    if (this.isEditing)
-    //        return false;
-    //
-    //    let { selector } = this;
-    //    let cell = this.index.findCell(this.selection[0]);
-    //
-    //    if (!!override)
-    //    {
-    //        selector.val(override);
-    //    }
-    //
-    //    selector.toggleEdit(true);
-    //    selector.focus();
-    //
-    //    return this.isEditing = true;
-    //}
-    //
-    //private endEdit(commit:boolean = true):boolean
-    //{
-    //    if (!this.isEditing)
-    //        return true;
-    //
-    //    let { grid, selector } = this;
-    //    let evt = {
-    //        cell: this.index.findCell(this.selection[0]),
-    //        value: selector.val(),
-    //    }
-    //
-    //    selector.toggleEdit(false);
-    //    selector.val('');
-    //
-    //    grid.focus();
-    //    this.kernel.emit('input', evt);
-    //
-    //    return !(this.isEditing = false);
-    //}
-
-    private onGridMouseDown(e:GridMouseEvent):void
-    {
-        if (e.cell)
-        {
-            this.select([e.cell.ref]);
-        }
-    }
 }
 
-class Selector
+class Selector extends AbsWidgetBase<HTMLDivElement>
 {
     public static create(container:HTMLElement, primary:boolean = false):Selector
     {
@@ -356,57 +315,5 @@ class Selector
         });
 
         return new Selector(root);
-    }
-
-    private constructor(public root:HTMLElement)
-    {
-    }
-
-    public destroy():void
-    {
-        this.root.remove();
-    }
-
-    public goto(rect:RectLike, animate:boolean):void
-    {
-        Dom.show(this.root);
-
-        if (animate)
-        {
-            Dom.singleTransition(this.root, 'all', 100, 'ease-out');
-        }
-
-        Dom.css(this.root, {
-            left: `${rect.left - 1}px`,
-            top: `${rect.top - 1}px`,
-            width: `${rect.width + 1}px`,
-            height: `${rect.height + 1}px`,
-            overflow: `hidden`,
-        });
-    }
-
-    public rect():RectLike
-    {
-        return {
-            left: parseInt(this.root.style.left),
-            top: parseInt(this.root.style.top),
-            width: this.root.clientWidth,
-            height: this.root.clientHeight,
-        };
-    }
-
-    public show():void
-    {
-        Dom.show(this.root);
-    }
-
-    public hide():void
-    {
-        Dom.hide(this.root);
-    }
-
-    public toggle(visible:boolean):void
-    {
-        Dom.toggle(this.root, visible)
     }
 }

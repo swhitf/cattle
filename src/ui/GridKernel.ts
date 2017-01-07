@@ -1,6 +1,8 @@
-import { ObjectMap } from './../global.d';
+import { ObjectMap } from '../global';
 import { GridElement } from './GridElement';
 
+//This keeps WebStorm quiet, for some reason it is complaining...
+declare var Reflect:any;
 
 
 export interface GridCommand
@@ -57,10 +59,19 @@ export interface GridRoutineOverride
 
 export interface GridRoutineHub
 {
+    /**
+     * Adds a hook to the specified signal that enables extensions to override grid behavior
+     * defined in the core or other extensions.
+     */
     hook(routine:string, callback:any):void;
 
     override(routine:string, callback:any):any;
 
+    /**
+     * Signals that a routine is about to run that can be hooked or overridden by extensions.  Arguments
+     * should be supporting data or relevant objects to the routine.  The value returned will be `true`
+     * if the routine has been overridden by an extension.
+     */
     signal(routine:string, ...args:any[]):boolean;
 }
 
@@ -70,14 +81,79 @@ export interface GridRoutineHub
 export class GridKernel
 {
     public readonly commands:GridCommandHub = new GridKernelCommandHubImpl();
+    public readonly routines:GridRoutineHub = new GridKernelRoutineHubImpl();
     public readonly variables:GridVariableHub = new GridKernelVariableHubImpl();
-
-    private hooks:ObjectMap<GridRoutineHook[]> = {};
-    private overrides:ObjectMap<GridRoutineOverride> = {};
 
     constructor(private emitter:(event:string, ...args:any[]) => void)
     {
     }
+
+    public install(ext:any):void
+    {
+        let { commands, variables } = this;
+
+        if (ext['__kernel'])
+        {
+            throw 'Extension appears to have already been installed into this or another grid...?';
+        }
+
+        ext['__kernel'] = this;
+
+        let cmds = Reflect.getMetadata('grid:commands', ext) || [];
+        for (let c of cmds)
+        {
+            commands.define(c.name, c.impl.bind(ext));
+        }
+
+        let vars = Reflect.getMetadata('grid:variables', ext) || [];
+        for (let v of vars)
+        {
+            variables.define(v.name, {
+                get: (function() { return this[v.key]; }).bind(ext),
+                set: !!v.mutable ? (function(val) { this[v.key] = val; }).bind(ext) : undefined,
+            });
+        }
+    }
+}
+
+class GridKernelCommandHubImpl implements GridCommandHub
+{
+    private store:ObjectMap<GridCommand> = {};
+
+    /**
+     * Defines the specified command for extensions or consumers to use.
+     */
+    public define(command:string, impl:GridCommand):void
+    {
+        if (this.store[command])
+        {
+            throw 'Command with name already registered: ' + command;
+        }
+
+        this.store[command] = impl;
+    }
+
+    /**
+     * Executes the specified grid command.
+     */
+    public exec(command:string, ...args:any[]):void
+    {
+        let impl = this.store[command];
+        if (impl)
+        {
+            impl.apply(this, args);
+        }
+        else
+        {
+            throw 'Unrecognized command: ' + command;
+        }
+    }
+}
+
+class GridKernelRoutineHubImpl implements GridRoutineHub
+{
+    private hooks:ObjectMap<GridRoutineHook[]> = {};
+    private overrides:ObjectMap<GridRoutineOverride> = {};
 
     /**
      * Adds a hook to the specified signal that enables extensions to override grid behavior
@@ -127,40 +203,6 @@ export class GridKernel
             {
                 hook.apply(this, args);
             }
-        }
-    }
-}
-
-class GridKernelCommandHubImpl implements GridCommandHub
-{
-    private store:ObjectMap<GridCommand> = {};
-
-    /**
-     * Defines the specified command for extensions or consumers to use.
-     */
-    public define(command:string, impl:GridCommand):void
-    {
-        if (this.store[command])
-        {
-            throw 'Command with name already registered: ' + command;
-        }
-
-        this.store[command] = impl;
-    }
-
-    /**
-     * Executes the specified grid command.
-     */
-    public exec(command:string, ...args:any[]):void
-    {
-        let impl = this.store[command];
-        if (impl)
-        {
-            impl.apply(this, args);
-        }
-        else
-        {
-            throw 'Unrecognized command: ' + command;
         }
     }
 }

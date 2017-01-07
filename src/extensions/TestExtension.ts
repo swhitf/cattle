@@ -16,7 +16,7 @@ export class TestExtension
 {
     private layer:HTMLElement;
 
-    constructor(private grid:GridElement, private kernel:GridKernel)
+    public init(grid:GridElement, kernel:GridKernel)
     {
         //kernel.override('select', (cells:string[], autoScroll:boolean, original:Function) =>
         //{

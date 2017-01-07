@@ -1,15 +1,18 @@
 import { ObjectMap } from '../global';
 import { CellModel } from '../model/CellModel';
 import { GridKernel } from './../ui/GridKernel';
-import { GridElement, GridMouseEvent, GridMouseDragEvent, GridKeyboardEvent } from './../ui/GridElement';
+import { GridElement, GridKeyboardEvent } from './../ui/GridElement';
 import { GridModelIndex } from '../model/GridModelIndex';
+import { SelectorWidget } from './SelectorExtension';
 import { KeyInput } from '../input/KeyInput';
+import { MouseInput } from '../input/MouseInput';
 import { Point } from '../geom/Point';
 import { RectLike, Rect } from '../geom/Rect';
 import * as _ from '../misc/Util';
 import * as Tether from 'tether';
 import * as Dom from '../misc/Dom';
-import { MouseInput } from '../input/MouseInput';
+import { AbsWidgetBase, Widget } from '../ui/Widget';
+import { command, routine, variable } from '../ui/Extensibility';
 
 
 
@@ -28,16 +31,26 @@ export interface GridInputEvent
     }[];
 }
 
+export interface InputWidget extends Widget
+{
+    focus():void;
+    val(value?:string):string;
+}
+
 export class EditingExtension
 {
+    private grid:GridElement;
     private layer:HTMLElement;
+
+    @variable()
+    private input:Input;
 
     private isEditing:boolean = false;
     private isEditingDetailed = false;
-    private input:Input;
 
-    constructor(private grid:GridElement, private kernel:GridKernel)
+    public init(grid:GridElement, kernel:GridKernel)
     {
+        this.grid = grid;
         this.createElements(grid.root);
 
         KeyInput.for(this.input.root)
@@ -64,24 +77,24 @@ export class EditingExtension
             .on('DBLCLICK:PRIMARY', () => this.beginEdit())
         ;
 
-        grid.on('keypress', this.onGridKeyPress.bind(this));
+        grid.on('keypress', (e:GridKeyboardEvent) => this.beginEdit(String.fromCharCode(e.charCode)));
 
-        kernel.hook('before:select', () => this.endEdit(true));
+        kernel.routines.hook('before:select', () => this.endEdit(true));
     }
 
     private get modelIndex():GridModelIndex
     {
-        return this.kernel.variables.get('modelIndex');
+        return this.grid.kernel.variables.get('modelIndex');
     }
 
-    private get primarySelector():RectLike
+    private get primarySelector():SelectorWidget
     {
-        return this.kernel.variables.get('primarySelector');
+        return this.grid.kernel.variables.get('primarySelector');
     }
 
     private get selection():string[]
     {
-        return this.kernel.variables.get('selection');
+        return this.grid.kernel.variables.get('selection');
     }
 
     private createElements(target:HTMLElement):void
@@ -105,11 +118,8 @@ export class EditingExtension
         this.input = Input.create(layer);
     }
 
-    private onGridKeyPress(e:GridKeyboardEvent):void
-    {
-        this.beginEdit(String.fromCharCode(e.charCode));
-    }
-
+    @command()
+    @routine()
     private beginEdit(override:string = null):boolean
     {
         if (this.isEditing)
@@ -127,7 +137,7 @@ export class EditingExtension
             input.val(cell.value);
         }
 
-        input.goto(this.primarySelector);
+        input.goto(this.primarySelector.viewRect);
         input.focus();
 
         this.isEditingDetailed = false;
@@ -136,6 +146,8 @@ export class EditingExtension
         return true;
     }
 
+    @command()
+    @routine()
     private endEdit(commit:boolean = true):boolean
     {
         if (!this.isEditing)
@@ -148,9 +160,9 @@ export class EditingExtension
         input.val('');
         grid.focus();
 
-        if (commit)
+        if (commit && !!selection.length)
         {
-            this.emitInput(_.zipPairs([[selection[0], newValue]]));
+            this.commitUniform(selection.slice(0, 1), newValue);
         }
 
         this.isEditing = false;
@@ -163,13 +175,15 @@ export class EditingExtension
     {
         if (this.endEdit(commit))
         {
-            this.kernel.commands.exec('selectNeighbor', vector);
+            this.grid.kernel.commands.exec('selectNeighbor', vector);
             return true;
         }
 
         return false;
     }
 
+    @command()
+    @routine()
     private erase():void
     {
         let { selection } = this;
@@ -177,11 +191,19 @@ export class EditingExtension
         if (this.isEditing)
             return;
 
-        let changes = _.zipPairs(selection.map(x => [x, '']));
-        this.emitInput(changes);
+        this.commitUniform(selection, '');
     }
 
-    private emitInput(changes:ObjectMap<string>):void
+    @command()
+    private commitUniform(cells:string[], uniformValue:any):void
+    {
+        let changes = _.zipPairs(cells.map(x => [x, uniformValue]));
+        this.commit(changes);
+    }
+
+    @command()
+    @routine()
+    private commit(changes:ObjectMap<string>):void
     {
         let { grid, modelIndex } = this;
 
@@ -196,7 +218,7 @@ export class EditingExtension
     }
 }
 
-class Input
+class Input extends AbsWidgetBase<HTMLInputElement>
 {
     public static create(container:HTMLElement):Input
     {
@@ -221,21 +243,6 @@ class Input
         return new Input(root);
     }
 
-    private constructor(public root:HTMLInputElement)
-    {
-    }
-
-    public goto(rect:RectLike):void
-    {
-        Dom.show(this.root);
-        Dom.css(this.root, {
-            left: `${rect.left + 2}px`,
-            top: `${rect.top + 2}px`,
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-        });
-    }
-
     public focus():void
     {
         let root = this.root;
@@ -244,16 +251,6 @@ class Input
             root.focus();
             root.setSelectionRange(root.value.length, root.value.length);
         }, 0);
-    }
-
-    public show():void
-    {
-        Dom.show(this.root);
-    }
-
-    public hide():void
-    {
-        Dom.hide(this.root);
     }
 
     public val(value?:string):string

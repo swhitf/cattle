@@ -1,6 +1,6 @@
 import { GridKernel } from './GridKernel';
 import { DefaultGrid } from './../model/default/DefaultGrid';
-import { ObjectIndex } from './../global.d';
+import { ObjectIndex } from '../global';
 import { ObjectMap } from '../global';
 import { CellModel } from '../model/CellModel';
 import { GridModel } from '../model/GridModel';
@@ -19,7 +19,7 @@ import { MouseDragEvent } from '../input/MouseDragEvent';
 
 export interface GridExtension
 {
-    new(grid:GridElement, kernel:GridKernel):any;
+    init?(grid:GridElement, kernel:GridKernel):void;
 }
 
 export interface GridMouseEvent extends MouseEvent
@@ -121,7 +121,13 @@ export class GridElement extends EventEmitterBase
 
     public extend(ext:GridExtension):GridElement
     {
-        let inst = new ext(this, this.kernel);
+        this.kernel.install(ext);
+
+        if (ext.init)
+        {
+            ext.init(this, this.kernel);
+        }
+
         return this;
     }
 

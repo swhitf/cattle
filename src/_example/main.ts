@@ -19,10 +19,10 @@ let model = builder.build();
 
 let grid = GridElement
     .create(document.getElementById('x'))
-    .extend(ScrollerExtension)
-    .extend(SelectorExtension)
-    .extend(EditingExtension)
-    .extend(TestExtension)
+    .extend(new ScrollerExtension())
+    .extend(new SelectorExtension())
+    .extend(new EditingExtension())
+    .extend(new TestExtension())
 ;
 
 grid.model = model;

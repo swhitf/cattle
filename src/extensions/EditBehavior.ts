@@ -1,6 +1,6 @@
 import { GridModelIndex } from './../model/GridModelIndex';
 import { Point } from './../geom/Point';
-import { ObjectIndex } from './../global';
+import { ObjectIndex } from '../global';
 import { Keys } from '../input/Keys';
 import { EventEmitterBase } from './../ui/internal/EventEmitter';
 import { GridMouseEvent, GridKeyboardEvent } from './../ui/GridElement';
