@@ -34,7 +34,7 @@ grid.on('input', (e:GridInputEvent) =>
         x.cell.value = x.value;
     });
 
-    grid.invalidate();
+    grid.redraw();
 });
 
 
