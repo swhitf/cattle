@@ -8,9 +8,9 @@ import { RectLike, Rect } from '../geom/Rect';
 import { MouseInput } from '../input/MouseInput';
 import { MouseDragEventSupport } from '../input/MouseDragEventSupport';
 import { command, routine } from '../ui/Extensibility';
+import { Widget, AbsWidgetBase } from '../ui/Widget';
 import * as Tether from 'tether';
 import * as Dom from '../misc/Dom';
-import { Widget, AbsWidgetBase } from '../ui/Widget';
 
 
 const Vectors = {
@@ -83,6 +83,7 @@ export class SelectorExtension
     private createElements(target:HTMLElement):void
     {
         let layer = document.createElement('div');
+        layer.className = 'grid-layer';
         Dom.css(layer, {
             pointerEvents: 'none',
             overflow: 'hidden',
@@ -95,7 +96,7 @@ export class SelectorExtension
             element: layer,
             target: target,
             attachment: 'middle center',
-            targetAttachment: 'middle center'
+            targetAttachment: 'middle center',
         });
 
         t.position();

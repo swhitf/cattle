@@ -46,7 +46,7 @@ export function routine(name?:string):MethodDecorator
         let wrapper = function ()
         {
             let kernel = (this['__kernel'] || this['kernel']) as GridKernel;
-            kernel.routines.signal(key, Array.prototype.slice.call(arguments, 0), routine.bind(this));
+            return kernel.routines.signal(key, Array.prototype.slice.call(arguments, 0), routine.bind(this));
         };
 
         return { value: wrapper };

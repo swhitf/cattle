@@ -25,7 +25,7 @@ export class ScrollerExtension
     private createElements(target:HTMLElement):void
     {
         let layer = this.layer = document.createElement('div');
-        layer.className = 'grid-scroller-layer';
+        layer.className = 'grid-layer';
         layer.style.pointerEvents = 'none';
         layer.style.width = target.clientWidth + 'px';
         layer.style.height = target.clientHeight + 'px';
@@ -35,7 +35,7 @@ export class ScrollerExtension
             element: layer,
             target: target,
             attachment: 'middle center',
-            targetAttachment: 'middle center'
+            targetAttachment: 'middle center',
         });
 
         t.position();

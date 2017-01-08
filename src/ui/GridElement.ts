@@ -47,7 +47,7 @@ export class GridElement extends EventEmitterBase
     {
         let canvas = target.ownerDocument.createElement('canvas');
         canvas.id = target.id;
-        canvas.className = target.className;
+        canvas.className = target.className = ' grid';
         canvas.tabIndex = 0;
         canvas.width = target.clientWidth;
         canvas.height = target.clientHeight;
@@ -291,7 +291,7 @@ export class GridElement extends EventEmitterBase
         console.time('GridElement.drawVisuals');
 
         let viewport = this.computeViewport();
-        let gfx = this.canvas.getContext('2d');
+        let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
         gfx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         gfx.save();

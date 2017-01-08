@@ -7,7 +7,7 @@ export type KeyMappable = EventTarget|EventEmitterBase;
 
 export interface KeyMapCallback
 {
-    ():void;
+    (e?:KeyboardEvent):void;
 }
 
 export class KeyInput

@@ -15,7 +15,6 @@ import { AbsWidgetBase, Widget } from '../ui/Widget';
 import { command, routine, variable } from '../ui/Extensibility';
 
 
-
 const Vectors = {
     north: new Point(0, -1),
     south: new Point(0, 1),
@@ -79,7 +78,7 @@ export class EditingExtension
 
         grid.on('keypress', (e:GridKeyboardEvent) => this.beginEdit(String.fromCharCode(e.charCode)));
 
-        kernel.routines.hook('before:select', () => this.endEdit(true));
+        kernel.routines.hook('before:doSelect', () => this.endEdit(true));
     }
 
     private get modelIndex():GridModelIndex
@@ -100,6 +99,7 @@ export class EditingExtension
     private createElements(target:HTMLElement):void
     {
         let layer = document.createElement('div');
+        layer.className = 'grid-layer';
         layer.style.pointerEvents = 'none';
         layer.style.width = target.clientWidth + 'px';
         layer.style.height = target.clientHeight + 'px';
@@ -109,7 +109,7 @@ export class EditingExtension
             element: layer,
             target: target,
             attachment: 'middle center',
-            targetAttachment: 'middle center'
+            targetAttachment: 'middle center',
         });
 
         t.position();
@@ -241,6 +241,18 @@ class Input extends AbsWidgetBase<HTMLInputElement>
         });
 
         return new Input(root);
+    }
+
+    public goto(viewRect:RectLike, autoShow:boolean = true):void
+    {
+        super.goto(viewRect);
+
+        Dom.css(this.root, {
+            left: `${viewRect.left + 2}px`,
+            top: `${viewRect.top + 2}px`,
+            width: `${viewRect.width}px`,
+            height: `${viewRect.height}px`,
+        });
     }
 
     public focus():void
