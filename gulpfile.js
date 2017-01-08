@@ -48,7 +48,7 @@ gulp.task('reserve', ['js', 'artifacts']);
 /**
  * Serve the application.
  */
-gulp.task('serve', ['js', 'artifacts', 'watch'], function() {
+gulp.task('serve', ['make', 'watch'], function() {
     connect.server({
         port: 3000,
         root: 'dist',
@@ -57,4 +57,5 @@ gulp.task('serve', ['js', 'artifacts', 'watch'], function() {
     });
 });
 
+gulp.task('make', ['js', 'artifacts']);
 gulp.task('default', ['serve']);
