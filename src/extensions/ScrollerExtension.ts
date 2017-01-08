@@ -5,14 +5,17 @@ import * as Dom from '../misc/Dom';
 
 export class ScrollerExtension
 {
+    private grid:GridElement;
+
     private layer:HTMLDivElement;
     private scrollerX:HTMLDivElement;
     private scrollerY:HTMLDivElement;
     private wedgeX:HTMLDivElement;
     private wedgeY:HTMLDivElement;
 
-    constructor(private grid:GridElement, private kernel:GridKernel)
+    public init(grid:GridElement, kernel:GridKernel)
     {
+        this.grid = grid;
         this.createElements(grid.root);
 
         grid.on('invalidate', () => this.alignElements());
@@ -22,7 +25,7 @@ export class ScrollerExtension
     private createElements(target:HTMLElement):void
     {
         let layer = this.layer = document.createElement('div');
-        layer.className = 'grid-scroller-layer';
+        layer.className = 'grid-layer';
         layer.style.pointerEvents = 'none';
         layer.style.width = target.clientWidth + 'px';
         layer.style.height = target.clientHeight + 'px';
@@ -32,7 +35,7 @@ export class ScrollerExtension
             element: layer,
             target: target,
             attachment: 'middle center',
-            targetAttachment: 'middle center'
+            targetAttachment: 'middle center',
         });
 
         t.position();

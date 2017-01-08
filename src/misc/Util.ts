@@ -58,3 +58,21 @@ export function unzipPairs(pairs:any):any[][]
 
     return arr;
 }
+
+export function max<T>(arr:T[], selector:(t:T) => number):T
+{
+    if (arr.length === 0)
+        return null;
+
+    let t = arr[0];
+
+    for (let x of arr)
+    {
+        if (selector(t) < selector(x))
+        {
+            t = x;
+        }
+    }
+
+    return t;
+}

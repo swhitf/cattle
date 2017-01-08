@@ -10,6 +10,7 @@ import { SelectorExtension } from '../extensions/SelectorExtension';
 import { ScrollerExtension } from '../extensions/ScrollerExtension';
 import { TestExtension } from '../extensions/TestExtension';
 import { EditingExtension, GridInputEvent } from '../extensions/EditingExtension';
+import { CopyPasteModule } from '../extensions/CopyPasteModule';
 
 let builder: GridBuilder = new FlexGridBuilder(1, 1);
 builder = new FlexGridBuilder(52 * 5, 250);
@@ -19,10 +20,10 @@ let model = builder.build();
 
 let grid = GridElement
     .create(document.getElementById('x'))
-    .extend(ScrollerExtension)
-    .extend(SelectorExtension)
-    .extend(EditingExtension)
-    .extend(TestExtension)
+    //.extend(new ScrollerExtension())
+    .extend(new SelectorExtension())
+    .extend(new EditingExtension())
+    .extend(new CopyPasteModule())
 ;
 
 grid.model = model;

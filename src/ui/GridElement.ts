@@ -1,6 +1,6 @@
 import { GridKernel } from './GridKernel';
 import { DefaultGrid } from './../model/default/DefaultGrid';
-import { ObjectIndex } from './../global.d';
+import { ObjectIndex } from '../global';
 import { ObjectMap } from '../global';
 import { CellModel } from '../model/CellModel';
 import { GridModel } from '../model/GridModel';
@@ -19,7 +19,7 @@ import { MouseDragEvent } from '../input/MouseDragEvent';
 
 export interface GridExtension
 {
-    new(grid:GridElement, kernel:GridKernel):any;
+    init?(grid:GridElement, kernel:GridKernel):void;
 }
 
 export interface GridMouseEvent extends MouseEvent
@@ -47,7 +47,7 @@ export class GridElement extends EventEmitterBase
     {
         let canvas = target.ownerDocument.createElement('canvas');
         canvas.id = target.id;
-        canvas.className = target.className;
+        canvas.className = target.className = ' grid';
         canvas.tabIndex = 0;
         canvas.width = target.clientWidth;
         canvas.height = target.clientHeight;
@@ -121,7 +121,13 @@ export class GridElement extends EventEmitterBase
 
     public extend(ext:GridExtension):GridElement
     {
-        let inst = new ext(this, this.kernel);
+        this.kernel.install(ext);
+
+        if (ext.init)
+        {
+            ext.init(this, this.kernel);
+        }
+
         return this;
     }
 
@@ -285,7 +291,7 @@ export class GridElement extends EventEmitterBase
         console.time('GridElement.drawVisuals');
 
         let viewport = this.computeViewport();
-        let gfx = this.canvas.getContext('2d');
+        let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
         gfx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         gfx.save();
