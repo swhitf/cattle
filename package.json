@@ -1,7 +1,7 @@
 {
-  "name": "bit-mirror",
+  "name": "cattle-js",
   "version": "0.1.0",
-  "description": "Mirrors bits, duh.",
+  "description": "A spreadsheet-like grid component library.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "mocha test/build/**/*.js"
   },
   "author": "Stephen Whitfield",
-  "license": "Fuck You",
+  "license": "MIT",
   "dependencies": {
     "@types/csv-parse": "^1.1.6",
     "@types/papaparse": "^4.1.28",
