@@ -20,7 +20,7 @@ let model = builder.build();
 
 let grid = GridElement
     .create(document.getElementById('x'))
-    //.extend(new ScrollerExtension())
+    .extend(new ScrollerExtension())
     .extend(new SelectorExtension())
     .extend(new EditingExtension())
     .extend(new CopyPasteModule())
