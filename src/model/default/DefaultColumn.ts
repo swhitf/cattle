@@ -1,7 +1,7 @@
-import { ColumnModel } from '../ColumnModel';
+import { GridColumn } from '../GridColumn';
 
 
-export class DefaultColumn implements ColumnModel
+export class DefaultColumn implements GridColumn
 {
     public readonly ref:number;
     public width:number;

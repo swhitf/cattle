@@ -1,15 +1,15 @@
 import { DefaultColumn } from '../../model/default/DefaultColumn';
 import { DefaultRow } from '../../model/default/DefaultRow';
-import { CellModel } from '../../model/CellModel';
-import { ColumnModel } from '../../model/ColumnModel';
+import { GridCell } from '../../model/GridCell';
+import { GridColumn } from '../../model/GridColumn';
 import { GridModel } from '../../model/GridModel';
-import { RowModel } from '../../model/RowModel';
+import { GridRow } from '../../model/GridRow';
 import { ObjectIndex, ObjectMap } from '../../global';
 import { Rect, RectLike } from '../../geom/Rect';
 import * as _ from '../../misc/Util';
 
 
-type CellColRowLookup = ObjectIndex<ObjectIndex<CellModel>>;
+type CellColRowLookup = ObjectIndex<ObjectIndex<GridCell>>;
 
 export interface GridLayoutRegion<T> extends RectLike
 {
@@ -20,8 +20,8 @@ export class GridLayout
 {
     public static compute(model:GridModel):GridLayout
     {
-        let colLookup = <ObjectIndex<ColumnModel>>model.columns.reduce((t, x) => { t[x.ref] = x; return t }, {});
-        let rowLookup = <ObjectIndex<RowModel>>model.rows.reduce((t, x) => { t[x.ref] = x; return t }, {});
+        let colLookup = <ObjectIndex<GridColumn>>model.columns.reduce((t, x) => { t[x.ref] = x; return t }, {});
+        let rowLookup = <ObjectIndex<GridRow>>model.rows.reduce((t, x) => { t[x.ref] = x; return t }, {});
         let cellLookup = buildCellLookup(model.cells); //by col then row
 
         // Compute all expected columns and rows
@@ -180,7 +180,7 @@ export class GridLayout
     }
 }
 
-function buildCellLookup(cells:CellModel[]):CellColRowLookup
+function buildCellLookup(cells:GridCell[]):CellColRowLookup
 {
     let ix = {};
     

@@ -1,5 +1,8 @@
-import { CellModel } from './CellModel';
+import { GridModelIndex } from './GridModelIndex';
+import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
+import { Point } from '../geom/Point';
+import { Rect } from '../geom/Rect';
 import * as _ from '../misc/util';
 
 
@@ -9,7 +12,7 @@ export class Range
     {
         let lookup = _.index(cellRefs, x => x);
 
-        let cells = [] as CellModel[];
+        let cells = [] as GridCell[];
         let lc = Number.MAX_VALUE, lr = Number.MAX_VALUE;
         let hc = Number.MIN_VALUE, hr = Number.MIN_VALUE;
 
@@ -39,6 +42,32 @@ export class Range
         });
     }
 
+    public static select(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):Range
+    {
+        if (toInclusive)
+        {
+            to = to.add(1);
+        }
+
+        let index = new GridModelIndex(model);
+        let dims = Rect.fromPoints(from, to);
+        let results = [] as string[];
+
+        for (let r = dims.top; r < dims.bottom; r++)
+        {
+            for (let c = dims.left; c < dims.right; c++)
+            {
+                let cell = index.locateCell(c, r);
+                if (cell)
+                {
+                    results.push(cell.ref);
+                }
+            }
+        }
+
+        return Range.create(model, results);
+    }
+
     public static empty():Range
     {
         return new Range({
@@ -51,8 +80,8 @@ export class Range
         });
     }
 
-    public readonly ltr:CellModel[];
-    public readonly ttb:CellModel[];
+    public readonly ltr:GridCell[];
+    public readonly ttb:GridCell[];
     public readonly width:number;
     public readonly height:number;
     public readonly count:number;
@@ -64,7 +93,7 @@ export class Range
     }
 }
 
-function ltr_sort(a:CellModel, b:CellModel):number
+function ltr_sort(a:GridCell, b:GridCell):number
 {
     let n = 0;
 
@@ -77,7 +106,7 @@ function ltr_sort(a:CellModel, b:CellModel):number
     return n;
 }
 
-function ttb_sort(a:CellModel, b:CellModel):number
+function ttb_sort(a:GridCell, b:GridCell):number
 {
     let n = 0;
 

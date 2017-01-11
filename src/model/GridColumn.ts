@@ -1,6 +1,6 @@
 
 
-export interface ColumnModel
+export interface GridColumn
 {
     readonly ref:number;
 

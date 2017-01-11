@@ -1,4 +1,4 @@
-import { CellModel } from '../model/CellModel';
+import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridMouseEvent, GridMouseDragEvent } from './../ui/GridElement';
 import { GridModelIndex } from '../model/GridModelIndex';
@@ -62,7 +62,7 @@ export class SelectorExtension
 
         MouseDragEventSupport.enable(grid.root);
         MouseInput.for(grid)
-            .on('DOWN:PRIMARY+SHIFT', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
+            .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
             .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
             .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
         ;
@@ -125,14 +125,14 @@ export class SelectorExtension
     {
         vector = vector.normalize();
 
-        let empty = (cell:CellModel) => <any>(cell.value === '' || cell.value === undefined || cell.value === null);
+        let empty = (cell:GridCell) => <any>(cell.value === '' || cell.value === undefined || cell.value === null);
 
         let ref = this.selection[0] || null;
         if (ref)
         {
             let startCell = this.index.findCell(ref);
             let currCell = this.index.findCellNeighbor(startCell.ref, vector);
-            let resultCell = <CellModel>null;
+            let resultCell = <GridCell>null;
 
             if (!currCell)
                 return;
