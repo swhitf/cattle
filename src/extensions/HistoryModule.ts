@@ -109,21 +109,30 @@ export class HistoryModule implements GridExtension
 
     private createEditAction(snapshots:CellEditSnapshot[]):HistoryAction
     {
-        let grid = this.grid;
-
         return {
             apply: () => {
-                this.noCapture = true;
-                grid.kernel.commands.exec(
-                    'commit', _.zipPairs(snapshots.map(x => [x.ref, x.newVal])));
-                this.noCapture = false;
+                this.invokeSilentCommit(_.zipPairs(snapshots.map(x => [x.ref, x.newVal])));
             },
             rollback: () => {
-                this.noCapture = true;
-                grid.kernel.commands.exec(
-                    'commit', _.zipPairs(snapshots.map(x => [x.ref, x.oldVal])));
-                this.noCapture = false;
+                this.invokeSilentCommit(_.zipPairs(snapshots.map(x => [x.ref, x.oldVal])));
             },
         };
+    }
+
+    private invokeSilentCommit(changes:ObjectMap<string>):void
+    {
+        let kernel = this.grid.kernel;
+
+        try
+        {
+            this.noCapture = true;
+            kernel.commands.exec('commit', changes);
+        }
+        finally
+        {
+            this.noCapture = false;
+        }
+
+        kernel.commands.exec('select', _.keys(changes));
     }
 }

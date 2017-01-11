@@ -1,4 +1,4 @@
-import { CellModel } from '../model/CellModel';
+import { GridCell } from '../model/GridCell';
 import { Rect } from '../geom/Rect';
 
 

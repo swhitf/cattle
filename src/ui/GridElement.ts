@@ -2,7 +2,7 @@ import { GridKernel } from './GridKernel';
 import { DefaultGrid } from './../model/default/DefaultGrid';
 import { ObjectIndex } from '../global';
 import { ObjectMap } from '../global';
-import { CellModel } from '../model/CellModel';
+import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
 import { GridModelIndex } from './../model/GridModelIndex';
 import { DefaultCellVisual } from './internal/DefaultCellVisual';
@@ -24,14 +24,14 @@ export interface GridExtension
 
 export interface GridMouseEvent extends MouseEvent
 {
-    readonly cell:CellModel;
+    readonly cell:GridCell;
     readonly gridX:number;
     readonly gridY:number;
 }
 
 export interface GridMouseDragEvent extends MouseDragEvent
 {
-    readonly cell:CellModel;
+    readonly cell:GridCell;
     readonly gridX:number;
     readonly gridY:number;
 }
@@ -163,7 +163,7 @@ export class GridElement extends EventEmitterBase
         }
     }
 
-    public getCellAtGridPoint(pt:PointLike):CellModel
+    public getCellAtGridPoint(pt:PointLike):GridCell
     {
         let refs = this.layout.captureCells(new Rect(pt.x, pt.y, 1, 1));
         if (refs.length)
@@ -174,7 +174,7 @@ export class GridElement extends EventEmitterBase
         return null;
     }
 
-    public getCellAtViewPoint(pt:PointLike):CellModel
+    public getCellAtViewPoint(pt:PointLike):GridCell
     {
         let viewport = this.computeViewport();
         let gpt = Point.create(pt).add(viewport.topLeft());
@@ -182,13 +182,13 @@ export class GridElement extends EventEmitterBase
         return this.getCellAtGridPoint(gpt);
     }
 
-    public getCellsInGridRect(rect:RectLike):CellModel[]
+    public getCellsInGridRect(rect:RectLike):GridCell[]
     {
         let refs = this.layout.captureCells(rect);
         return refs.map(x => this.modelIndex.findCell(x));
     }
 
-    public getCellsInViewRect(rect:RectLike):CellModel[]
+    public getCellsInViewRect(rect:RectLike):GridCell[]
     {
         let viewport = this.computeViewport();
         let grt = Rect.fromLike(rect).offset(viewport.topLeft());

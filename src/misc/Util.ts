@@ -23,6 +23,11 @@ export function index<T>(arr:T[], indexer:(tm:T) => number|string):ObjectMap<T>
     return obj;
 }
 
+export function keys<T>(ix:ObjectIndex<T>|ObjectMap<T>):string[]
+{
+    return Object.keys(ix);
+}
+
 export function values<T>(ix:ObjectIndex<T>|ObjectMap<T>):T[]
 {
     let a:T[] = [];

@@ -1,4 +1,4 @@
-import { CellModel } from '../model/CellModel';
+import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridMouseEvent, GridMouseDragEvent } from './../ui/GridElement';
 import { GridModelIndex } from '../model/GridModelIndex';

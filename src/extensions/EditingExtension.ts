@@ -1,5 +1,5 @@
 import { ObjectMap } from '../global';
-import { CellModel } from '../model/CellModel';
+import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridKeyboardEvent } from './../ui/GridElement';
 import { GridModelIndex } from '../model/GridModelIndex';
@@ -29,7 +29,7 @@ export interface GridEditEvent
 
 export interface GridEditIntent
 {
-    cell:CellModel;
+    cell:GridCell;
     value:string;
 }
 

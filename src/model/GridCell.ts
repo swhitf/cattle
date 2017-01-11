@@ -1,6 +1,6 @@
 
 
-export interface CellModel
+export interface GridCell
 {
     readonly ref:string;
 

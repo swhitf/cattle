@@ -1,13 +1,13 @@
 import { Point } from './../geom/Point';
-import { CellModel } from './CellModel';
+import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
 import { ObjectMap, ObjectIndex } from '../global';
 import * as util from '../misc/Util'
 
 export class GridModelIndex
 {
-    private readonly refs:ObjectMap<CellModel>;
-    private readonly coords:ObjectIndex<ObjectIndex<CellModel>>;
+    private readonly refs:ObjectMap<GridCell>;
+    private readonly coords:ObjectIndex<ObjectIndex<GridCell>>;
 
     constructor(model:GridModel)
     {
@@ -21,12 +21,12 @@ export class GridModelIndex
         }
     }
 
-    public findCell(ref:string):CellModel
+    public findCell(ref:string):GridCell
     {
         return this.refs[ref] || null;
     }
 
-    public findCellNeighbor(ref:string, vector:Point):CellModel
+    public findCellNeighbor(ref:string, vector:Point):GridCell
     {
         let cell = this.findCell(ref);
         let col = cell.colRef + vector.x;
@@ -35,7 +35,7 @@ export class GridModelIndex
         return this.locateCell(col, row);
     }
 
-    public locateCell(col:number, row:number):CellModel
+    public locateCell(col:number, row:number):GridCell
     {
         return (this.coords[col] || {})[row] || null;
     }

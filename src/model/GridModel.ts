@@ -1,11 +1,11 @@
-import { ColumnModel } from './ColumnModel';
-import { CellModel } from './CellModel';
-import { RowModel } from './RowModel';
+import { GridColumn } from './GridColumn';
+import { GridCell } from './GridCell';
+import { GridRow } from './GridRow';
 
 
 export interface GridModel
 {
-    readonly cells:CellModel[];
-    readonly columns:ColumnModel[];
-    readonly rows:RowModel[];
+    readonly cells:GridCell[];
+    readonly columns:GridColumn[];
+    readonly rows:GridRow[];
 }

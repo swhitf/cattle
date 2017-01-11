@@ -4,15 +4,14 @@ import { Clipboard } from '../vendor/clipboard';
 import { GridModelIndex } from '../model/GridModelIndex';
 import { SelectorWidget } from './SelectorExtension';
 import { AbsWidgetBase } from '../ui/Widget';
-import { variable, command, routine } from '../ui/Extensibility';
 import { Rect } from '../geom/Rect';
-import { Range } from '../model/Range';
-import * as Tether from 'tether';
+import { Point } from '../geom/Point';
+import { Range } from '../model/GridRange';
+import { variable, command, routine } from '../ui/Extensibility';
 import * as _ from '../misc/Util';
 import * as Dom from '../misc/Dom';
 import * as Papa from 'papaparse';
-import { Query } from '../model/Query';
-import { Point } from '../geom/Point';
+import * as Tether from 'tether';
 
 
 //I know... :(
@@ -154,7 +153,7 @@ export class CopyPasteModule implements GridExtension
         let startVector = new Point(focusedCell.colRef, focusedCell.rowRef);
         let endVector = startVector.add(new Point(width, height));
 
-        let pasteRange = Query.over(grid.model).vector(startVector, endVector);
+        let pasteRange = Range.select(grid.model, startVector, endVector);
 
         let changes = {} as any;
         for (let cell of pasteRange.ltr)

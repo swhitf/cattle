@@ -1,7 +1,7 @@
-import { RowModel } from '../RowModel';
+import { GridRow } from '../GridRow';
 
 
-export class DefaultRow implements RowModel
+export class DefaultRow implements GridRow
 {
     public readonly ref:number;
     public height:number;

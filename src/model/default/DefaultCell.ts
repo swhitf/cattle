@@ -1,8 +1,8 @@
-import { CellModel } from '../CellModel';
+import { GridCell } from '../GridCell';
 import * as shortid from 'shortid';
 
 
-export class DefaultCell implements CellModel
+export class DefaultCell implements GridCell
 {
     public readonly ref:string;
     public readonly colRef: number;

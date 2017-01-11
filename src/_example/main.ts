@@ -1,21 +1,15 @@
-import { GridBuilder } from './../model/GridBuilder';
-import { TimelineGridBuilder } from './TimelineGridBuilder';
-import { DefaultGrid } from '../model/default/DefaultGrid';
-import { DefaultColumn } from '../model/default/DefaultColumn';
-import { DefaultRow } from '../model/default/DefaultRow';
-import { FlexCell } from '../model/flexi/FlexCell';
-import { GridElement, GridMouseEvent } from '../ui/GridElement';
+import { ExampleGridBuilder } from './ExampleGridBuilder';
+import { GridElement } from '../ui/GridElement';
 import { FlexGridBuilder } from '../model/flexi/FlexGridBuilder';
 import { SelectorExtension } from '../extensions/SelectorExtension';
 import { ScrollerExtension } from '../extensions/ScrollerExtension';
-import { TestExtension } from '../extensions/TestExtension';
 import { EditingExtension, GridEditEvent } from '../extensions/EditingExtension';
 import { CopyPasteModule } from '../extensions/CopyPasteModule';
 import { HistoryModule } from '../extensions/HistoryModule';
 
-let builder: GridBuilder = new FlexGridBuilder(1, 1);
+let builder:any = new FlexGridBuilder(1, 1);
 builder = new FlexGridBuilder(52 * 5, 250);
-builder = new TimelineGridBuilder();
+builder = new ExampleGridBuilder();
 
 let model = builder.build();
 

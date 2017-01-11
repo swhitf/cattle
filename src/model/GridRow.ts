@@ -1,6 +1,6 @@
 
 
-export interface RowModel
+export interface GridRow
 {
     readonly ref:number;
 

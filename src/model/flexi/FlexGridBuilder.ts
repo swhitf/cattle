@@ -1,11 +1,10 @@
-import { GridBuilder } from '../GridBuilder';
 import { GridModel } from '../GridModel';
 import { DefaultGrid } from '../default/DefaultGrid';
 import { FlexCell } from './FlexCell';
-import { CellModel } from '../CellModel';
+import { GridCell } from '../GridCell';
 
 
-export class FlexGridBuilder implements GridBuilder
+export class FlexGridBuilder
 {
     public createHeader:boolean = true;
     public createMargin:boolean = true;
@@ -53,5 +52,5 @@ export class FlexGridBuilder implements GridBuilder
 
 interface CellFactory
 {
-    (col:number, row:number):CellModel;
+    (col:number, row:number):GridCell;
 }
