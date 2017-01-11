@@ -9,8 +9,9 @@ import { FlexGridBuilder } from '../model/flexi/FlexGridBuilder';
 import { SelectorExtension } from '../extensions/SelectorExtension';
 import { ScrollerExtension } from '../extensions/ScrollerExtension';
 import { TestExtension } from '../extensions/TestExtension';
-import { EditingExtension, GridInputEvent } from '../extensions/EditingExtension';
+import { EditingExtension, GridEditEvent } from '../extensions/EditingExtension';
 import { CopyPasteModule } from '../extensions/CopyPasteModule';
+import { HistoryModule } from '../extensions/HistoryModule';
 
 let builder: GridBuilder = new FlexGridBuilder(1, 1);
 builder = new FlexGridBuilder(52 * 5, 250);
@@ -24,10 +25,11 @@ let grid = GridElement
     .extend(new SelectorExtension())
     .extend(new EditingExtension())
     .extend(new CopyPasteModule())
+    .extend(new HistoryModule())
 ;
 
 grid.model = model;
-grid.on('input', (e:GridInputEvent) =>
+grid.on('input', (e:GridEditEvent) =>
 {
     e.changes.forEach(x =>
     {
@@ -36,6 +38,8 @@ grid.on('input', (e:GridInputEvent) =>
 
     grid.invalidate();
 });
+
+window['grid'] = grid;
 
 
 //window.addEventListener('keydown', e =>

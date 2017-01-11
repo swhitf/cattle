@@ -22,12 +22,15 @@ const Vectors = {
     west: new Point(-1, 0),
 };
 
-export interface GridInputEvent
+export interface GridEditEvent
 {
-    changes: {
-        cell: CellModel,
-        value: string,
-    }[];
+    changes:GridEditIntent[];
+}
+
+export interface GridEditIntent
+{
+    cell:CellModel;
+    value:string;
 }
 
 export interface InputWidget extends Widget
@@ -207,7 +210,7 @@ export class EditingExtension
     {
         let { grid, modelIndex } = this;
 
-        let evt:GridInputEvent = {
+        let evt:GridEditEvent = {
             changes: _.unzipPairs(changes).map(x => ({
                 cell: modelIndex.findCell(x[0]),
                 value: x[1],

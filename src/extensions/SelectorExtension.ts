@@ -62,7 +62,7 @@ export class SelectorExtension
 
         MouseDragEventSupport.enable(grid.root);
         MouseInput.for(grid)
-            .on('DOWN:PRIMARY+SHIFT', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
+            .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
             .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
             .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
         ;
