@@ -7,6 +7,7 @@ import { EditingExtension, GridEditEvent } from '../extensions/EditingExtension'
 import { CopyPasteModule } from '../extensions/CopyPasteModule';
 import { HistoryModule } from '../extensions/HistoryModule';
 
+
 let builder:any = new FlexGridBuilder(1, 1);
 builder = new FlexGridBuilder(52 * 5, 250);
 builder = new ExampleGridBuilder();

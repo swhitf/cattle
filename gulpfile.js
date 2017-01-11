@@ -7,24 +7,16 @@ var browserify = require('browserify');
 var tsify = require("tsify");
 var watchify = require('watchify');
 
-/**
- * Packs the application static resources.
- */
-gulp.task('artifacts', function() {
-
-    var res = gulp.src('res/**/*')
-        .pipe(gulp.dest('dist'));
-
-    return merge(res)
-        .pipe(connect.reload());
-});
-
 gulp.task('js', function() {
 
+    var entries = [
+        './node_modules/reflect-metadata/temp/Reflect.js'
+    ];
+
+    entries = entries.concat(glob.sync('./src/**/*.ts'));
+
     var cfg = {
-        entries: glob.sync('./src/**/*.ts').concat([
-            './node_modules/reflect-metadata/temp/Reflect.js'
-        ]),
+        entries: entries,
         cache: {},
         packageCache: {},
         plugin: [watchify, tsify],
@@ -50,14 +42,14 @@ gulp.task('js', function() {
  */
 gulp.task('artifacts', function() {
 
-    var debug = gulp.src('debug/**/*')
+    var res = gulp.src('res/**/*')
         .pipe(gulp.dest('dist'));
 
-    return merge(debug)
+    return merge(res)
         .pipe(connect.reload());
 });
 
-gulp.task('js', function() {
+gulp.task('jsx', function() {
 
     var b = browserify({
         entries: [
