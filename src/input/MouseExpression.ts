@@ -1,5 +1,6 @@
 import { Keys } from './Keys';
 import * as _ from '../misc/Util';
+import { KeyCheck } from './KeyCheck';
 
 
 export type MouseEventType = 'click'|'dblclick'|'mousedown'|'mousemove'|'mouseup'|'dragbegin'|'drag'|'dragend'
@@ -61,7 +62,9 @@ export class MouseExpression
 {
     public static parse(input:string):MouseExpression
     {
-        let cfg = <any>{};
+        let cfg = <any>{
+            keys: [],
+        };
 
         cfg.exclusive = input[0] === '!';
         if (cfg.exclusive)
@@ -79,12 +82,7 @@ export class MouseExpression
                 let key = Keys.parse(x, false);
                 if (key !== null)
                 {
-                    switch (key)
-                    {
-                        case Keys.CTRL: cfg.ctrl = true; break;
-                        case Keys.ALT: cfg.alt = true; break;
-                        case Keys.SHIFT: cfg.shift = true; break;
-                    }
+                    cfg.keys.push(key);
                 }
                 else
                 {
@@ -97,9 +95,7 @@ export class MouseExpression
 
     public readonly event:MouseEventType = null;
     public readonly button:number = null;
-    public readonly ctrl:boolean = false;
-    public readonly alt:boolean = false;
-    public readonly shift:boolean = false;
+    public readonly keys:number[] = [];
     public readonly exclusive:boolean = false;
 
     private constructor(cfg:any)
@@ -109,12 +105,18 @@ export class MouseExpression
 
     public matches(mouseData:MouseEvent):boolean
     {
-        return (
-            this.event == mouseData.type &&
-            this.ctrl == mouseData.ctrlKey &&
-            this.alt == mouseData.altKey &&
-            this.shift == mouseData.shiftKey &&
-            (this.button == null || this.button == mouseData.button)
-        );
+        if (this.event !== mouseData.type)
+            return false;
+
+        if (this.button !== null && this.button !== mouseData.button)
+            return false;
+
+        for (let k of this.keys)
+        {
+            if (!KeyCheck.down(k))
+                return false;
+        }
+
+        return true;
     }
 }

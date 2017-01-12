@@ -3,7 +3,6 @@ import { EventEmitterBase } from './internal/EventEmitter';
 import { GridKernel } from './GridKernel';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
-import { GridModelIndex } from './../model/GridModelIndex';
 import { GridLayout } from './internal/GridLayout';
 import { MouseDragEvent } from '../input/MouseDragEvent';
 import { Rect, RectLike } from '../geom/Rect';
@@ -70,7 +69,6 @@ export class GridElement extends EventEmitterBase
     private dirty:boolean = false;
     private buffers:ObjectMap<Buffer> = {};
     private visuals:ObjectMap<Visual> = {};
-    private modelIndex:GridModelIndex;
 
     private constructor(private canvas:HTMLCanvasElement)
     {
@@ -86,7 +84,6 @@ export class GridElement extends EventEmitterBase
 
         kernel.variables.define('width', { get: () => this.width });
         kernel.variables.define('height', { get: () => this.height });
-        kernel.variables.define('modelIndex', { get: () => this.modelIndex });
     }
 
     public get width():number
@@ -163,7 +160,7 @@ export class GridElement extends EventEmitterBase
         let refs = this.layout.captureCells(new Rect(pt.x, pt.y, 1, 1));
         if (refs.length)
         {
-            return this.modelIndex.findCell(refs[0]);
+            return this.model.findCell(refs[0]);
         }
 
         return null;
@@ -180,7 +177,7 @@ export class GridElement extends EventEmitterBase
     public getCellsInGridRect(rect:RectLike):GridCell[]
     {
         let refs = this.layout.captureCells(rect);
-        return refs.map(x => this.modelIndex.findCell(x));
+        return refs.map(x => this.model.findCell(x));
     }
 
     public getCellsInViewRect(rect:RectLike):GridCell[]
@@ -212,7 +209,6 @@ export class GridElement extends EventEmitterBase
     public invalidate():void
     {
         this.buffers = {};
-        this.modelIndex = new GridModelIndex(this.model);
         this.layout = GridLayout.compute(this.model);
 
         this.redraw();
@@ -290,7 +286,7 @@ export class GridElement extends EventEmitterBase
 
         for (let cr in this.visuals)
         {
-            let cell = this.modelIndex.findCell(cr);
+            let cell = this.model.findCell(cr);
             let visual = this.visuals[cr];
 
             if (!viewport.intersects(visual))

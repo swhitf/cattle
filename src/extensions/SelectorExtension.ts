@@ -1,14 +1,13 @@
 import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridMouseEvent, GridMouseDragEvent } from './../ui/GridElement';
-import { GridModelIndex } from '../model/GridModelIndex';
 import { KeyInput } from '../input/KeyInput';
 import { Point } from '../geom/Point';
 import { RectLike, Rect } from '../geom/Rect';
 import { MouseInput } from '../input/MouseInput';
 import { MouseDragEventSupport } from '../input/MouseDragEventSupport';
-import { command, routine } from '../ui/Extensibility';
 import { Widget, AbsWidgetBase } from '../ui/Widget';
+import { command, routine } from '../ui/Extensibility';
 import * as Tether from 'tether';
 import * as Dom from '../misc/Dom';
 
@@ -75,11 +74,6 @@ export class SelectorExtension
         kernel.variables.define('captureSelector', { get: () => this.captureSelector });
     }
 
-    private get index():GridModelIndex
-    {
-        return this.grid.kernel.variables.get('modelIndex');
-    }
-
     private createElements(target:HTMLElement):void
     {
         let layer = document.createElement('div');
@@ -123,6 +117,8 @@ export class SelectorExtension
     @command()
     private selectEdge(vector:Point, autoScroll = true):void
     {
+        let { grid } = this;
+
         vector = vector.normalize();
 
         let empty = (cell:GridCell) => <any>(cell.value === '' || cell.value === undefined || cell.value === null);
@@ -130,8 +126,8 @@ export class SelectorExtension
         let ref = this.selection[0] || null;
         if (ref)
         {
-            let startCell = this.index.findCell(ref);
-            let currCell = this.index.findCellNeighbor(startCell.ref, vector);
+            let startCell = grid.model.findCell(ref);
+            let currCell = grid.model.findCellNeighbor(startCell.ref, vector);
             let resultCell = <GridCell>null;
 
             if (!currCell)
@@ -140,7 +136,7 @@ export class SelectorExtension
             while (true)
             {
                 let a = currCell;
-                let b = this.index.findCellNeighbor(a.ref, vector);
+                let b = grid.model.findCellNeighbor(a.ref, vector);
 
                 if (!a || !b)
                 {
@@ -187,12 +183,14 @@ export class SelectorExtension
     @command()
     private selectNeighbor(vector:Point, autoScroll = true):void
     {
+        let { grid } = this;
+
         vector = vector.normalize();
 
         let ref = this.selection[0] || null;
         if (ref)
         {
-            let cell = this.index.findCellNeighbor(ref, vector);
+            let cell = grid.model.findCellNeighbor(ref, vector);
             if (cell)
             {
                 this.select([cell.ref], autoScroll);
@@ -202,9 +200,9 @@ export class SelectorExtension
 
     private reselect(autoScroll:boolean = true):void
     {
-        let { index, selection } = this;
+        let { grid, selection } = this;
 
-        let remaining = selection.filter(x => !!index.findCell(x));
+        let remaining = selection.filter(x => !!grid.model.findCell(x));
         if (remaining.length != selection.length)
         {
             this.select(remaining, autoScroll);

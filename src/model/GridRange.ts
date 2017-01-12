@@ -1,4 +1,3 @@
-import { GridModelIndex } from './GridModelIndex';
 import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
 import { Point } from '../geom/Point';
@@ -71,7 +70,6 @@ export class GridRange
             to = to.add(1);
         }
 
-        let index = new GridModelIndex(model);
         let dims = Rect.fromPoints(from, to);
         let results = [] as string[];
 
@@ -79,7 +77,7 @@ export class GridRange
         {
             for (let c = dims.left; c < dims.right; c++)
             {
-                let cell = index.locateCell(c, r);
+                let cell = model.locateCell(c, r);
                 if (cell)
                 {
                     results.push(cell.ref);

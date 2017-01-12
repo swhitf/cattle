@@ -1,9 +1,8 @@
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';
-import { GridModelIndex } from '../model/GridModelIndex';
+import { KeyInput } from '../input/KeyInput';
 import { command } from '../ui/Extensibility';
 import * as _ from '../misc/Util'
-import { KeyInput } from '../input/KeyInput';
 
 
 export interface HistoryAction
@@ -20,7 +19,7 @@ interface CellEditSnapshot
     oldVal:string;
 }
 
-export class HistoryModule implements GridExtension
+export class HistoryExtension implements GridExtension
 {
     private grid:GridElement;
 
@@ -38,11 +37,6 @@ export class HistoryModule implements GridExtension
         ;
 
         grid.kernel.routines.hook('before:commit', this.beforeCommit.bind(this));
-    }
-
-    private get index():GridModelIndex
-    {
-        return this.grid.kernel.variables.get('modelIndex');
     }
 
     @command()
@@ -91,7 +85,7 @@ export class HistoryModule implements GridExtension
 
     private createSnapshots(changes:ObjectMap<string>):CellEditSnapshot[]
     {
-        let index = this.index;
+        let model = this.grid.model;
         let batch = [] as CellEditSnapshot[];
 
         for (let ref in changes)
@@ -99,7 +93,7 @@ export class HistoryModule implements GridExtension
             batch.push({
                 ref: ref,
                 newVal: changes[ref],
-                oldVal: index.findCell(ref).value,
+                oldVal: model.findCell(ref).value,
             });
         }
 

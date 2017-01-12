@@ -3,6 +3,7 @@ import { KeyExpression } from './KeyExpression';
 import { EventTargetEventEmitterAdapter } from './EventTargetEventEmitterAdapter';
 import { MouseExpression } from './MouseExpression';
 import { MouseDragEventSupport } from './MouseDragEventSupport';
+import { KeyCheck } from './KeyCheck';
 
 
 export type Mappable = EventTarget|EventEmitterBase;
@@ -16,6 +17,7 @@ export class MouseInput
 {
     public static for(...elmts:Mappable[]):MouseInput
     {
+        KeyCheck.init();
         return new MouseInput(normalize(elmts));
     }
 

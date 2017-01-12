@@ -1,7 +1,6 @@
 import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridKeyboardEvent } from './../ui/GridElement';
-import { GridModelIndex } from '../model/GridModelIndex';
 import { SelectorWidget } from './SelectorExtension';
 import { KeyInput } from '../input/KeyInput';
 import { MouseInput } from '../input/MouseInput';
@@ -83,11 +82,6 @@ export class EditingExtension
         kernel.routines.hook('before:doSelect', () => this.endEdit(true));
     }
 
-    private get modelIndex():GridModelIndex
-    {
-        return this.grid.kernel.variables.get('modelIndex');
-    }
-
     private get primarySelector():SelectorWidget
     {
         return this.grid.kernel.variables.get('primarySelector');
@@ -128,7 +122,7 @@ export class EditingExtension
             return false;
 
         let { input } = this;
-        let cell = this.modelIndex.findCell(this.selection[0]);
+        let cell = this.grid.model.findCell(this.selection[0]);
 
         if (!!override)
         {
@@ -207,11 +201,11 @@ export class EditingExtension
     @routine()
     private commit(changes:ObjectMap<string>):void
     {
-        let { grid, modelIndex } = this;
+        let { grid } = this;
 
         let evt:GridEditEvent = {
             changes: _.unzipPairs(changes).map(x => ({
-                cell: modelIndex.findCell(x[0]),
+                cell: grid.model.findCell(x[0]),
                 value: x[1],
             }))
         };
