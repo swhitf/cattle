@@ -1,4 +1,3 @@
-import { ObjectIndex, ObjectMap } from '../global';
 
 
 export function extend(target:any, data:any):any

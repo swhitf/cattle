@@ -1,7 +1,6 @@
 import { Point } from './../geom/Point';
 import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
-import { ObjectMap, ObjectIndex } from '../global';
 import * as util from '../misc/Util'
 
 export class GridModelIndex

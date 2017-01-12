@@ -1,4 +1,3 @@
-import { ObjectMap } from '../global';
 import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridKeyboardEvent } from './../ui/GridElement';

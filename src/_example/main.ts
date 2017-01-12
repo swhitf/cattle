@@ -1,6 +1,6 @@
 import { ExampleGridBuilder } from './ExampleGridBuilder';
 import { GridElement } from '../ui/GridElement';
-import { FlexGridBuilder } from '../model/flexi/FlexGridBuilder';
+//import { FlexGridBuilder } from '../model/flexi/FlexGridBuilder';
 import { SelectorExtension } from '../extensions/SelectorExtension';
 import { ScrollerExtension } from '../extensions/ScrollerExtension';
 import { EditingExtension, GridEditEvent } from '../extensions/EditingExtension';
@@ -8,9 +8,9 @@ import { CopyPasteModule } from '../extensions/CopyPasteModule';
 import { HistoryModule } from '../extensions/HistoryModule';
 
 
-let builder:any = new FlexGridBuilder(1, 1);
-builder = new FlexGridBuilder(52 * 5, 250);
-builder = new ExampleGridBuilder();
+//let builder:any = new FlexGridBuilder(1, 1);
+//builder = new FlexGridBuilder(52 * 5, 250);
+let builder = new ExampleGridBuilder();
 
 let model = builder.build();
 
@@ -31,7 +31,7 @@ grid.on('input', (e:GridEditEvent) =>
         x.cell.value = x.value;
     });
 
-    grid.invalidate();
+    grid.redraw();
 });
 
 window['grid'] = grid;

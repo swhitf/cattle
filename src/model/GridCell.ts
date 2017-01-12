@@ -1,16 +1,35 @@
-
-
+/**
+ * Defines the interface of an object that represents a GridCell.
+ */
 export interface GridCell
 {
+    /**
+     * The cell reference, must be unique per GridModel instance.
+     */
     readonly ref:string;
 
-    colRef:number;
+    /**
+     * The column reference that describes the horizontal position of the cell.
+     */
+    readonly colRef:number;
 
-    colSpan:number;
-    
-    rowRef:number;
+    /**
+     * The number of columns that this cell spans.
+     */
+    readonly colSpan:number;
 
-    rowSpan:number;
+    /**
+     * The row reference that describes the vertical position of the cell.
+     */
+    readonly rowRef:number;
 
-    value:any;
+    /**
+     * The number of rows that this cell spans.
+     */
+    readonly rowSpan:number;
+
+    /**
+     * The value of the cell.
+     */
+    value:string;
 }

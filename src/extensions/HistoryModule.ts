@@ -1,7 +1,6 @@
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';
 import { GridModelIndex } from '../model/GridModelIndex';
-import { ObjectMap } from '../global';
 import { command } from '../ui/Extensibility';
 import * as _ from '../misc/Util'
 import { KeyInput } from '../input/KeyInput';

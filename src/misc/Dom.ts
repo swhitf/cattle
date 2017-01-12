@@ -1,4 +1,3 @@
-import { ObjectMap } from '../global';
 
 
 export function parse(html:string):HTMLElement

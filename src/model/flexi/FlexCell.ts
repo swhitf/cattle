@@ -1,26 +1,33 @@
-import { DefaultCell } from '../default/DefaultCell';
-import { Rect } from '../../geom/Rect';
-import { renderer } from '../../ui/Renderer';
+import { DefaultGridCell } from '../default/DefaultGridCell';
+import { renderer, visualize } from '../../ui/Extensibility';
 
 
 @renderer(draw)
-export class FlexCell extends DefaultCell
+export class FlexCell extends DefaultGridCell
 {
+    @visualize()
+    public borderColor:string = 'lightgray';
+
+    @visualize()
+    public bgColor:string = 'white';
+
+    @visualize()
+    public fgColor:string = 'black';
 }
 
-function draw(gfx:CanvasRenderingContext2D, region:Rect, cell:FlexCell):void
+function draw(gfx:CanvasRenderingContext2D, visual:any):void
 {
-    gfx.fillStyle = 'white';
-    gfx.strokeStyle = 'lightgray';
     gfx.lineWidth = 1;
-
     let av = gfx.lineWidth % 2 == 0 ? 0 : 0.5;
 
-    gfx.fillRect(-av, -av, region.width, region.height);
-    gfx.strokeRect(-av, -av, region.width, region.height);
+    gfx.fillStyle = visual.bgColor;
+    gfx.fillRect(-av, -av, visual.width, visual.height);
 
-    gfx.fillStyle = 'black';
+    gfx.strokeStyle = visual.borderColor;
+    gfx.strokeRect(-av, -av, visual.width, visual.height);
+
+    gfx.fillStyle = visual.fgColor;
     gfx.textBaseline = 'middle';
     gfx.font = '13px Segoe UI';
-    gfx.fillText(cell.value, 3, 0 + (region.height / 2));
+    gfx.fillText(visual.value, 3, 0 + (visual.height / 2));
 }

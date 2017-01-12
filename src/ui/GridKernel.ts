@@ -1,6 +1,3 @@
-import { ObjectMap } from '../global';
-import { GridElement } from './GridElement';
-
 //This keeps WebStorm quiet, for some reason it is complaining...
 declare var Reflect:any;
 

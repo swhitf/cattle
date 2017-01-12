@@ -6,7 +6,7 @@ import { SelectorWidget } from './SelectorExtension';
 import { AbsWidgetBase } from '../ui/Widget';
 import { Rect } from '../geom/Rect';
 import { Point } from '../geom/Point';
-import { Range } from '../model/GridRange';
+import { GridRange } from '../model/GridRange';
 import { variable, command, routine } from '../ui/Extensibility';
 import * as _ from '../misc/Util';
 import * as Dom from '../misc/Dom';
@@ -23,7 +23,7 @@ export class CopyPasteModule implements GridExtension
     private layer:HTMLElement;
 
     private copyList:string[] = [];
-    private copyRange:Range = Range.empty();
+    private copyRange:GridRange = GridRange.empty();
 
     @variable()
     private copyNet:CopyNet;
@@ -102,7 +102,7 @@ export class CopyPasteModule implements GridExtension
     private doCopy(cells:string[], delimiter:string = '\t'):void
     {
         this.copyList = cells;
-        let range = this.copyRange = Range.create(this.grid.model, cells);
+        let range = this.copyRange = GridRange.create(this.grid.model, cells);
         let text = '';
 
         if (!cells.length)
@@ -153,7 +153,7 @@ export class CopyPasteModule implements GridExtension
         let startVector = new Point(focusedCell.colRef, focusedCell.rowRef);
         let endVector = startVector.add(new Point(width, height));
 
-        let pasteRange = Range.select(grid.model, startVector, endVector);
+        let pasteRange = GridRange.select(grid.model, startVector, endVector);
 
         let changes = {} as any;
         for (let cell of pasteRange.ltr)

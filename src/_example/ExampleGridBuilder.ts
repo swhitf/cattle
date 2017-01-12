@@ -1,6 +1,6 @@
-import { DefaultGrid } from './../model/default/DefaultGrid';
+import { DefaultGridModel } from '../model/default/DefaultGridModel';
 import { FlexCell } from './../model/flexi/FlexCell';
-import { DefaultRow } from './../model/default/DefaultRow';
+import { DefaultGridRow } from '../model/default/DefaultGridRow';
 import { GridModel } from './../model/GridModel';
 import { GridRow } from '../model/GridRow';
 import { GridCell } from '../model/GridCell';
@@ -14,39 +14,51 @@ export class ExampleGridBuilder
 
     public build():GridModel
     {
-        let model = new DefaultGrid();
+        let cells = [] as GridCell[];
 
-        this.createColumnRow(model.cells);
+        this.createColumnRow(cells);
 
         for (let i = 0; i < this.lines; i++)
         {
-            this.createResourceRow(model.cells, i);
+            this.createResourceRow(cells, i);
         }
 
-        return model;
+        return new DefaultGridModel(cells, [], []);
     }
 
     private createColumnRow(cells:GridCell[]):void
     {
-        cells.push(new FlexCell(0, 0, null, '+'));
+        cells.push(new FlexCell({
+            colRef: 0,
+            rowRef: 0,
+            value: '+',
+        }));
 
         for (let i = 0; i < this.cols; i++)
         {
-            let cell = new FlexCell(i + 1, 0);
-            cell.value = 'Vertical #' + (i + 1);
-            cells.push(cell);
+            cells.push(new FlexCell({
+                colRef: i + 1,
+                rowRef: 0,
+                value: 'Vertical #' + (i + 1),
+            }));
         }
     }
 
     private createResourceRow(cells:GridCell[], line:number):void
     {
-        cells.push(new FlexCell(0, line + 1, null, `Horizontal #${line}`));
+        cells.push(new FlexCell({
+            colRef: 0,
+            rowRef: line + 1,
+            value: `Horizontal #${line}`,
+        }));
 
         for (let i = 0; i < this.cols; i++)
         {
-            let cell = new FlexCell(i + 1, line + 1);
-            cell.value = (line + i).toString();
-            cells.push(cell);
+            cells.push(new FlexCell({
+                colRef: i + 1,
+                rowRef: line + 1,
+                value: (line + i).toString(),
+            }));
         }
     }
 }
