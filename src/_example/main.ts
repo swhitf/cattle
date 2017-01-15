@@ -22,6 +22,7 @@ let grid = GridElement
     .extend(new ClipboardExtension())
     .extend(new HistoryExtension())
     .extend(new PanExtension())
+    .mergeInterface()
 ;
 
 grid.model = model;

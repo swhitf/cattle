@@ -14,10 +14,10 @@ import { command, routine, variable } from '../ui/Extensibility';
 
 
 const Vectors = {
-    north: new Point(0, -1),
-    south: new Point(0, 1),
-    east: new Point(1, 0),
-    west: new Point(-1, 0),
+    n: new Point(0, -1),
+    s: new Point(0, 1),
+    e: new Point(1, 0),
+    w: new Point(-1, 0),
 };
 
 export interface GridEditEvent
@@ -55,13 +55,13 @@ export class EditingExtension
 
         KeyInput.for(this.input.root)
             .on('!ESCAPE', () => this.endEdit(false))
-            .on('!ENTER', () => this.endEditToNeighbor(Vectors.east))
-            .on('!TAB', () => this.endEditToNeighbor(Vectors.east))
-            .on('!SHIFT+TAB', () => this.endEditToNeighbor(Vectors.west))
-            .on('UP_ARROW', () => this.endEditToNeighbor(Vectors.north))
-            .on('DOWN_ARROW', () => this.endEditToNeighbor(Vectors.south))
-            .on('RIGHT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.east); } })
-            .on('LEFT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.west); } })
+            .on('!ENTER', () => this.endEditToNeighbor(Vectors.e))
+            .on('!TAB', () => this.endEditToNeighbor(Vectors.e))
+            .on('!SHIFT+TAB', () => this.endEditToNeighbor(Vectors.w))
+            .on('UP_ARROW', () => this.endEditToNeighbor(Vectors.n))
+            .on('DOWN_ARROW', () => this.endEditToNeighbor(Vectors.s))
+            .on('RIGHT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.e); } })
+            .on('LEFT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.w); } })
         ;
 
         MouseInput.for(this.input.root)

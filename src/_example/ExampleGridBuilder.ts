@@ -1,6 +1,6 @@
 import { DefaultGridModel } from '../model/default/DefaultGridModel';
-import { FlexCell } from './../model/flexi/FlexCell';
 import { DefaultGridRow } from '../model/default/DefaultGridRow';
+import { FlexCell } from '../model/flex/FlexCell';
 import { GridModel } from './../model/GridModel';
 import { GridRow } from '../model/GridRow';
 import { GridCell } from '../model/GridCell';

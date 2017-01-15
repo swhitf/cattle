@@ -9,6 +9,7 @@ import { Rect, RectLike } from '../geom/Rect';
 import { Point, PointLike } from '../geom/Point';
 import { property } from '../misc/Property';
 import * as _ from '../misc/Util';
+import { variable } from './Extensibility';
 
 
 export interface GridExtension
@@ -81,9 +82,6 @@ export class GridElement extends EventEmitterBase
             .forEach(x => this.forwardMouseEvent(x));
         ['keydown', 'keypress', 'keyup']
             .forEach(x => this.forwardKeyEvent(x));
-
-        kernel.variables.define('width', { get: () => this.width });
-        kernel.variables.define('height', { get: () => this.height });
     }
 
     public get width():number
@@ -94,6 +92,16 @@ export class GridElement extends EventEmitterBase
     public get height():number
     {
         return this.root.clientHeight;
+    }
+
+    public get modelWidth():number
+    {
+        return this.layout.columns.length;
+    }
+
+    public get modelHeight():number
+    {
+        return this.layout.rows.length;
     }
 
     public get virtualWidth():number
@@ -123,36 +131,30 @@ export class GridElement extends EventEmitterBase
         return this;
     }
 
+    public exec(command:string, ...args:any[]):void
+    {
+        this.kernel.commands.exec(command, args);
+    }
+
+    public get(variable:string):any
+    {
+        this.kernel.variables.get(variable);
+    }
+
+    public set(variable:string, value:any):void
+    {
+        this.kernel.variables.set(variable, value);
+    }
+
+    public mergeInterface():GridElement
+    {
+        this.kernel.exportInterface(this);
+        return this;
+    }
+
     public focus():void
     {
         this.root.focus();
-    }
-
-    public scrollTo(ptOrRect:PointLike|RectLike):void
-    {
-        let dest = <any>ptOrRect;
-
-        if (dest.width === undefined && dest.height === undefined)
-        {
-            dest = new Rect(dest.x, dest.y, 1, 1);
-        }
-
-        if (dest.left < 0)
-        {
-            this.scrollLeft += dest.left;
-        }
-        if (dest.right > this.width)
-        {
-            this.scrollLeft += dest.right - this.width;
-        }
-        if (dest.top < 0)
-        {
-            this.scrollTop += dest.top;
-        }
-        if (dest.bottom > this.height)
-        {
-            this.scrollTop += dest.bottom - this.height;
-        }
     }
 
     public getCellAtGridPoint(pt:PointLike):GridCell
@@ -204,6 +206,33 @@ export class GridElement extends EventEmitterBase
         }
 
         return rect;
+    }
+
+    public scrollTo(ptOrRect:PointLike|RectLike):void
+    {
+        let dest = <any>ptOrRect;
+
+        if (dest.width === undefined && dest.height === undefined)
+        {
+            dest = new Rect(dest.x, dest.y, 1, 1);
+        }
+
+        if (dest.left < 0)
+        {
+            this.scrollLeft += dest.left;
+        }
+        if (dest.right > this.width)
+        {
+            this.scrollLeft += dest.right - this.width;
+        }
+        if (dest.top < 0)
+        {
+            this.scrollTop += dest.top;
+        }
+        if (dest.bottom > this.height)
+        {
+            this.scrollTop += dest.bottom - this.height;
+        }
     }
 
     public invalidate():void

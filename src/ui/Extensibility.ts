@@ -1,5 +1,6 @@
 import { GridKernel } from './GridKernel';
 import { Rect } from '../geom/Rect';
+import { isBoolean } from 'util';
 
 //This keeps WebStorm quiet, for some reason it is complaining...
 declare var Reflect:any;
@@ -94,8 +95,15 @@ export function routine(name?:string):MethodDecorator
  * @param name The optional variable name
  * @returns decorator
  */
-export function variable(name?:string, mutable:boolean = true):PropertyDecorator
+export function variable(mutable:boolean):PropertyDecorator;
+export function variable(name?:string, mutable?:boolean);
+export function variable(name:string|boolean, mutable?:boolean):PropertyDecorator
 {
+    if (typeof(name) === 'boolean')
+    {
+        return variable(undefined, name as boolean);
+    }
+
     return function(ctor:Object, key:string):void
     {
         const mdk = 'grid:variables';

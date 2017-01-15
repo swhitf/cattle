@@ -19,6 +19,7 @@ export interface EventEmitter
     emit(event:string, ...args:any[]):void;
 }
 
+EventTarget
 export class EventEmitterBase
 {
     private buckets:any = {};
