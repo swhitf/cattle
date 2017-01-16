@@ -356,7 +356,7 @@ export class GridElement extends EventEmitterBase
         {
             if (visual[p] === undefined)
             {
-                visual[p] = cell[p];
+                visual[p] = _.shadowClone(cell[p]);
             }
             else
             {
