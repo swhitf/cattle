@@ -1,6 +1,9 @@
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';
 import { extend } from '../misc/Util';
+import { GridRange } from '../model/GridRange';
+import { Point } from '../geom/Point';
+import { GridCell } from '../model/GridCell';
 
 
 const RefExtract = /(?!.*['"`])[A-Za-z]+[0-9]+:?([A-Za-z]+[0-9])?/g;
@@ -98,37 +101,52 @@ export class ComputeExtension implements GridExtension
 
             formula =
                 formula.substr(0, result.index) +
-                `range('${result[0]}')` +
+                `expr('${result[0]}')` +
                 formula.substring(result.index + result[0].length);
         }
 
         let functions = extend({}, SupportFunctions);
-        functions.range = this.range.bind(this);
+        functions.expr = this.resolveExpr.bind(this);
 
         let code = `with (arguments[0]) { return (${formula.substr(1)}); }`.toLowerCase();
 
         console.log(code);
 
         let f = new Function(code).bind(null, functions);
-        return f(functions).toString(functions) || '0';
+        return f().toString() || '0';
     }
 
-    private range(expr:string):number[]
+    private resolveExpr(expr:string):number|number[]
     {
-        debugger;
         let [from, to] = expr.split(':');
 
-        let fromRef = this.convertRef(from);
+        let fromCell = this.resolveRef(from);
 
         if (to === undefined)
         {
+            if (!!fromCell)
+            {
+                return parseInt(fromCell.value) || 0;
+            }
+        }
+        else
+        {
+            let toCell = this.resolveRef(to);
 
+            if (!!fromCell && !!toCell)
+            {
+                let fromVector = new Point(fromCell.colRef, fromCell.rowRef);
+                let toVector = new Point(toCell.colRef, toCell.rowRef);
+
+                let range = GridRange.select(this.grid.model, fromVector, toVector, true);
+                return range.ltr.map(x => parseInt(x.value) || 0);
+            }
         }
 
-        return [];
+        return 0;
     }
 
-    private convertRef(nameRef:string):string
+    private resolveRef(nameRef:string):GridCell
     {
         RefConvert.lastIndex = 0;
         let result = RefConvert.exec(nameRef);
@@ -149,7 +167,6 @@ export class ComputeExtension implements GridExtension
             }
         }
 
-        let cell = this.grid.model.locateCell(colRef, rowRef);
-        return cell.ref;
+        return this.grid.model.locateCell(colRef - 1, rowRef - 1);
     }
 }
