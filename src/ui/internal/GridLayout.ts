@@ -1,10 +1,9 @@
-import { DefaultColumn } from '../../model/default/DefaultColumn';
-import { DefaultRow } from '../../model/default/DefaultRow';
+import { DefaultGridColumn } from '../../model/default/DefaultGridColumn';
+import { DefaultGridRow } from '../../model/default/DefaultGridRow';
 import { GridCell } from '../../model/GridCell';
 import { GridColumn } from '../../model/GridColumn';
 import { GridModel } from '../../model/GridModel';
 import { GridRow } from '../../model/GridRow';
-import { ObjectIndex, ObjectMap } from '../../global';
 import { Rect, RectLike } from '../../geom/Rect';
 import * as _ from '../../misc/Util';
 
@@ -31,11 +30,11 @@ export class GridLayout
         // Generate missing columns and rows
         for (let i = 0; i <= maxCol; i++)
         {
-            (colLookup[i] || (colLookup[i] = new DefaultColumn(i)));
+            (colLookup[i] || (colLookup[i] = new DefaultGridColumn(i)));
         }
         for (let i = 0; i <= maxRow; i++)
         {
-            (rowLookup[i] || (rowLookup[i] = new DefaultRow(i)));
+            (rowLookup[i] || (rowLookup[i] = new DefaultGridRow(i)));
         }
 
         // Compute width and height of whole grid

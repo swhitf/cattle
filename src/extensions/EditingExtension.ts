@@ -1,8 +1,6 @@
-import { ObjectMap } from '../global';
 import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridKeyboardEvent } from './../ui/GridElement';
-import { GridModelIndex } from '../model/GridModelIndex';
 import { SelectorWidget } from './SelectorExtension';
 import { KeyInput } from '../input/KeyInput';
 import { MouseInput } from '../input/MouseInput';
@@ -16,10 +14,10 @@ import { command, routine, variable } from '../ui/Extensibility';
 
 
 const Vectors = {
-    north: new Point(0, -1),
-    south: new Point(0, 1),
-    east: new Point(1, 0),
-    west: new Point(-1, 0),
+    n: new Point(0, -1),
+    s: new Point(0, 1),
+    e: new Point(1, 0),
+    w: new Point(-1, 0),
 };
 
 export interface GridEditEvent
@@ -57,13 +55,13 @@ export class EditingExtension
 
         KeyInput.for(this.input.root)
             .on('!ESCAPE', () => this.endEdit(false))
-            .on('!ENTER', () => this.endEditToNeighbor(Vectors.east))
-            .on('!TAB', () => this.endEditToNeighbor(Vectors.east))
-            .on('!SHIFT+TAB', () => this.endEditToNeighbor(Vectors.west))
-            .on('UP_ARROW', () => this.endEditToNeighbor(Vectors.north))
-            .on('DOWN_ARROW', () => this.endEditToNeighbor(Vectors.south))
-            .on('RIGHT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.east); } })
-            .on('LEFT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.west); } })
+            .on('!ENTER', () => this.endEditToNeighbor(Vectors.e))
+            .on('!TAB', () => this.endEditToNeighbor(Vectors.e))
+            .on('!SHIFT+TAB', () => this.endEditToNeighbor(Vectors.w))
+            .on('UP_ARROW', () => this.endEditToNeighbor(Vectors.n))
+            .on('DOWN_ARROW', () => this.endEditToNeighbor(Vectors.s))
+            .on('RIGHT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.e); } })
+            .on('LEFT_ARROW', () => { if (!this.isEditingDetailed) { this.endEditToNeighbor(Vectors.w); } })
         ;
 
         MouseInput.for(this.input.root)
@@ -82,11 +80,6 @@ export class EditingExtension
         grid.on('keypress', (e:GridKeyboardEvent) => this.beginEdit(String.fromCharCode(e.charCode)));
 
         kernel.routines.hook('before:doSelect', () => this.endEdit(true));
-    }
-
-    private get modelIndex():GridModelIndex
-    {
-        return this.grid.kernel.variables.get('modelIndex');
     }
 
     private get primarySelector():SelectorWidget
@@ -129,7 +122,7 @@ export class EditingExtension
             return false;
 
         let { input } = this;
-        let cell = this.modelIndex.findCell(this.selection[0]);
+        let cell = this.grid.model.findCell(this.selection[0]);
 
         if (!!override)
         {
@@ -208,11 +201,11 @@ export class EditingExtension
     @routine()
     private commit(changes:ObjectMap<string>):void
     {
-        let { grid, modelIndex } = this;
+        let { grid } = this;
 
         let evt:GridEditEvent = {
             changes: _.unzipPairs(changes).map(x => ({
-                cell: modelIndex.findCell(x[0]),
+                cell: grid.model.findCell(x[0]),
                 value: x[1],
             }))
         };

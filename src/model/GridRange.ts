@@ -1,4 +1,3 @@
-import { GridModelIndex } from './GridModelIndex';
 import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
 import { Point } from '../geom/Point';
@@ -6,9 +5,20 @@ import { Rect } from '../geom/Rect';
 import * as _ from '../misc/util';
 
 
-export class Range
+/**
+ * Describes a range of grid cells.
+ */
+export class GridRange
 {
-    public static create(model:GridModel, cellRefs:string[]):Range
+    /**
+     * Creates a new GridRange object that contains the cells with the specified refs from the
+     * specified model.
+     *
+     * @param model
+     * @param cellRefs
+     * @returns {Range}
+     */
+    public static create(model:GridModel, cellRefs:string[]):GridRange
     {
         let lookup = _.index(cellRefs, x => x);
 
@@ -32,7 +42,7 @@ export class Range
         let ltr = cells.sort(ltr_sort);
         let ttb = cells.slice(0).sort(ttb_sort);
 
-        return new Range({
+        return new GridRange({
             ltr: ltr,
             ttb: ttb,
             width: hc - lc,
@@ -42,14 +52,24 @@ export class Range
         });
     }
 
-    public static select(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):Range
+    /**
+     * Selects a range of cells from the specified model based on the specified vectors.  The vectors should be
+     * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
+     * Any cells falling into the rectangle created from these two points will be included in the selected range.
+     *
+     * @param model
+     * @param from
+     * @param to
+     * @param toInclusive
+     * @returns {Range}
+     */
+    public static select(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):GridRange
     {
         if (toInclusive)
         {
             to = to.add(1);
         }
 
-        let index = new GridModelIndex(model);
         let dims = Rect.fromPoints(from, to);
         let results = [] as string[];
 
@@ -57,7 +77,7 @@ export class Range
         {
             for (let c = dims.left; c < dims.right; c++)
             {
-                let cell = index.locateCell(c, r);
+                let cell = model.locateCell(c, r);
                 if (cell)
                 {
                     results.push(cell.ref);
@@ -65,12 +85,17 @@ export class Range
             }
         }
 
-        return Range.create(model, results);
+        return GridRange.create(model, results);
     }
 
-    public static empty():Range
+    /**
+     * Creates an empty GridRange object.
+     *
+     * @returns {Range}
+     */
+    public static empty():GridRange
     {
-        return new Range({
+        return new GridRange({
             ltr: [],
             ttb: [],
             width: 0,
@@ -80,11 +105,34 @@ export class Range
         });
     }
 
+    /**
+     * The cells in the range ordered from left to right.
+     */
     public readonly ltr:GridCell[];
+
+    /**
+     * The cells in the range ordered from top to bottom.
+     */
     public readonly ttb:GridCell[];
+
+    /**
+     * With width of the range in columns.
+     */
     public readonly width:number;
+
+    /**
+     * With height of the range in rows.
+     */
     public readonly height:number;
+
+    /**
+     * The number of cells in the range (will be different to length if some cell slots contain no cells).
+     */
     public readonly count:number;
+
+    /**
+     * The length of the range (number of rows * number of columns).
+     */
     public readonly length:number;
 
     private constructor(values:any)

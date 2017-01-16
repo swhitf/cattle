@@ -1,4 +1,3 @@
-import { ObjectIndex, ObjectMap } from '../global';
 
 
 export function extend(target:any, data:any):any
@@ -80,4 +79,21 @@ export function max<T>(arr:T[], selector:(t:T) => number):T
     }
 
     return t;
+}
+
+export function shadowClone(target:any):any
+{
+    if (typeof(target) === 'object')
+    {
+        let sc = {} as any;
+
+        for (let prop in target)
+        {
+            sc[prop] = shadowClone(target[prop]);
+        }
+
+        return sc;
+    }
+
+    return target;
 }

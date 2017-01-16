@@ -1,5 +1,4 @@
-import { ObjectMap } from '../global';
-import { GridElement } from './GridElement';
+import * as _ from '../misc/Util'
 
 //This keeps WebStorm quiet, for some reason it is complaining...
 declare var Reflect:any;
@@ -86,6 +85,26 @@ export class GridKernel
 
     constructor(private emitter:(event:string, ...args:any[]) => void)
     {
+    }
+
+    public exportInterface(target?:any):any
+    {
+        target = target || {} as any;
+
+        let commands = this.commands['store'] as ObjectMap<GridCommand>;
+        let variables = this.variables['store'] as ObjectMap<GridVariable>;
+
+        for (let n in commands)
+        {
+            target[n] = commands[n];
+        }
+
+        for (let n in variables)
+        {
+            Object.defineProperty(target, n, variables[n]);
+        }
+
+        return target;
     }
 
     public install(ext:any):void

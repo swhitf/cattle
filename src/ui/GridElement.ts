@@ -1,20 +1,15 @@
+import { DefaultGridModel } from '../model/default/DefaultGridModel';
+import { EventEmitterBase } from './internal/EventEmitter';
 import { GridKernel } from './GridKernel';
-import { DefaultGrid } from './../model/default/DefaultGrid';
-import { ObjectIndex } from '../global';
-import { ObjectMap } from '../global';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
-import { GridModelIndex } from './../model/GridModelIndex';
-import { DefaultCellVisual } from './internal/DefaultCellVisual';
-import { EventEmitterBase } from './internal/EventEmitter';
 import { GridLayout } from './internal/GridLayout';
-import { Visual } from './internal/Visual';
-import { Renderer } from './Renderer';
-import { property } from '../misc/Property';
+import { MouseDragEvent } from '../input/MouseDragEvent';
 import { Rect, RectLike } from '../geom/Rect';
 import { Point, PointLike } from '../geom/Point';
-import * as util from '../misc/Util'
-import { MouseDragEvent } from '../input/MouseDragEvent';
+import { property } from '../misc/Property';
+import * as _ from '../misc/Util';
+import { variable } from './Extensibility';
 
 
 export interface GridExtension
@@ -58,7 +53,7 @@ export class GridElement extends EventEmitterBase
         return new GridElement(canvas);
     }
 
-    @property(new DefaultGrid(), t => t.invalidate())
+    @property(DefaultGridModel.empty(), t => t.invalidate())
     public model:GridModel;
 
     @property(0, t => { t.redraw(); t.emit('scroll'); })
@@ -75,7 +70,6 @@ export class GridElement extends EventEmitterBase
     private dirty:boolean = false;
     private buffers:ObjectMap<Buffer> = {};
     private visuals:ObjectMap<Visual> = {};
-    private modelIndex:GridModelIndex;
 
     private constructor(private canvas:HTMLCanvasElement)
     {
@@ -88,10 +82,6 @@ export class GridElement extends EventEmitterBase
             .forEach(x => this.forwardMouseEvent(x));
         ['keydown', 'keypress', 'keyup']
             .forEach(x => this.forwardKeyEvent(x));
-
-        kernel.variables.define('width', { get: () => this.width });
-        kernel.variables.define('height', { get: () => this.height });
-        kernel.variables.define('modelIndex', { get: () => this.modelIndex });
     }
 
     public get width():number
@@ -102,6 +92,16 @@ export class GridElement extends EventEmitterBase
     public get height():number
     {
         return this.root.clientHeight;
+    }
+
+    public get modelWidth():number
+    {
+        return this.layout.columns.length;
+    }
+
+    public get modelHeight():number
+    {
+        return this.layout.rows.length;
     }
 
     public get virtualWidth():number
@@ -131,9 +131,81 @@ export class GridElement extends EventEmitterBase
         return this;
     }
 
+    public exec(command:string, ...args:any[]):void
+    {
+        this.kernel.commands.exec(command, args);
+    }
+
+    public get(variable:string):any
+    {
+        this.kernel.variables.get(variable);
+    }
+
+    public set(variable:string, value:any):void
+    {
+        this.kernel.variables.set(variable, value);
+    }
+
+    public mergeInterface():GridElement
+    {
+        this.kernel.exportInterface(this);
+        return this;
+    }
+
     public focus():void
     {
         this.root.focus();
+    }
+
+    public getCellAtGridPoint(pt:PointLike):GridCell
+    {
+        let refs = this.layout.captureCells(new Rect(pt.x, pt.y, 1, 1));
+        if (refs.length)
+        {
+            return this.model.findCell(refs[0]);
+        }
+
+        return null;
+    }
+
+    public getCellAtViewPoint(pt:PointLike):GridCell
+    {
+        let viewport = this.computeViewport();
+        let gpt = Point.create(pt).add(viewport.topLeft());
+
+        return this.getCellAtGridPoint(gpt);
+    }
+
+    public getCellsInGridRect(rect:RectLike):GridCell[]
+    {
+        let refs = this.layout.captureCells(rect);
+        return refs.map(x => this.model.findCell(x));
+    }
+
+    public getCellsInViewRect(rect:RectLike):GridCell[]
+    {
+        let viewport = this.computeViewport();
+        let grt = Rect.fromLike(rect).offset(viewport.topLeft());
+
+        return this.getCellsInGridRect(grt);
+    }
+
+    public getCellGridRect(ref:string):Rect
+    {
+        let region = this.layout.queryCell(ref);
+        return !!region ? Rect.fromLike(region) : null;
+    }
+
+    public getCellViewRect(ref:string):Rect
+    {
+        let rect = this.getCellGridRect(ref);
+
+        if (rect)
+        {
+            rect = rect.offset(this.scroll.inverse());
+        }
+
+        return rect;
     }
 
     public scrollTo(ptOrRect:PointLike|RectLike):void
@@ -163,61 +235,9 @@ export class GridElement extends EventEmitterBase
         }
     }
 
-    public getCellAtGridPoint(pt:PointLike):GridCell
-    {
-        let refs = this.layout.captureCells(new Rect(pt.x, pt.y, 1, 1));
-        if (refs.length)
-        {
-            return this.modelIndex.findCell(refs[0]);
-        }
-
-        return null;
-    }
-
-    public getCellAtViewPoint(pt:PointLike):GridCell
-    {
-        let viewport = this.computeViewport();
-        let gpt = Point.create(pt).add(viewport.topLeft());
-
-        return this.getCellAtGridPoint(gpt);
-    }
-
-    public getCellsInGridRect(rect:RectLike):GridCell[]
-    {
-        let refs = this.layout.captureCells(rect);
-        return refs.map(x => this.modelIndex.findCell(x));
-    }
-
-    public getCellsInViewRect(rect:RectLike):GridCell[]
-    {
-        let viewport = this.computeViewport();
-        let grt = Rect.fromLike(rect).offset(viewport.topLeft());
-
-        return this.getCellsInGridRect(grt);
-    }
-
-    public getCellGridRect(ref:string):Rect
-    {
-        let region = this.layout.queryCell(ref);
-        return !!region ? Rect.fromLike(region) : null;
-    }
-
-    public getCellViewRect(ref:string):Rect
-    {
-        let rect = this.getCellGridRect(ref);
-
-        if (rect)
-        {
-            rect = rect.offset(this.scroll.inverse());
-        }
-
-        return rect;
-    }
-
     public invalidate():void
     {
         this.buffers = {};
-        this.modelIndex = new GridModelIndex(this.model);
         this.layout = GridLayout.compute(this.model);
 
         this.redraw();
@@ -252,38 +272,34 @@ export class GridElement extends EventEmitterBase
     {
         console.time('GridElement.updateVisuals');
 
+        let { model, layout } = this;
+
         let viewport = this.computeViewport();
-        let visibleCells = this.layout.captureCells(viewport);
-        let visuals = <ObjectMap<Visual>>{};
+        let visibleCells = layout.captureCells(viewport)
+            .map(ref => model.findCell(ref));
 
-        let apply = (visual:Visual, region:RectLike):Visual =>
+        let prevFrame = this.visuals;
+        let nextFrame = <ObjectMap<Visual>>{};
+
+        for (let cell of visibleCells)
         {
-            visual.left = region.left;
-            visual.top = region.top;
-            visual.width = region.width
-            visual.height = region.height;
-            return visual;
-        };
+            let region = layout.queryCell(cell.ref);
+            let visual = this.createVisual(cell, region);
 
-        for (let vcr of visibleCells)
-        {
-            let region = this.layout.queryCell(vcr);
+            // If a previous visual already existed, perform a diff and if there are changes, trash the
+            // buffer for this cell so that it is redrawn
+            let previous = prevFrame[cell.ref];
+            if (!!previous && !previous.equals(visual))
+            {
+                delete this.buffers[cell.ref];
+            }
 
-            //If visual already exists, update and add existing
-            if (this.visuals[vcr])
-            {
-                visuals[vcr] = apply(this.visuals[vcr], region);
-            }
-            //Otherwise create new
-            else
-            {
-                visuals[vcr] = apply(this.createVisual(), region);
-            }
+            nextFrame[cell.ref] = visual;
         }
 
-        console.timeEnd('GridElement.updateVisuals');
+        this.visuals = nextFrame;
 
-        this.visuals = visuals;
+        console.timeEnd('GridElement.updateVisuals');
     }
 
     private drawVisuals():void
@@ -299,7 +315,7 @@ export class GridElement extends EventEmitterBase
 
         for (let cr in this.visuals)
         {
-            let cell = this.modelIndex.findCell(cr);
+            let cell = this.model.findCell(cr);
             let visual = this.visuals[cr];
 
             if (!viewport.intersects(visual))
@@ -328,12 +344,27 @@ export class GridElement extends EventEmitterBase
 
     private createBuffer(width:number, height:number):Buffer
     {
-        return new Buffer(width, height, 25);
+        return new Buffer(width, height, 0);
     }
 
-    private createVisual():Visual
+    private createVisual(cell:any, region:RectLike):Visual
     {
-        return new DefaultCellVisual();
+        let visual = new Visual(cell.ref, cell.value, region.left, region.top, region.width, region.height);
+
+        let props = (Reflect.getMetadata('grid:visualize', cell.constructor.prototype) || []) as string[];
+        for (let p of props)
+        {
+            if (visual[p] === undefined)
+            {
+                visual[p] = _.shadowClone(cell[p]);
+            }
+            else
+            {
+                console.error(`Illegal visualized property name ${p} on type ${cell.constructor.name}.`);
+            }
+        }
+
+        return visual;
     }
 
     private forwardMouseEvent(event:string):void
@@ -371,7 +402,32 @@ class Buffer
         this.canvas = document.createElement('canvas');
         this.canvas.width = width + (inflation * 2);
         this.canvas.height = height + (inflation * 2);
-        this.gfx = this.canvas.getContext('2d');
+        this.gfx = this.canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
         this.gfx.translate(inflation, inflation);
+    }
+}
+
+class Visual
+{
+    constructor(public ref:string,
+                public value:string,
+                public left:number,
+                public top:number,
+                public width:number,
+                public height:number)
+    {
+    }
+
+    public equals(another:any):boolean
+    {
+        for (let prop in this)
+        {
+            if (this[prop] !== another[prop])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

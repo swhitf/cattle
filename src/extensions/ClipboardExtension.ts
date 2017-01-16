@@ -1,12 +1,11 @@
-import { GridExtension, GridElement, GridKeyboardEvent } from '../ui/GridElement';
+import { GridExtension, GridElement } from '../ui/GridElement';
 import { KeyInput } from '../input/KeyInput';
 import { Clipboard } from '../vendor/clipboard';
-import { GridModelIndex } from '../model/GridModelIndex';
 import { SelectorWidget } from './SelectorExtension';
 import { AbsWidgetBase } from '../ui/Widget';
 import { Rect } from '../geom/Rect';
 import { Point } from '../geom/Point';
-import { Range } from '../model/GridRange';
+import { GridRange } from '../model/GridRange';
 import { variable, command, routine } from '../ui/Extensibility';
 import * as _ from '../misc/Util';
 import * as Dom from '../misc/Dom';
@@ -17,13 +16,13 @@ import * as Tether from 'tether';
 //I know... :(
 const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
 
-export class CopyPasteModule implements GridExtension
+export class ClipboardExtension implements GridExtension
 {
     private grid:GridElement;
     private layer:HTMLElement;
 
     private copyList:string[] = [];
-    private copyRange:Range = Range.empty();
+    private copyRange:GridRange = GridRange.empty();
 
     @variable()
     private copyNet:CopyNet;
@@ -42,11 +41,6 @@ export class CopyPasteModule implements GridExtension
         grid.on('scroll', () => this.alignNet());
         grid.kernel.routines.hook('before:beginEdit', () => this.resetCopy());
         grid.kernel.routines.hook('before:commit', () => this.resetCopy());
-    }
-
-    private get modelIndex():GridModelIndex
-    {
-        return this.grid.kernel.variables.get('modelIndex');
     }
 
     private get captureSelector():SelectorWidget
@@ -102,7 +96,7 @@ export class CopyPasteModule implements GridExtension
     private doCopy(cells:string[], delimiter:string = '\t'):void
     {
         this.copyList = cells;
-        let range = this.copyRange = Range.create(this.grid.model, cells);
+        let range = this.copyRange = GridRange.create(this.grid.model, cells);
         let text = '';
 
         if (!cells.length)
@@ -133,12 +127,12 @@ export class CopyPasteModule implements GridExtension
     @routine()
     private doPaste(text:string):void
     {
-        let { grid, modelIndex, selection } = this;
+        let { grid, selection } = this;
 
         if (!selection.length)
             return;
 
-        let focusedCell = modelIndex.findCell(selection[0]);
+        let focusedCell = grid.model.findCell(selection[0]);
 
         let parsed = Papa.parse(text, {
             delimiter: text.indexOf('\t') >= 0 ? '\t' : undefined,
@@ -153,7 +147,7 @@ export class CopyPasteModule implements GridExtension
         let startVector = new Point(focusedCell.colRef, focusedCell.rowRef);
         let endVector = startVector.add(new Point(width, height));
 
-        let pasteRange = Range.select(grid.model, startVector, endVector);
+        let pasteRange = GridRange.select(grid.model, startVector, endVector);
 
         let changes = {} as any;
         for (let cell of pasteRange.ltr)

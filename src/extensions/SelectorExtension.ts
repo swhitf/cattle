@@ -1,23 +1,26 @@
 import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridMouseEvent, GridMouseDragEvent } from './../ui/GridElement';
-import { GridModelIndex } from '../model/GridModelIndex';
 import { KeyInput } from '../input/KeyInput';
-import { Point } from '../geom/Point';
+import { Point, PointLike } from '../geom/Point';
 import { RectLike, Rect } from '../geom/Rect';
 import { MouseInput } from '../input/MouseInput';
 import { MouseDragEventSupport } from '../input/MouseDragEventSupport';
-import { command, routine } from '../ui/Extensibility';
 import { Widget, AbsWidgetBase } from '../ui/Widget';
+import { command, routine, variable } from '../ui/Extensibility';
 import * as Tether from 'tether';
 import * as Dom from '../misc/Dom';
 
 
 const Vectors = {
-    north: new Point(0, -1),
-    south: new Point(0, 1),
-    east: new Point(1, 0),
-    west: new Point(-1, 0),
+    nw: new Point(-1, -1),
+    n: new Point(0, -1),
+    ne: new Point(1, -1),
+    e: new Point(1, 0),
+    se: new Point(1, 1),
+    s: new Point(0, 1),
+    sw: new Point(-1, 1),
+    w: new Point(-1, 0),
 };
 
 interface SelectGesture
@@ -31,15 +34,46 @@ export interface SelectorWidget extends Widget
 
 }
 
+export interface SelectorExtensionExports
+{
+    canSelect:boolean;
+
+    readonly selection:string[]
+
+    readonly primarySelector:SelectorWidget;
+
+    readonly captureSelector:SelectorWidget;
+
+    select(cells:string[], autoScroll?:boolean):void;
+
+    selectAll():void;
+
+    selectBorder(vector:Point, autoScroll?:boolean):void;
+
+    selectEdge(vector:Point, autoScroll?:boolean):void;
+
+    selectLine(gridPt:Point, autoScroll?:boolean):void;
+
+    selectNeighbor(vector:Point, autoScroll?:boolean):void;
+}
+
 export class SelectorExtension
 {
     private grid:GridElement;
     private layer:HTMLElement;
-
-    private selection:string[] = [];
-    private primarySelector:Selector;
-    private captureSelector:Selector;
     private selectGesture:SelectGesture;
+
+    @variable()
+    private canSelect:boolean = true;
+
+    @variable(false)
+    private selection:string[] = [];
+
+    @variable(false)
+    private primarySelector:Selector;
+
+    @variable(false)
+    private captureSelector:Selector;
 
     public init(grid:GridElement, kernel:GridKernel)
     {
@@ -47,17 +81,21 @@ export class SelectorExtension
         this.createElements(grid.root);
 
         KeyInput.for(grid)
-            .on('!TAB', () => this.selectNeighbor(Vectors.east))
-            .on('!SHIFT+TAB', () => this.selectNeighbor(Vectors.west))
-            .on('RIGHT_ARROW', () => this.selectNeighbor(Vectors.east))
-            .on('LEFT_ARROW', () => this.selectNeighbor(Vectors.west))
-            .on('UP_ARROW', () => this.selectNeighbor(Vectors.north))
-            .on('DOWN_ARROW', () => this.selectNeighbor(Vectors.south))
-            .on('CTRL+RIGHT_ARROW', () => this.selectEdge(Vectors.east))
-            .on('CTRL+LEFT_ARROW', () => this.selectEdge(Vectors.west))
-            .on('CTRL+UP_ARROW', () => this.selectEdge(Vectors.north))
-            .on('CTRL+DOWN_ARROW', () => this.selectEdge(Vectors.south))
+            .on('!TAB', () => this.selectNeighbor(Vectors.e))
+            .on('!SHIFT+TAB', () => this.selectNeighbor(Vectors.w))
+            .on('RIGHT_ARROW', () => this.selectNeighbor(Vectors.e))
+            .on('LEFT_ARROW', () => this.selectNeighbor(Vectors.w))
+            .on('UP_ARROW', () => this.selectNeighbor(Vectors.n))
+            .on('DOWN_ARROW', () => this.selectNeighbor(Vectors.s))
+            .on('CTRL+RIGHT_ARROW', () => this.selectEdge(Vectors.e))
+            .on('CTRL+LEFT_ARROW', () => this.selectEdge(Vectors.w))
+            .on('CTRL+UP_ARROW', () => this.selectEdge(Vectors.n))
+            .on('CTRL+DOWN_ARROW', () => this.selectEdge(Vectors.s))
             .on('CTRL+A', () => this.selectAll())
+            .on('HOME', () => this.selectBorder(Vectors.w))
+            .on('CTRL+HOME', () => this.selectBorder(Vectors.nw))
+            .on('END', () => this.selectBorder(Vectors.e))
+            .on('CTRL+END', () => this.selectBorder(Vectors.se))
         ;
 
         MouseDragEventSupport.enable(grid.root);
@@ -69,15 +107,6 @@ export class SelectorExtension
 
         grid.on('invalidate', () => this.reselect(false));
         grid.on('scroll', () => this.alignSelectors(false));
-
-        kernel.variables.define('selection', { get: () => this.selection });
-        kernel.variables.define('primarySelector', { get: () => this.primarySelector });
-        kernel.variables.define('captureSelector', { get: () => this.captureSelector });
-    }
-
-    private get index():GridModelIndex
-    {
-        return this.grid.kernel.variables.get('modelIndex');
     }
 
     private createElements(target:HTMLElement):void
@@ -121,8 +150,48 @@ export class SelectorExtension
     }
 
     @command()
+    private selectBorder(vector:Point, autoScroll = true):void
+    {
+        let { grid } = this;
+
+        let ref = this.selection[0] || null;
+        if (ref)
+        {
+            vector = vector.normalize();
+
+            let startCell = grid.model.findCell(ref);
+            let xy = { x: startCell.colRef, y: startCell.rowRef } as PointLike;
+
+            if (vector.x < 0)
+            {
+                xy.x = 0;
+            }
+            if (vector.x > 0)
+            {
+                xy.x = grid.modelWidth - 1;
+            }
+            if (vector.y < 0)
+            {
+                xy.y = 0;
+            }
+            if (vector.y > 0)
+            {
+                xy.y = grid.modelHeight - 1;
+            }
+
+            let resultCell = grid.model.locateCell(xy.x, xy.y);
+            if (resultCell)
+            {
+                this.select([resultCell.ref], autoScroll);
+            }
+        }
+    }
+
+    @command()
     private selectEdge(vector:Point, autoScroll = true):void
     {
+        let { grid } = this;
+
         vector = vector.normalize();
 
         let empty = (cell:GridCell) => <any>(cell.value === '' || cell.value === undefined || cell.value === null);
@@ -130,8 +199,8 @@ export class SelectorExtension
         let ref = this.selection[0] || null;
         if (ref)
         {
-            let startCell = this.index.findCell(ref);
-            let currCell = this.index.findCellNeighbor(startCell.ref, vector);
+            let startCell = grid.model.findCell(ref);
+            let currCell = grid.model.findCellNeighbor(startCell.ref, vector);
             let resultCell = <GridCell>null;
 
             if (!currCell)
@@ -140,7 +209,7 @@ export class SelectorExtension
             while (true)
             {
                 let a = currCell;
-                let b = this.index.findCellNeighbor(a.ref, vector);
+                let b = grid.model.findCellNeighbor(a.ref, vector);
 
                 if (!a || !b)
                 {
@@ -187,12 +256,14 @@ export class SelectorExtension
     @command()
     private selectNeighbor(vector:Point, autoScroll = true):void
     {
+        let { grid } = this;
+
         vector = vector.normalize();
 
         let ref = this.selection[0] || null;
         if (ref)
         {
-            let cell = this.index.findCellNeighbor(ref, vector);
+            let cell = grid.model.findCellNeighbor(ref, vector);
             if (cell)
             {
                 this.select([cell.ref], autoScroll);
@@ -202,9 +273,9 @@ export class SelectorExtension
 
     private reselect(autoScroll:boolean = true):void
     {
-        let { index, selection } = this;
+        let { grid, selection } = this;
 
-        let remaining = selection.filter(x => !!index.findCell(x));
+        let remaining = selection.filter(x => !!grid.model.findCell(x));
         if (remaining.length != selection.length)
         {
             this.select(remaining, autoScroll);
