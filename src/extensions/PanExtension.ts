@@ -51,20 +51,20 @@ export class PanExtension implements GridExtension
             last = new Point(e.gridX, e.gridY);
         });
 
-        grid.kernel.routines.override('beginEdit', (override:string, impl:any) =>
-        {
-            if (panning)
-                return false;
+        //grid.kernel.routines.override('beginEdit', (override:string, impl:any) =>
+        //{
+        //    if (panning)
+        //        return false;
+        //
+        //    return impl(override);
+        //});
 
-            return impl(override);
-        });
-
-        grid.kernel.routines.override('doSelect', (cells:string[] = [], autoScroll:boolean, impl:any) =>
-        {
-            if (panning)
-                return false;
-
-            return impl(cells, autoScroll);
-        });
+        //grid.kernel.routines.override('doSelect', (cells:string[] = [], autoScroll:boolean, impl:any) =>
+        //{
+        //    if (panning)
+        //        return false;
+        //
+        //    return impl(cells, autoScroll);
+        //});
     }
 }

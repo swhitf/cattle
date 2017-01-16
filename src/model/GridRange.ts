@@ -6,7 +6,7 @@ import * as _ from '../misc/util';
 
 
 /**
- * Describes a range of grid cells.
+ * Describes a resolveExpr of grid cells.
  */
 export class GridRange
 {
@@ -53,9 +53,9 @@ export class GridRange
     }
 
     /**
-     * Selects a range of cells from the specified model based on the specified vectors.  The vectors should be
+     * Selects a resolveExpr of cells from the specified model based on the specified vectors.  The vectors should be
      * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
-     * Any cells falling into the rectangle created from these two points will be included in the selected range.
+     * Any cells falling into the rectangle created from these two points will be included in the selected resolveExpr.
      *
      * @param model
      * @param from
@@ -65,12 +65,16 @@ export class GridRange
      */
     public static select(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):GridRange
     {
+        //TODO: Explain this...
+        let tl = new Point(from.x < to.x ? from.x : to.x, from.y < to.y ? from.y : to.y);
+        let br = new Point(from.x > to.x ? from.x : to.x, from.y > to.y ? from.y : to.y);
+
         if (toInclusive)
         {
-            to = to.add(1);
+            br = br.add(1);
         }
 
-        let dims = Rect.fromPoints(from, to);
+        let dims = Rect.fromPoints(tl, br);
         let results = [] as string[];
 
         for (let r = dims.top; r < dims.bottom; r++)
@@ -106,32 +110,32 @@ export class GridRange
     }
 
     /**
-     * The cells in the range ordered from left to right.
+     * The cells in the resolveExpr ordered from left to right.
      */
     public readonly ltr:GridCell[];
 
     /**
-     * The cells in the range ordered from top to bottom.
+     * The cells in the resolveExpr ordered from top to bottom.
      */
     public readonly ttb:GridCell[];
 
     /**
-     * With width of the range in columns.
+     * With width of the resolveExpr in columns.
      */
     public readonly width:number;
 
     /**
-     * With height of the range in rows.
+     * With height of the resolveExpr in rows.
      */
     public readonly height:number;
 
     /**
-     * The number of cells in the range (will be different to length if some cell slots contain no cells).
+     * The number of cells in the resolveExpr (will be different to length if some cell slots contain no cells).
      */
     public readonly count:number;
 
     /**
-     * The length of the range (number of rows * number of columns).
+     * The length of the resolveExpr (number of rows * number of columns).
      */
     public readonly length:number;
 

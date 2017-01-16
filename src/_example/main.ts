@@ -6,6 +6,7 @@ import { EditingExtension, GridEditEvent } from '../extensions/EditingExtension'
 import { ClipboardExtension } from '../extensions/ClipboardExtension';
 import { HistoryExtension } from '../extensions/HistoryExtension';
 import { PanExtension } from '../extensions/PanExtension';
+import { ComputeExtension } from '../extensions/ComputeExtension';
 
 
 //let builder:any = new FlexGridBuilder(1, 1);
@@ -22,6 +23,7 @@ let grid = GridElement
     .extend(new ClipboardExtension())
     .extend(new HistoryExtension())
     .extend(new PanExtension())
+    .extend(new ComputeExtension())
     .mergeInterface()
 ;
 
