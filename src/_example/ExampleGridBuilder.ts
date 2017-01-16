@@ -1,6 +1,6 @@
 import { DefaultGridModel } from '../model/default/DefaultGridModel';
 import { DefaultGridRow } from '../model/default/DefaultGridRow';
-import { FlexCell } from '../model/flex/FlexCell';
+import { FlexGridCell } from '../model/flex/FlexGridCell';
 import { GridModel } from './../model/GridModel';
 import { GridRow } from '../model/GridRow';
 import { GridCell } from '../model/GridCell';
@@ -28,7 +28,7 @@ export class ExampleGridBuilder
 
     private createColumnRow(cells:GridCell[]):void
     {
-        cells.push(new FlexCell({
+        cells.push(new FlexGridCell({
             colRef: 0,
             rowRef: 0,
             value: '+',
@@ -36,7 +36,7 @@ export class ExampleGridBuilder
 
         for (let i = 0; i < this.cols; i++)
         {
-            cells.push(new FlexCell({
+            cells.push(new FlexGridCell({
                 colRef: i + 1,
                 rowRef: 0,
                 value: 'Vertical #' + (i + 1),
@@ -46,7 +46,7 @@ export class ExampleGridBuilder
 
     private createResourceRow(cells:GridCell[], line:number):void
     {
-        cells.push(new FlexCell({
+        cells.push(new FlexGridCell({
             colRef: 0,
             rowRef: line + 1,
             value: `Horizontal #${line}`,
@@ -54,7 +54,7 @@ export class ExampleGridBuilder
 
         for (let i = 0; i < this.cols; i++)
         {
-            cells.push(new FlexCell({
+            cells.push(new FlexGridCell({
                 colRef: i + 1,
                 rowRef: line + 1,
                 value: (line + i).toString(),

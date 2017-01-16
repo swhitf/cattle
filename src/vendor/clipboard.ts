@@ -81,7 +81,7 @@ clipboard.copy = (function() {
                 bogusSelect();
                 if (document.execCommand("copy")) {
                     // document.execCommand is synchronous: http://www.w3.org/TR/2015/WD-clipboard-apis-20150421/#integration-with-rich-text-editing-apis
-                    // So we can call resolve() back here.
+                    // So we can call convertRef() back here.
                     cleanup();
                     resolve();
                 }

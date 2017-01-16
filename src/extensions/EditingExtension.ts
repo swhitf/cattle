@@ -74,7 +74,7 @@ export class EditingExtension
         ;
 
         MouseInput.for(this.grid.root)
-            .on('DBLCLICK:PRIMARY', () => this.beginEdit())
+            .on('DBLCLICK:PRIMARY', () => this.beginEdit(null))
         ;
 
         grid.on('keypress', (e:GridKeyboardEvent) => this.beginEdit(String.fromCharCode(e.charCode)));
@@ -116,7 +116,7 @@ export class EditingExtension
 
     @command()
     @routine()
-    private beginEdit(override:string = null):boolean
+    private beginEdit(override:string):boolean
     {
         if (this.isEditing)
             return false;
@@ -124,7 +124,7 @@ export class EditingExtension
         let { input } = this;
         let cell = this.grid.model.findCell(this.selection[0]);
 
-        if (!!override)
+        if (!!override || override === '')
         {
             input.val(override);
         }
