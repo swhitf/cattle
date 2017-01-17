@@ -4,6 +4,7 @@ import { GridRow } from '../GridRow';
 import { GridCell } from '../GridCell';
 import { Point } from '../../geom/Point';
 import * as _ from '../../misc/Util'
+import { DefaultGridCell } from './DefaultGridCell';
 
 
 /**
@@ -11,6 +12,31 @@ import * as _ from '../../misc/Util'
  */
 export class DefaultGridModel implements GridModel
 {
+    /**
+     * Creates an grid model with the specified number of columns and rows populated with default cells.
+     *
+     * @param cols
+     * @param rows
+     */
+    public static dim(cols:number, rows:number):DefaultGridModel
+    {
+        let cells = [] as GridCell[];
+
+        for (let c = 0; c < cols; c++)
+        {
+            for (let r = 0; r < rows; r++)
+            {
+                cells.push(new DefaultGridCell({
+                    colRef: c,
+                    rowRef: r,
+                    value: '',
+                }));
+            }
+        }
+
+        return new DefaultGridModel(cells, [], []);
+    }
+
     /**
      * Creates an empty grid model.
      *

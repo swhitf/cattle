@@ -1,6 +1,7 @@
 import { GridCell } from '../GridCell';
 import * as _ from '../../misc/Util';
 import * as shortid from 'shortid';
+import { visualize, renderer } from '../../ui/Extensibility';
 
 
 /**
@@ -19,6 +20,7 @@ export interface DefaultGridCellParams
 /**
  * Provides a by-the-book implementation of GridCell.
  */
+@renderer(draw)
 export class DefaultGridCell implements GridCell
 {
     /**
@@ -51,6 +53,11 @@ export class DefaultGridCell implements GridCell
      */
     public value:string;
 
+    /**
+     * Initializes a new instance of DefaultGridCell.
+     *
+     * @param params
+     */
     constructor(params:DefaultGridCellParams)
     {
         params.ref = params.ref || shortid.generate();
@@ -60,4 +67,21 @@ export class DefaultGridCell implements GridCell
 
         _.extend(this, params);
     }
+}
+
+function draw(gfx:CanvasRenderingContext2D, visual:any):void
+{
+    gfx.lineWidth = 1;
+    let av = gfx.lineWidth % 2 == 0 ? 0 : 0.5;
+
+    gfx.fillStyle = 'white';
+    gfx.fillRect(-av, -av, visual.width, visual.height);
+
+    gfx.strokeStyle = 'lightgray';
+    gfx.strokeRect(-av, -av, visual.width, visual.height);
+
+    gfx.fillStyle = 'black';
+    gfx.textBaseline = 'middle';
+    gfx.font = `13px Sans-Serif`;
+    gfx.fillText(visual.value, 3, 0 + (visual.height / 2));
 }

@@ -141,7 +141,7 @@ export function variable(name:string|boolean, mutable?:boolean):PropertyDecorato
  */
 export function visualize():PropertyDecorator
 {
-    return function(ctor:Object, key:string):void
+    return function(ctor:Object, key:string):PropertyDescriptor
     {
         const mdk = 'grid:visualize';
 
@@ -152,5 +152,19 @@ export function visualize():PropertyDecorator
         }
 
         list.push(key);
+
+        let pk = `__${key}`;
+
+        return {
+            get: function():any
+            {
+                return this[pk];
+            },
+            set: function(val:any):void
+            {
+                this[pk] = val;
+                this['__dirty'] = true;
+            }
+        }
     };
 }
