@@ -7,11 +7,14 @@ import { ClipboardExtension } from '../extensions/ClipboardExtension';
 import { HistoryExtension } from '../extensions/HistoryExtension';
 import { PanExtension } from '../extensions/PanExtension';
 import { ComputeExtension } from '../extensions/ComputeExtension';
+import { BaseStyle, Style } from '../model/styled/Style';
 
 
 //let builder:any = new FlexGridBuilder(1, 1);
 //builder = new FlexGridBuilder(52 * 5, 250);
-let builder = new ExampleGridBuilder();
+let builder = new ExampleGridBuilder(100, 52, new Style(BaseStyle, {
+    textAlignment: 'right'
+}));
 
 let model = builder.build();
 

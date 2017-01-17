@@ -38,7 +38,7 @@ export interface GridKeyboardEvent extends KeyboardEvent
 
 export class GridElement extends EventEmitterBase
 {
-    public static create(target:HTMLElement):GridElement
+    public static create(target:HTMLElement, initialModel?:GridModel):GridElement
     {
         let canvas = target.ownerDocument.createElement('canvas');
         canvas.id = target.id;
@@ -50,7 +50,10 @@ export class GridElement extends EventEmitterBase
         target.parentNode.insertBefore(canvas, target);
         target.remove();
 
-        return new GridElement(canvas);
+        let grid = new GridElement(canvas);
+        grid.model = initialModel || DefaultGridModel.dim(26, 100);
+
+        return grid;
     }
 
     @property(DefaultGridModel.empty(), t => t.invalidate())
@@ -284,17 +287,21 @@ export class GridElement extends EventEmitterBase
         for (let cell of visibleCells)
         {
             let region = layout.queryCell(cell.ref);
-            let visual = this.createVisual(cell, region);
+            let visual = prevFrame[cell.ref];
 
-            // If a previous visual already existed, perform a diff and if there are changes, trash the
-            // buffer for this cell so that it is redrawn
-            let previous = prevFrame[cell.ref];
-            if (!!previous && !previous.equals(visual))
+            // If we didn't have a previous visual or if the cell was dirty, create new visual
+            if (!visual || cell.value !== visual.value || cell['__dirty'] !== false)
             {
+                nextFrame[cell.ref] = this.createVisual(cell, region);
                 delete this.buffers[cell.ref];
-            }
 
-            nextFrame[cell.ref] = visual;
+                cell['__dirty'] = false;
+            }
+            // Otherwise just use the previous
+            else
+            {
+                nextFrame[cell.ref] = visual;
+            }
         }
 
         this.visuals = nextFrame;
