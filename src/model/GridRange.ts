@@ -2,7 +2,7 @@ import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
-import * as _ from '../misc/util';
+import * as _ from '../misc/Util';
 
 
 /**

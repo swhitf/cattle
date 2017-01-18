@@ -37,6 +37,28 @@ gulp.task('js', function() {
 
 });
 
+gulp.task('export', function() {
+
+    var entries = [
+        './node_modules/reflect-metadata/temp/Reflect.js'
+    ];
+
+    entries = entries.concat(glob.sync('./src/**/*.ts'));
+
+    var cfg = {
+        entries: entries,
+        cache: {},
+        packageCache: {},
+        plugin: [tsify],
+        debug: true
+    };
+
+    return browserify(cfg)
+        .bundle()
+        .pipe(source('cattle.js'))
+        .pipe(gulp.dest('dist'))
+});
+
 /**
  * Packs the application static resources.
  */
@@ -47,24 +69,6 @@ gulp.task('artifacts', function() {
 
     return merge(res)
         .pipe(connect.reload());
-});
-
-gulp.task('jsx', function() {
-
-    var b = browserify({
-        entries: [
-            './node_modules/reflect-metadata/temp/Reflect.js',
-            './build/_example/main.js'
-        ],
-        debug: true,
-        //transform: 'require-globify'
-    });
-
-    return b.bundle()
-        .pipe(source('code.js'))
-        .pipe(gulp.dest('dist'))
-        .pipe(connect.reload());
-
 });
 
 /**
