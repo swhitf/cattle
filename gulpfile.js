@@ -9,31 +9,14 @@ var watchify = require('watchify');
 
 gulp.task('js', function() {
 
-    var entries = [
-        './node_modules/reflect-metadata/temp/Reflect.js'
-    ];
+    var b = browserify({
+        entries: ['./node_modules/reflect-metadata/temp/Reflect.js', './build/_dev/main.js'],
+        debug: true,
+    });
 
-    entries = entries.concat(glob.sync('./src/**/*.ts'));
-
-    var cfg = {
-        entries: entries,
-        cache: {},
-        packageCache: {},
-        plugin: [watchify, tsify],
-        debug: true
-    };
-
-    var b = browserify(cfg);
-    var flush = function() {
-        b.bundle()
-            .pipe(source('code.js'))
-            .pipe(gulp.dest('dist'))
-            .pipe(connect.reload());
-    };
-
-    b.on('error', function (error) { console.error(error.toString()); })
-    b.on('update', flush);
-    flush();
+    return b.bundle()
+        .pipe(source('app.js'))
+        .pipe(gulp.dest('dist/local'));
 
 });
 
@@ -65,7 +48,7 @@ gulp.task('export', function() {
 gulp.task('artifacts', function() {
 
     var res = gulp.src('res/**/*')
-        .pipe(gulp.dest('dist'));
+        .pipe(gulp.dest('dist/local'));
 
     return merge(res)
         .pipe(connect.reload());
@@ -75,7 +58,7 @@ gulp.task('artifacts', function() {
  * Watches for various file changes
  */
 gulp.task('watch', function() {
-    gulp.watch(['build/**/*.js', 'debug/**/*'], function() {
+    gulp.watch(['build/**/*.js', 'res/**/*'], function() {
         setTimeout(function() { gulp.start('reserve'); }, 200);
     });
 });
@@ -88,8 +71,8 @@ gulp.task('reserve', ['js', 'artifacts']);
 gulp.task('serve', ['make', 'watch'], function() {
     connect.server({
         port: 3000,
-        root: 'dist',
-        fallback: 'dist/index.html',
+        root: 'dist/local',
+        fallback: 'dist/local/index.html',
         livereload: true
     });
 });
