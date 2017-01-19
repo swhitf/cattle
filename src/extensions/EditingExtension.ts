@@ -96,9 +96,7 @@ export class EditingExtension
     {
         let layer = document.createElement('div');
         layer.className = 'grid-layer';
-        layer.style.pointerEvents = 'none';
-        layer.style.width = target.clientWidth + 'px';
-        layer.style.height = target.clientHeight + 'px';
+        Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
         target.parentElement.insertBefore(layer, target);
 
         let t = new Tether({
@@ -108,7 +106,13 @@ export class EditingExtension
             targetAttachment: 'middle center',
         });
 
-        t.position();
+        let onBash = () => {
+            Dom.fit(layer, target);
+            t.position();
+        };
+
+        this.grid.on('bash', onBash);
+        onBash();
 
         this.layer = layer;
         this.input = Input.create(layer);

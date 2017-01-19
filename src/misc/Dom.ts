@@ -20,6 +20,14 @@ export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
     return e;
 }
 
+export function fit(e:HTMLElement, target:HTMLElement):HTMLElement
+{
+    return css(e, {
+        width: target.clientWidth + 'px',
+        height: target.clientHeight + 'px',
+    });
+}
+
 export function hide(e:HTMLElement):HTMLElement
 {
     return css(e, { display: 'none' });

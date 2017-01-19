@@ -24,11 +24,9 @@ export class ScrollerExtension
 
     private createElements(target:HTMLElement):void
     {
-        let layer = this.layer = document.createElement('div');
+        let layer = document.createElement('div');
         layer.className = 'grid-layer';
-        layer.style.pointerEvents = 'none';
-        layer.style.width = target.clientWidth + 'px';
-        layer.style.height = target.clientHeight + 'px';
+        Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
         target.parentElement.insertBefore(layer, target);
 
         let t = new Tether({
@@ -38,7 +36,13 @@ export class ScrollerExtension
             targetAttachment: 'middle center',
         });
 
-        t.position();
+        let onBash = () => {
+            Dom.fit(layer, target);
+            t.position();
+        };
+
+        this.grid.on('bash', onBash);
+        onBash();
 
         let scrollerX = this.scrollerX = document.createElement('div');
         scrollerX.className = 'grid-scroller grid-scroller-x';

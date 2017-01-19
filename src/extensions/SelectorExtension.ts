@@ -113,12 +113,7 @@ export class SelectorExtension
     {
         let layer = document.createElement('div');
         layer.className = 'grid-layer';
-        Dom.css(layer, {
-            pointerEvents: 'none',
-            overflow: 'hidden',
-            width: target.clientWidth + 'px',
-            height: target.clientHeight + 'px',
-        });
+        Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
         target.parentElement.insertBefore(layer, target);
 
         let t = new Tether({
@@ -128,7 +123,13 @@ export class SelectorExtension
             targetAttachment: 'middle center',
         });
 
-        t.position();
+        let onBash = () => {
+            Dom.fit(layer, target);
+            t.position();
+        };
+
+        this.grid.on('bash', onBash);
+        onBash();
 
         this.layer = layer;
 

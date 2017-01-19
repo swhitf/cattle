@@ -1,3 +1,4 @@
+import { GridRow } from '../model/GridRow';
 import { DefaultGridModel } from '../model/default/DefaultGridModel';
 import { EventEmitterBase } from './internal/EventEmitter';
 import { GridKernel } from './GridKernel';
@@ -8,8 +9,8 @@ import { MouseDragEvent } from '../input/MouseDragEvent';
 import { Rect, RectLike } from '../geom/Rect';
 import { Point, PointLike } from '../geom/Point';
 import { property } from '../misc/Property';
-import * as _ from '../misc/Util';
 import { variable } from './Extensibility';
+import * as _ from '../misc/Util';
 
 
 export interface GridExtension
@@ -42,16 +43,15 @@ export class GridElement extends EventEmitterBase
     {
         let canvas = target.ownerDocument.createElement('canvas');
         canvas.id = target.id;
-        canvas.className = target.className = ' grid';
-        canvas.tabIndex = 0;
-        canvas.width = target.clientWidth;
-        canvas.height = target.clientHeight;
+        canvas.className = target.className;
+        canvas.tabIndex = target.tabIndex || 0;
 
         target.parentNode.insertBefore(canvas, target);
         target.remove();
 
         let grid = new GridElement(canvas);
         grid.model = initialModel || DefaultGridModel.dim(26, 100);
+        grid.bash();
 
         return grid;
     }
@@ -65,7 +65,7 @@ export class GridElement extends EventEmitterBase
     @property(0, t => { t.redraw(); t.emit('scroll'); })
     public scrollTop:number;
 
-    public readonly root:HTMLElement;
+    public readonly root:HTMLCanvasElement;
 
     public readonly kernel:GridKernel;
 
@@ -238,6 +238,15 @@ export class GridElement extends EventEmitterBase
         }
     }
 
+    public bash():void
+    {
+        this.root.width = this.root.parentElement.clientWidth;
+        this.root.height = this.root.parentElement.clientHeight;
+        this.emit('bash');
+
+        this.invalidate();
+    }
+
     public invalidate():void
     {
         this.buffers = {};
@@ -253,16 +262,21 @@ export class GridElement extends EventEmitterBase
         if (!this.dirty)
         {
             this.dirty = true;
-            requestAnimationFrame(this.draw.bind(this));
+            console.time('GridElement.redraw');
+            setTimeout(this.draw.bind(this), 0);
         }
     }
 
     private draw():void
     {
+        if (!this.dirty)
+            return;
+            
         this.updateVisuals();
         this.drawVisuals();
 
         this.dirty = false;
+        console.timeEnd('GridElement.redraw');
         this.emit('draw');
     }
 
