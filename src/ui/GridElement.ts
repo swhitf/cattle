@@ -136,7 +136,7 @@ export class GridElement extends EventEmitterBase
 
     public exec(command:string, ...args:any[]):void
     {
-        this.kernel.commands.exec(command, args);
+        this.kernel.commands.exec(command, ...args);
     }
 
     public get(variable:string):any

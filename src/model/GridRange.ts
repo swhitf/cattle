@@ -53,7 +53,7 @@ export class GridRange
     }
 
     /**
-     * Selects a resolveExpr of cells from the specified model based on the specified vectors.  The vectors should be
+     * Captures a range of cells from the specified model based on the specified vectors.  The vectors should be
      * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
      * Any cells falling into the rectangle created from these two points will be included in the selected resolveExpr.
      *
@@ -63,7 +63,7 @@ export class GridRange
      * @param toInclusive
      * @returns {Range}
      */
-    public static select(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):GridRange
+    public static capture(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):GridRange
     {
         //TODO: Explain this...
         let tl = new Point(from.x < to.x ? from.x : to.x, from.y < to.y ? from.y : to.y);
@@ -90,6 +90,42 @@ export class GridRange
         }
 
         return GridRange.create(model, results);
+    }
+    
+    /**
+     * Selects a range of cells using an Excel-like range expression. For example:
+     * - A1 selects a 1x1 range of the first cell
+     * - A1:A5 selects a 1x5 range from the first cell horizontally.
+     * - A1:E5 selects a 5x5 range from the first cell evenly.
+     * 
+     * @param model
+     * @param query
+     */
+    public static select(model:GridModel, query:string):GridRange
+    {
+        let [from, to] = query.split(':');
+        let fromCell = resolve_expr_ref(model, from);
+
+        if (!to)
+        {
+            if (!!fromCell)
+            {
+                return GridRange.create(model, [fromCell.ref]);
+            }
+        }
+        else
+        {
+            let toCell = resolve_expr_ref(model, to);
+
+            if (!!fromCell && !!toCell)
+            {
+                let fromVector = new Point(fromCell.colRef, fromCell.rowRef);
+                let toVector = new Point(toCell.colRef, toCell.rowRef);
+                return GridRange.capture(model, fromVector, toVector, true);
+            }
+        }
+
+        return GridRange.empty();
     }
 
     /**
@@ -139,9 +175,24 @@ export class GridRange
      */
     public readonly length:number;
 
+    private index:ObjectMap<GridCell>;
+
     private constructor(values:any)
     {
         _.extend(this, values);
+    }
+
+    /**
+     * Indicates whether or not a cell is included in the range.
+     */
+    public contains(cellRef:string):boolean
+    {
+        if (!this.index)
+        {
+            this.index = _.index(this.ltr, x => x.ref);
+        }
+
+        return !!this.index[cellRef];
     }
 }
 
@@ -169,4 +220,30 @@ function ttb_sort(a:GridCell, b:GridCell):number
     }
 
     return n;
+}
+
+function resolve_expr_ref(model:GridModel, value:string):GridCell
+{
+    const RefConvert = /([A-Za-z]+)([0-9]+)/g;
+
+    RefConvert.lastIndex = 0;
+    let result = RefConvert.exec(value);
+
+    let exprRef = result[1];
+    let rowRef = parseInt(result[2]);
+    let colRef = 0;
+
+    for (let i = exprRef.length - 1; i >= 0; i--)
+    {
+        let x = (exprRef.length - 1) - i;
+        let n = exprRef[x].toUpperCase().charCodeAt(0) - 64;
+        colRef += n * (26 * i);
+
+        if (i == 0)
+        {
+            colRef += n;
+        }
+    }
+
+    return model.locateCell(colRef - 1, rowRef - 1);
 }

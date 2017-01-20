@@ -147,7 +147,7 @@ export class ClipboardExtension implements GridExtension
         let startVector = new Point(focusedCell.colRef, focusedCell.rowRef);
         let endVector = startVector.add(new Point(width, height));
 
-        let pasteRange = GridRange.select(grid.model, startVector, endVector);
+        let pasteRange = GridRange.capture(grid.model, startVector, endVector);
 
         let changes = {} as any;
         for (let cell of pasteRange.ltr)
@@ -183,7 +183,7 @@ export class ClipboardExtension implements GridExtension
         let ae = document.activeElement;
         while (!!ae)
         {
-            if (!!ae.className && ae.className.indexOf('grid') >= 0)
+            if (ae == this.grid.root)
                 break;
 
             ae = ae.parentElement;

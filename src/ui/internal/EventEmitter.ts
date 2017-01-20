@@ -42,6 +42,11 @@ export class EventEmitterBase
 
     public emit(event:string, ...args:any[]):void
     {
+        if (!event.match('mouse') && !event.match('key') && !event.match('drag'))
+        {
+            console.log(event, ...args);
+        }
+
         let list = this.getCallbackList(event);
         for (let callback of list)
         {

@@ -1,4 +1,3 @@
-import { ExampleGridBuilder } from './ExampleGridBuilder';
 import { GridElement } from '../ui/GridElement';
 import { SelectorExtension } from '../extensions/SelectorExtension';
 import { ScrollerExtension } from '../extensions/ScrollerExtension';
@@ -9,10 +8,6 @@ import { PanExtension } from '../extensions/PanExtension';
 import { ComputeExtension } from '../extensions/ComputeExtension';
 import { BaseStyle, Style } from '../model/styled/Style';
 
-
-//let builder:any = new FlexGridBuilder(1, 1);
-//builder = new FlexGridBuilder(52 * 5, 250);
-let model = builder.build();
 
 let grid = GridElement
     .create(document.getElementById('x'))
@@ -26,7 +21,6 @@ let grid = GridElement
     .mergeInterface()
 ;
 
-grid.model = model;
 grid.on('input', (e:GridEditEvent) =>
 {
     e.changes.forEach(x =>

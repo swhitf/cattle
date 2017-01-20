@@ -22,6 +22,22 @@ export function index<T>(arr:T[], indexer:(tm:T) => number|string):ObjectMap<T>
     return obj;
 }
 
+export function flatten<T>(aa:any):T[] 
+{
+    let a = [] as any;
+    for (let tm of aa) 
+    {
+        if (Array.isArray(tm)) 
+        {
+            a = a.concat(flatten(tm));
+        } else 
+        {
+            a.push(tm)
+        }
+    }
+    return a as T[];
+}
+
 export function keys<T>(ix:ObjectIndex<T>|ObjectMap<T>):string[]
 {
     return Object.keys(ix);

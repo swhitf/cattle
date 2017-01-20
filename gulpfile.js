@@ -20,26 +20,15 @@ gulp.task('js', function() {
 
 });
 
-gulp.task('export', function() {
+gulp.task('export-lib', function() {
 
-    var entries = [
-        './node_modules/reflect-metadata/temp/Reflect.js'
-    ];
-
-    entries = entries.concat(glob.sync('./src/**/*.ts'));
-
-    var cfg = {
-        entries: entries,
-        cache: {},
-        packageCache: {},
-        plugin: [tsify],
-        debug: true
-    };
-
-    return browserify(cfg)
-        .bundle()
-        .pipe(source('cattle.js'))
-        .pipe(gulp.dest('dist'))
+    return gulp
+        .src([
+            './build/**/*',
+            '!./build/_dev/',
+            '!./build/_dev/*'
+        ])
+        .pipe(gulp.dest('export/lib'));
 });
 
 /**

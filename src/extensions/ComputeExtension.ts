@@ -1,9 +1,12 @@
+import { css } from '../../export/lib/misc/Dom';
+import { EventCallback, EventSubscription, GridEditEvent } from '../../export/lib/_export';
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';
 import { extend } from '../misc/Util';
 import { GridRange } from '../model/GridRange';
 import { Point } from '../geom/Point';
 import { GridCell } from '../model/GridCell';
+import { flatten } from '../misc/Util';
 
 
 const RefExtract = /(?!.*['"`])[A-Za-z]+[0-9]+:?([A-Za-z]+[0-9])?/g;
@@ -32,16 +35,23 @@ const SupportFunctions = {
     //Custom:
     sum: function(values:number[]):number
     {
+        if (!Array.isArray(values)) values = [values];
         return values.reduce((t, x) => t + x, 0);
     },
 };
 
-
+export interface CompiledFormula
+{
+    (changeScope?:ObjectMap<string>):number;
+}
 
 export class ComputeExtension implements GridExtension
 {
+    private overrideNextCommit:boolean = false;
+    private formulaCache:any = {};
     private grid:GridElement;
     private tracker:ObjectMap<string> = {};
+    private watches:GridCellWatchManager = new GridCellWatchManager();
 
     private get selection():string
     {
@@ -54,6 +64,7 @@ export class ComputeExtension implements GridExtension
 
         kernel.routines.override('commit', this.commitOverride.bind(this));
         kernel.routines.override('beginEdit', this.beginEditOverride.bind(this));
+        kernel.routines.override('endEdit', this.endEditOverride.bind(this));
     }
 
     private beginEditOverride(override:string, impl:any):boolean
@@ -72,101 +83,171 @@ export class ComputeExtension implements GridExtension
 
         return impl(override);
     }
+    
+    private endEditOverride(commit:boolean, impl:any):boolean
+    {
+        this.overrideNextCommit = commit === true;
+        return impl(commit);
+    }
 
     private commitOverride(changes:ObjectMap<string>, impl:any):void
     {
-        let { tracker } = this;
+        //TODO: Heavy optimization needed here...
 
-        for (let ref in changes)
+        let { grid, tracker, watches } = this;
+        let recurse = false;
+
+        if (this.overrideNextCommit)
         {
-            let val = changes[ref];
-
-            if (val.length > 0 && val[0] === '=')
+            for (let ref in changes)
             {
-                tracker[ref] = val;
-                changes[ref] = this.evaluate(val);
+                let val = changes[ref];
+
+                if (val.length > 0 && val[0] === '=')
+                {
+                    let inputRanges = this
+                        .inspectFormula(val)
+                        .map(f => GridRange.select(grid.model, f))
+                        .map(r => r.ltr.map(x => x.ref));
+
+                    watches.unwatch(ref);
+                    watches.watch(ref, flatten<string>(inputRanges));
+
+                    tracker[ref] = val;
+                    changes[ref] = this.evaluateFormula(val);
+                }
+                else
+                {
+                    if (val === '')
+                    {
+                        watches.unwatch(ref);
+                        delete tracker[ref];
+                    }
+
+                    let affectedCells = watches.getObserversOf(ref);
+                    for (let acRef of affectedCells)
+                    {
+                        if (!!changes[acRef] || !tracker[acRef]) 
+                            continue;                    
+
+                        let formula = tracker[acRef];
+                        changes[acRef] = this.evaluateFormula(formula, changes);
+                        recurse = true;
+                    }
+                }
             }
         }
 
-        impl(changes);
+        if (recurse)
+        {
+            this.commitOverride(changes, impl);
+        }
+        else
+        {
+            this.overrideNextCommit = false;
+            impl(changes);
+        }
     }
 
-    private evaluate(formula:string):string
+    protected evaluateFormula(formula:string, changeScope?:ObjectMap<string>):string
     {
+        let func = this.compileFormula(formula);
+        return (func(changeScope) || 0).toString();
+    }
+
+    protected compileFormula(formula:string):CompiledFormula
+    {
+        let func = this.formulaCache[formula] as CompiledFormula;
+
+        if (!func)
+        {
+            let exprs = this.inspectFormula(formula);
+            for (let x of exprs) 
+            {
+                formula = formula.split(x).join(`expr('${x}', arguments[1] || {})`);
+            }
+
+            let functions = extend({}, SupportFunctions);
+            functions.expr = this.resolveExpression.bind(this);
+
+            let code = `with (arguments[0]) { return (${formula.substr(1)}); }`.toLowerCase();
+            func = this.formulaCache[formula] = new Function(code).bind(null, functions);
+        }
+
+        return func;
+    }
+
+    protected inspectFormula(formula:string):string[]
+    {
+        let exprs = [] as string[];
         let result = null as RegExpExecArray;
+
         while (result = RefExtract.exec(formula))
         {
             if (!result.length)
                 continue;
-
-            formula =
-                formula.substr(0, result.index) +
-                `expr('${result[0]}')` +
-                formula.substring(result.index + result[0].length);
+            
+            exprs.push(result[0]);
         }
 
-        let functions = extend({}, SupportFunctions);
-        functions.expr = this.resolveExpr.bind(this);
-
-        let code = `with (arguments[0]) { return (${formula.substr(1)}); }`.toLowerCase();
-
-        console.log(code);
-
-        let f = new Function(code).bind(null, functions);
-        return f().toString() || '0';
+        return exprs;
     }
 
-    private resolveExpr(expr:string):number|number[]
+    protected resolveExpression(expr:string, changeScope:ObjectMap<string>):number|number[]
     {
-        let [from, to] = expr.split(':');
+        var values = GridRange
+            .select(this.grid.model, expr)
+            .ltr
+            .map(x => parseInt(changeScope[x.ref] || x.value) || 0);
 
-        let fromCell = this.resolveRef(from);
+        return values.length < 2
+            ? (values[0] || 0)
+            : values;
+    }
+}
 
-        if (to === undefined)
-        {
-            if (!!fromCell)
-            {
-                return parseInt(fromCell.value) || 0;
-            }
-        }
-        else
-        {
-            let toCell = this.resolveRef(to);
+class GridCellWatchManager
+{
+    private observing:ObjectMap<string[]> = {};
+    private observed:ObjectMap<string[]> = {};
 
-            if (!!fromCell && !!toCell)
-            {
-                let fromVector = new Point(fromCell.colRef, fromCell.rowRef);
-                let toVector = new Point(toCell.colRef, toCell.rowRef);
-
-                let range = GridRange.select(this.grid.model, fromVector, toVector, true);
-                return range.ltr.map(x => parseInt(x.value) || 0);
-            }
-        }
-
-        return 0;
+    constructor()
+    {
     }
 
-    private resolveRef(nameRef:string):GridCell
+    public getObserversOf(cellRef:string):string[]
     {
-        RefConvert.lastIndex = 0;
-        let result = RefConvert.exec(nameRef);
+        return this.observed[cellRef] || [];
+    }
 
-        let exprRef = result[1];
-        let rowRef = parseInt(result[2]);
-        let colRef = 0;
+    public getObservedBy(cellRef:string):string[]
+    {
+        return this.observing[cellRef] || [];
+    }
 
-        for (let i = exprRef.length - 1; i >= 0; i--)
+    public watch(observer:string, subjects:string[]):void
+    {
+        this.observing[observer] = subjects;
+        for (let s of subjects)
         {
-            let x = (exprRef.length - 1) - i;
-            let n = exprRef[x].toUpperCase().charCodeAt(0) - 64;
-            colRef += n * (26 * i);
+            let list = this.observed[s] || (this.observed[s] = []);
+            list.push(observer);
+        }
+    }
 
-            if (i == 0)
+    public unwatch(observer:string):void
+    {
+        let subjects = this.getObservedBy(observer);
+        delete this.observing[observer];
+
+        for (let s of subjects)
+        {
+            let list = this.observed[s] || [];
+            let ix = list.indexOf(observer);
+            if (ix >= 0)
             {
-                colRef += n;
+                list.splice(ix, 1);
             }
         }
-
-        return this.grid.model.locateCell(colRef - 1, rowRef - 1);
     }
 }
