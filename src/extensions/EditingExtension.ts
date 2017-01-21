@@ -26,6 +26,11 @@ export interface GridEditEvent
     changes:GridChange[];
 }
 
+export interface GridChangeSetVisitor
+{
+    (ref:string, val:string, cascaded:boolean):void;
+}
+
 export class GridChangeSet
 {
     private data:ObjectMap<any> = {};
@@ -60,6 +65,18 @@ export class GridChangeSet
                 value: x.value,
                 cascaded: x.cascaded,
             }));
+    }
+
+    public visit(visitor:GridChangeSetVisitor):GridChangeSet
+    {
+        for (let ref in this.data)
+        {
+            let x = this.data[ref];
+
+            visitor(x.ref, x.value, !!x.cascaded);
+        }
+
+        return this;
     }
 }
 

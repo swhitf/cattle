@@ -100,9 +100,9 @@ export class ComputeExtension implements GridExtension
 
         if (this.overrideNextCommit)
         {
-            for (let ref in changes)
+            for (let ref of changes.refs())
             {
-                let val = changes[ref];
+                let val = changes.get(ref);
 
                 if (val.length > 0 && val[0] === '=')
                 {
@@ -115,7 +115,7 @@ export class ComputeExtension implements GridExtension
                     watches.watch(ref, flatten<string>(inputRanges));
 
                     tracker[ref] = val;
-                    changes[ref] = this.evaluateFormula(val);
+                    changes.put(ref, this.evaluateFormula(val), false);
                 }
                 else
                 {
@@ -128,11 +128,11 @@ export class ComputeExtension implements GridExtension
                     let affectedCells = watches.getObserversOf(ref);
                     for (let acRef of affectedCells)
                     {
-                        if (!!changes[acRef] || !tracker[acRef]) 
+                        if (!!changes.get(acRef) || !tracker[acRef])
                             continue;                    
 
                         let formula = tracker[acRef];
-                        changes[acRef] = this.evaluateFormula(formula, changes);
+                        changes.put(acRef, this.evaluateFormula(formula, changes), true);
                         recurse = true;
                     }
                 }
@@ -165,7 +165,7 @@ export class ComputeExtension implements GridExtension
             let exprs = this.inspectFormula(formula);
             for (let x of exprs) 
             {
-                formula = formula.split(x).join(`expr('${x}', arguments[1] || {})`);
+                formula = formula.split(x).join(`expr('${x}', arguments[1])`);
             }
 
             let functions = extend({}, SupportFunctions);
@@ -175,7 +175,10 @@ export class ComputeExtension implements GridExtension
             func = this.formulaCache[formula] = new Function(code).bind(null, functions);
         }
 
-        return func;
+        return function(changeScope?:GridChangeSet):number
+        {
+            return func(changeScope || new GridChangeSet());
+        };
     }
 
     protected inspectFormula(formula:string):string[]

@@ -16,8 +16,8 @@ let grid = GridElement
     .extend(new EditingExtension())
     .extend(new ClipboardExtension())
     .extend(new HistoryExtension())
-    // .extend(new PanExtension())
-    // .extend(new ComputeExtension())
+    .extend(new PanExtension())
+    .extend(new ComputeExtension())
     .mergeInterface()
 ;
 
