@@ -1,3 +1,4 @@
+import { cascade, GridModel } from '../../export/lib/_export';
 import { GridCell } from '../model/GridCell';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridKeyboardEvent } from './../ui/GridElement';
@@ -22,13 +23,51 @@ const Vectors = {
 
 export interface GridEditEvent
 {
-    changes:GridEditIntent[];
+    changes:GridChange[];
 }
 
-export interface GridEditIntent
+export class GridChangeSet
+{
+    private data:ObjectMap<any> = {};
+
+    public get(ref:string):string
+    {
+        let entry = this.data[ref];
+        return !!entry ? entry.value : null;
+    }
+
+    public put(ref:string, value:string, cascaded?:boolean):GridChangeSet
+    {
+        this.data[ref] = {
+            ref: ref,
+            value: value,
+            cascaded: cascaded,
+        };
+
+        return this;
+    }
+
+    public refs():string[]
+    {
+        return _.keys(this.data);
+    }
+
+    public compile(model:GridModel):GridChange[]
+    {
+        return _.values(this.data)
+            .map(x => ({
+                cell: model.findCell(x.ref),
+                value: x.value,
+                cascaded: x.cascaded,
+            }));
+    }
+}
+
+export interface GridChange
 {
     cell:GridCell;
     value:string;
+    cascaded?:boolean;
 }
 
 export interface InputWidget extends Widget
@@ -197,21 +236,23 @@ export class EditingExtension
     @command()
     private commitUniform(cells:string[], uniformValue:any):void
     {
-        let changes = _.zipPairs(cells.map(x => [x, uniformValue]));
+        let changes = new GridChangeSet();
+        for (let ref of cells)
+        {
+            changes.put(ref, uniformValue, false);
+        }
+
         this.commit(changes);
     }
 
     @command()
     @routine()
-    private commit(changes:ObjectMap<string>):void
+    private commit(changes:GridChangeSet):void
     {
         let { grid } = this;
 
         let evt:GridEditEvent = {
-            changes: _.unzipPairs(changes).map(x => ({
-                cell: grid.model.findCell(x[0]),
-                value: x[1],
-            }))
+            changes: changes.compile(grid.model)
         };
 
         grid.emit('input', evt);

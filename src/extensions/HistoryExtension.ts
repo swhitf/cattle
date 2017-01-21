@@ -1,3 +1,5 @@
+import { GridRow } from '../../export/lib/_export';
+import { GridChangeSet } from './EditingExtension';
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';
 import { KeyInput } from '../input/KeyInput';
@@ -17,6 +19,7 @@ interface CellEditSnapshot
     ref:string;
     newVal:string;
     oldVal:string;
+    cascaded?:boolean;
 }
 
 export class HistoryExtension implements GridExtension
@@ -72,7 +75,7 @@ export class HistoryExtension implements GridExtension
         this.future = [];
     }
 
-    private beforeCommit(changes:ObjectMap<string>):void
+    private beforeCommit(changes:GridChangeSet):void
     {
         if (this.noCapture)
             return;
@@ -83,17 +86,19 @@ export class HistoryExtension implements GridExtension
         this.push(action);
     }
 
-    private createSnapshots(changes:ObjectMap<string>):CellEditSnapshot[]
+    private createSnapshots(changes:GridChangeSet):CellEditSnapshot[]
     {
         let model = this.grid.model;
         let batch = [] as CellEditSnapshot[];
 
-        for (let ref in changes)
+        let compiled = changes.compile(model);
+        for (let entry of compiled)
         {
             batch.push({
-                ref: ref,
-                newVal: changes[ref],
-                oldVal: model.findCell(ref).value,
+                ref: entry.cell.ref,
+                newVal: entry.value,
+                oldVal: entry.cell.value,
+                cascaded: entry.cascaded,
             });
         }
 
@@ -104,28 +109,40 @@ export class HistoryExtension implements GridExtension
     {
         return {
             apply: () => {
-                this.invokeSilentCommit(_.zipPairs(snapshots.map(x => [x.ref, x.newVal])));
+                this.invokeSilentCommit(create_changes(snapshots, x => x.newVal));
             },
             rollback: () => {
-                this.invokeSilentCommit(_.zipPairs(snapshots.map(x => [x.ref, x.oldVal])));
+                this.invokeSilentCommit(create_changes(snapshots, x => x.oldVal));
             },
         };
     }
 
-    private invokeSilentCommit(changes:ObjectMap<string>):void
+    private invokeSilentCommit(changes:GridChangeSet):void
     {
-        let kernel = this.grid.kernel;
+        let { grid } = this;
 
         try
         {
             this.noCapture = true;
-            kernel.commands.exec('commit', changes);
+            grid.exec('commit', changes);
         }
         finally
         {
             this.noCapture = false;
         }
 
-        kernel.commands.exec('select', _.keys(changes));
+        let compiled = changes.compile(grid.model);
+        let refs = compiled.filter(x => !x.cascaded).map(x => x.cell.ref);
+        grid.exec('select', refs);
     }
+}
+
+function create_changes(snapshots:CellEditSnapshot[], valSelector:(s:CellEditSnapshot) => string):GridChangeSet 
+{
+    let changeSet = new GridChangeSet();
+    for (let s of snapshots)
+    {
+        changeSet.put(s.ref, valSelector(s), s.cascaded);
+    }
+    return changeSet;
 }

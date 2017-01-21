@@ -1,3 +1,4 @@
+import { GridChangeSet } from './EditingExtension';
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { KeyInput } from '../input/KeyInput';
 import { Clipboard } from '../vendor/clipboard';
@@ -149,13 +150,13 @@ export class ClipboardExtension implements GridExtension
 
         let pasteRange = GridRange.capture(grid.model, startVector, endVector);
 
-        let changes = {} as any;
+        let changes = new GridChangeSet();
         for (let cell of pasteRange.ltr)
         {
             let xy = new Point(cell.colRef, cell.rowRef).subtract(startVector);
             let value = data[xy.y][xy.x] || '';
 
-            changes[cell.ref] = value;
+            changes.put(cell.ref, value);
         }
 
         this.grid.kernel.commands.exec('commit', changes);

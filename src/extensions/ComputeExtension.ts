@@ -1,3 +1,4 @@
+import { GridChangeSet } from './EditingExtension';
 import { css } from '../../export/lib/misc/Dom';
 import { EventCallback, EventSubscription, GridEditEvent } from '../../export/lib/_export';
 import { GridExtension, GridElement } from '../ui/GridElement';
@@ -42,7 +43,7 @@ const SupportFunctions = {
 
 export interface CompiledFormula
 {
-    (changeScope?:ObjectMap<string>):number;
+    (changeScope?:GridChangeSet):number;
 }
 
 export class ComputeExtension implements GridExtension
@@ -90,7 +91,7 @@ export class ComputeExtension implements GridExtension
         return impl(commit);
     }
 
-    private commitOverride(changes:ObjectMap<string>, impl:any):void
+    private commitOverride(changes:GridChangeSet, impl:any):void
     {
         //TODO: Heavy optimization needed here...
 
@@ -149,7 +150,7 @@ export class ComputeExtension implements GridExtension
         }
     }
 
-    protected evaluateFormula(formula:string, changeScope?:ObjectMap<string>):string
+    protected evaluateFormula(formula:string, changeScope?:GridChangeSet):string
     {
         let func = this.compileFormula(formula);
         return (func(changeScope) || 0).toString();
@@ -193,12 +194,12 @@ export class ComputeExtension implements GridExtension
         return exprs;
     }
 
-    protected resolveExpression(expr:string, changeScope:ObjectMap<string>):number|number[]
+    protected resolveExpression(expr:string, changeScope:GridChangeSet):number|number[]
     {
         var values = GridRange
             .select(this.grid.model, expr)
             .ltr
-            .map(x => parseInt(changeScope[x.ref] || x.value) || 0);
+            .map(x => parseInt(changeScope.get(x.ref) || x.value) || 0);
 
         return values.length < 2
             ? (values[0] || 0)
