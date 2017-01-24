@@ -1,5 +1,5 @@
-import { cascade, GridModel } from '../../export/lib/_export';
 import { GridCell } from '../model/GridCell';
+import { GridModel } from '../model/GridModel';
 import { GridKernel } from './../ui/GridKernel';
 import { GridElement, GridKeyboardEvent } from './../ui/GridElement';
 import { SelectorWidget } from './SelectorExtension';

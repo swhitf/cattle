@@ -141,7 +141,7 @@ export class Rect
         }
     }
 
-    public inflate(size:Point):Rect
+    public inflate(size:PointLike):Rect
     {
         return new Rect(
             this.left - size.x,

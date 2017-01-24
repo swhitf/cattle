@@ -1,3 +1,4 @@
+import { Base26 } from '../misc/Base26';
 import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
 import { Point } from '../geom/Point';
@@ -229,21 +230,8 @@ function resolve_expr_ref(model:GridModel, value:string):GridCell
     RefConvert.lastIndex = 0;
     let result = RefConvert.exec(value);
 
-    let exprRef = result[1];
-    let rowRef = parseInt(result[2]);
-    let colRef = 0;
+    let colRef = Base26.str(result[1]).num;
+    let rowRef = parseInt(result[2]) - 1;
 
-    for (let i = exprRef.length - 1; i >= 0; i--)
-    {
-        let x = (exprRef.length - 1) - i;
-        let n = exprRef[x].toUpperCase().charCodeAt(0) - 64;
-        colRef += n * (26 * i);
-
-        if (i == 0)
-        {
-            colRef += n;
-        }
-    }
-
-    return model.locateCell(colRef - 1, rowRef - 1);
+    return model.locateCell(colRef, rowRef);
 }

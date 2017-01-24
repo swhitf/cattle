@@ -59,7 +59,7 @@ function draw(gfx:CanvasRenderingContext2D, visual:any):void
         textPt.x = visual.width - 3;
     }
 
-    gfx.font = `${style.textSize}px ${style.textFont}`;
+    gfx.font = `${style.textStyle} ${style.textVariant} ${style.textWeight} ${style.textSize}px ${style.textFont}`;
     gfx.textAlign = style.textAlignment;
     gfx.textBaseline = 'middle';
     gfx.fillStyle = style.textColor;

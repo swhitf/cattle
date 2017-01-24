@@ -1,6 +1,5 @@
+import { GridRow } from '../../export/lib/_export';
 import { GridChangeSet } from './EditingExtension';
-import { css } from '../../export/lib/misc/Dom';
-import { EventCallback, EventSubscription, GridEditEvent } from '../../export/lib/_export';
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';
 import { extend } from '../misc/Util';
@@ -10,8 +9,7 @@ import { GridCell } from '../model/GridCell';
 import { flatten } from '../misc/Util';
 
 
-const RefExtract = /(?!.*['"`])[A-Za-z]+[0-9]+:?([A-Za-z]+[0-9])?/g;
-const RefConvert = /([A-Za-z]+)([0-9]+)/g;
+const RefExtract = /(?!.*['"`])[A-Za-z]+[0-9]+:?([A-Za-z]+[0-9]+)?/g;
 
 const SupportFunctions = {
     //Math:
@@ -46,13 +44,38 @@ export interface CompiledFormula
     (changeScope?:GridChangeSet):number;
 }
 
+export interface GridCellWithFormula extends GridCell
+{
+    formula:string;
+}
+
+export interface Computer
+{
+    connect(grid:GridElement):void;
+
+    compute(cellRefs?:string[], scope?:GridChangeSet):GridChangeSet
+
+    evaluate(formula:string):string;
+
+    inspect(formula:string):string[];
+
+    program(cellRef:string, formula:string):void;
+}
+
 export class ComputeExtension implements GridExtension
 {
+    private readonly computer:Computer;
+
     private overrideNextCommit:boolean = false;
     private formulaCache:any = {};
     private grid:GridElement;
     private tracker:ObjectMap<string> = {};
     private watches:GridCellWatchManager = new GridCellWatchManager();
+
+    constructor(computer?:Computer)
+    {
+        this.computer = computer || new JavaScriptFudgeComputer();
+    }
 
     private get selection():string
     {
@@ -62,10 +85,13 @@ export class ComputeExtension implements GridExtension
     public init?(grid:GridElement, kernel:GridKernel):void
     {
         this.grid = grid;
+        this.computer.connect(grid);
 
         kernel.routines.override('commit', this.commitOverride.bind(this));
         kernel.routines.override('beginEdit', this.beginEditOverride.bind(this));
         kernel.routines.override('endEdit', this.endEditOverride.bind(this));
+
+        //grid.on('invalidate', this.flushFormulas.bind(this));
     }
 
     private beginEditOverride(override:string, impl:any):boolean
@@ -95,118 +121,59 @@ export class ComputeExtension implements GridExtension
     {
         //TODO: Heavy optimization needed here...
 
-        let { grid, tracker, watches } = this;
-        let recurse = false;
+        // let { grid, tracker, watches } = this;
+        // let recurse = false;
 
-        if (this.overrideNextCommit)
-        {
-            for (let ref of changes.refs())
-            {
-                let val = changes.get(ref);
+        // if (this.overrideNextCommit)
+        // {
+        //     for (let ref of changes.refs())
+        //     {
+        //         let val = changes.get(ref);
 
-                if (val.length > 0 && val[0] === '=')
-                {
-                    let inputRanges = this
-                        .inspectFormula(val)
-                        .map(f => GridRange.select(grid.model, f))
-                        .map(r => r.ltr.map(x => x.ref));
+        //         if (val.length > 0 && val[0] === '=')
+        //         {
+        //             let inputRanges = this
+        //                 .inspectFormula(val)
+        //                 .map(f => GridRange.select(grid.model, f))
+        //                 .map(r => r.ltr.map(x => x.ref));
 
-                    watches.unwatch(ref);
-                    watches.watch(ref, flatten<string>(inputRanges));
+        //             watches.unwatch(ref);
+        //             watches.watch(ref, flatten<string>(inputRanges));
 
-                    tracker[ref] = val;
-                    changes.put(ref, this.evaluateFormula(val), false);
-                }
-                else
-                {
-                    if (val === '')
-                    {
-                        watches.unwatch(ref);
-                        delete tracker[ref];
-                    }
+        //             tracker[ref] = val;
+        //             changes.put(ref, this.evaluateFormula(val), false);
+        //         }
+        //         else
+        //         {
+        //             if (val === '')
+        //             {
+        //                 watches.unwatch(ref);
+        //                 delete tracker[ref];
+        //             }
 
-                    let affectedCells = watches.getObserversOf(ref);
-                    for (let acRef of affectedCells)
-                    {
-                        if (!!changes.get(acRef) || !tracker[acRef])
-                            continue;                    
+        //             let affectedCells = watches.getObserversOf(ref);
+        //             for (let acRef of affectedCells)
+        //             {
+        //                 if (!!changes.get(acRef) || !tracker[acRef])
+        //                     continue;                    
 
-                        let formula = tracker[acRef];
-                        changes.put(acRef, this.evaluateFormula(formula, changes), true);
-                        recurse = true;
-                    }
-                }
-            }
-        }
+        //                 let formula = tracker[acRef];
+        //                 changes.put(acRef, this.evaluateFormula(formula, changes), true);
+        //                 recurse = true;
+        //             }
+        //         }
+        //     }
+        // }
 
-        if (recurse)
-        {
-            this.commitOverride(changes, impl);
-        }
-        else
+        // if (recurse)
+        // {
+        //     this.commitOverride(changes, impl);
+        // }
+        // else
         {
             this.overrideNextCommit = false;
             impl(changes);
         }
-    }
-
-    protected evaluateFormula(formula:string, changeScope?:GridChangeSet):string
-    {
-        let func = this.compileFormula(formula);
-        return (func(changeScope) || 0).toString();
-    }
-
-    protected compileFormula(formula:string):CompiledFormula
-    {
-        let func = this.formulaCache[formula] as CompiledFormula;
-
-        if (!func)
-        {
-            let exprs = this.inspectFormula(formula);
-            for (let x of exprs) 
-            {
-                formula = formula.split(x).join(`expr('${x}', arguments[1])`);
-            }
-
-            let functions = extend({}, SupportFunctions);
-            functions.expr = this.resolveExpression.bind(this);
-
-            let code = `with (arguments[0]) { return (${formula.substr(1)}); }`.toLowerCase();
-            func = this.formulaCache[formula] = new Function(code).bind(null, functions);
-        }
-
-        return function(changeScope?:GridChangeSet):number
-        {
-            return func(changeScope || new GridChangeSet());
-        };
-    }
-
-    protected inspectFormula(formula:string):string[]
-    {
-        let exprs = [] as string[];
-        let result = null as RegExpExecArray;
-
-        while (result = RefExtract.exec(formula))
-        {
-            if (!result.length)
-                continue;
-            
-            exprs.push(result[0]);
-        }
-
-        return exprs;
-    }
-
-    protected resolveExpression(expr:string, changeScope:GridChangeSet):number|number[]
-    {
-        var values = GridRange
-            .select(this.grid.model, expr)
-            .ltr
-            .map(x => parseInt(changeScope.get(x.ref) || x.value) || 0);
-
-        return values.length < 2
-            ? (values[0] || 0)
-            : values;
     }
 }
 
@@ -217,6 +184,12 @@ class GridCellWatchManager
 
     constructor()
     {
+    }
+
+    public clear():void
+    {
+        this.observing = {};
+        this.observed = {};
     }
 
     public getObserversOf(cellRef:string):string[]
@@ -231,6 +204,9 @@ class GridCellWatchManager
 
     public watch(observer:string, subjects:string[]):void
     {
+        if (!subjects || !subjects.length)
+            return;
+
         this.observing[observer] = subjects;
         for (let s of subjects)
         {
@@ -253,5 +229,131 @@ class GridCellWatchManager
                 list.splice(ix, 1);
             }
         }
+    }
+}
+
+export class JavaScriptFudgeComputer implements Computer
+{
+    private grid:GridElement;
+    private buffer:ObjectMap<string> = {};
+    private cache:ObjectMap<CompiledFormula> = {};
+
+    public connect(grid:GridElement):void
+    {
+        this.grid = grid;
+    }
+
+    public evaluate(formula:string, changeScope?:GridChangeSet):string 
+    {
+        let func = this.compile(formula);
+        return (func(changeScope || new GridChangeSet()) || 0).toString();
+    }
+
+    public compute(refs?:string[], scope?:GridChangeSet):GridChangeSet
+    {
+        let { grid, buffer } = this;
+
+        let targets = (!!refs && !!refs.length)
+            ? refs.map(x => grid.model.findCell(x))
+            : grid.model.cells;
+        scope = scope || new GridChangeSet();
+
+        targets = this.expandAndSort(targets);
+
+        for (let cell of targets)
+        {
+            let formula = buffer[cell.ref];
+            let result = this.evaluate(formula, scope)
+
+            scope.put(cell.ref, result, true);
+        }
+
+        return scope;
+    }
+
+    public inspect(formula:string):string[] 
+    {
+        let exprs = [] as string[];
+        let result = null as RegExpExecArray;
+
+        while (result = RefExtract.exec(formula))
+        {
+            if (!result.length)
+                continue;
+            
+            exprs.push(result[0]);
+        }
+
+        return exprs;
+    }
+
+    public program(cellRef:string, formula:string):void
+    {
+        this.buffer[cellRef] = formula;
+    }
+
+    protected compile(formula:string):CompiledFormula
+    {
+        let func = this.cache[formula] as CompiledFormula;
+
+        if (!func)
+        {
+            let exprs = this.inspect(formula);
+            for (let x of exprs) 
+            {
+                formula = formula.split(x).join(`expr('${x}', arguments[1])`);
+            }
+
+            let functions = extend({}, SupportFunctions);
+            functions.expr = this.resolve.bind(this);
+
+            let code = `with (arguments[0]) { return (${formula.substr(1)}); }`.toLowerCase();
+            func = this.cache[formula] = new Function(code).bind(null, functions);
+        }
+
+        return func;
+    }
+
+    protected expandAndSort(cells:GridCell[]):GridCell[]
+    {
+        let { grid, buffer } = this;
+
+        let list = [] as GridCell[];
+        let alreadyPushed = {} as ObjectMap<boolean>;
+
+        const visit = (cell:GridCell):void =>
+        {
+            let formula = buffer[cell.ref];
+            if (formula === undefined)
+                return;
+
+            if (alreadyPushed[cell.ref] === true)
+                return;
+
+            let dependencies = flatten<GridCell>(
+                this.inspect(formula).map(x => GridRange.select(grid.model, x).ltr));
+
+            for (let dc of dependencies)
+            {
+                visit(dc);
+            }
+
+            list.push(cell);
+            alreadyPushed[cell.ref] = true;
+        };
+
+        return list;
+    }
+
+    protected resolve(expr:string, changeScope:GridChangeSet):number|number[]
+    {
+        var values = GridRange
+            .select(this.grid.model, expr)
+            .ltr
+            .map(x => parseInt(changeScope.get(x.ref) || x.value) || 0);
+
+        return values.length < 2
+            ? (values[0] || 0)
+            : values;
     }
 }

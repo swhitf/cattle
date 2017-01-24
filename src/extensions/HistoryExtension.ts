@@ -1,4 +1,3 @@
-import { GridRow } from '../../export/lib/_export';
 import { GridChangeSet } from './EditingExtension';
 import { GridExtension, GridElement } from '../ui/GridElement';
 import { GridKernel } from '../ui/GridKernel';

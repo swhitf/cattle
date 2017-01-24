@@ -46,6 +46,15 @@ export class Style
     @cascade()
     public textSize:number;
 
+    @cascade()
+    public textStyle:string;
+
+    @cascade()
+    public textVariant:string;
+
+    @cascade()
+    public textWeight:string;
+
     constructor(parent?:Style, values?:any)
     {
         this.parent = parent || null;
@@ -63,4 +72,7 @@ export const BaseStyle = new Style(null, {
     textColor: 'black',
     textFont: 'Segoe UI',
     textSize: 13,
+    textStyle: 'normal',
+    textVariant: 'normal',
+    textWeight: 'normal',
 });

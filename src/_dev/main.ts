@@ -21,9 +21,6 @@ let grid = GridElement
     .mergeInterface()
 ;
 
-grid.model.cells[0].value = 'Hi Jamie';
-grid.redraw();
-
 grid.on('input', (e:GridEditEvent) =>
 {
     e.changes.forEach(x =>
@@ -33,5 +30,12 @@ grid.on('input', (e:GridEditEvent) =>
 
     grid.redraw();
 });
+
+let model = grid.model;
+model.locateCell(0, 0)['formula'] = '=B1+1';
+model.locateCell(1, 0)['formula'] = '=E5';
+model.locateCell(2, 0)['formula'] = '=A1+B1';
+model.locateCell(4, 4)['value'] = '99';
+grid.invalidate();
 
 window['grid'] = grid;

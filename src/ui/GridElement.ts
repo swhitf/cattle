@@ -47,7 +47,7 @@ export class GridElement extends EventEmitterBase
         canvas.tabIndex = target.tabIndex || 0;
 
         target.parentNode.insertBefore(canvas, target);
-        target.remove();
+        target.parentNode.removeChild(target);
 
         let grid = new GridElement(canvas);
         grid.model = initialModel || DefaultGridModel.dim(26, 100);
@@ -56,7 +56,7 @@ export class GridElement extends EventEmitterBase
         return grid;
     }
 
-    @property(DefaultGridModel.empty(), t => t.invalidate())
+    @property(DefaultGridModel.empty(), t => { t.emit('load', t.model); t.invalidate(); })
     public model:GridModel;
 
     @property(0, t => { t.redraw(); t.emit('scroll'); })
@@ -257,13 +257,21 @@ export class GridElement extends EventEmitterBase
         this.emit('invalidate');
     }
 
-    public redraw():void
+    public redraw(forceImmediate:boolean = false):void
     {
         if (!this.dirty)
         {
             this.dirty = true;
             console.time('GridElement.redraw');
-            setTimeout(this.draw.bind(this), 0);
+
+            if (forceImmediate)
+            {
+                this.draw();
+            }
+            else
+            {
+                setTimeout(this.draw.bind(this), 0);
+            }
         }
     }
 
