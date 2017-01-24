@@ -432,18 +432,18 @@ export class GridElement extends EventEmitterBase
             {
                 if (this.hotCell)
                 {
-                    let newEvt = this.createGridMouseEvent('cellenter', e) as any;
+                    let newEvt = this.createGridMouseEvent('cellexit', e) as any;
                     newEvt.cell = this.hotCell;
-                    this.emit('cellenter', e);
+                    this.emit('cellexit', e);
                 }
 
                 this.hotCell = e.cell;
 
                 if (this.hotCell)
                 {
-                    let newEvt = this.createGridMouseEvent('cellexit', e) as any;
+                    let newEvt = this.createGridMouseEvent('cellenter', e) as any;
                     newEvt.cell = this.hotCell;
-                    this.emit('cellexit', e);
+                    this.emit('cellenter', e);
                 }
             }
         });

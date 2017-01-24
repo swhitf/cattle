@@ -35,6 +35,7 @@ var GridElement = (function (_super) {
             .forEach(function (x) { return _this.forwardMouseEvent(x); });
         ['keydown', 'keypress', 'keyup']
             .forEach(function (x) { return _this.forwardKeyEvent(x); });
+        _this.enableEnterExitEvents();
         return _this;
     }
     GridElement.create = function (target, initialModel) {
@@ -298,6 +299,31 @@ var GridElement = (function (_super) {
         this.canvas.addEventListener(event, function (ne) {
             _this.emit(event, ne);
         });
+    };
+    GridElement.prototype.enableEnterExitEvents = function () {
+        var _this = this;
+        this.on('mousemove', function (e) {
+            if (e.cell != _this.hotCell) {
+                if (_this.hotCell) {
+                    var newEvt = _this.createGridMouseEvent('cellenter', e);
+                    newEvt.cell = _this.hotCell;
+                    _this.emit('cellenter', e);
+                }
+                _this.hotCell = e.cell;
+                if (_this.hotCell) {
+                    var newEvt = _this.createGridMouseEvent('cellexit', e);
+                    newEvt.cell = _this.hotCell;
+                    _this.emit('cellexit', e);
+                }
+            }
+        });
+    };
+    GridElement.prototype.createGridMouseEvent = function (type, source) {
+        var event = (new MouseEvent(type, source));
+        event.cell = source.cell;
+        event.gridX = source.gridX;
+        event.gridY = source.gridY;
+        return event;
     };
     return GridElement;
 }(EventEmitter_1.EventEmitterBase));

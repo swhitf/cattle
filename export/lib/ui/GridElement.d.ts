@@ -28,6 +28,7 @@ export declare class GridElement extends EventEmitterBase {
     scrollTop: number;
     readonly root: HTMLCanvasElement;
     readonly kernel: GridKernel;
+    private hotCell;
     private layout;
     private dirty;
     private buffers;
@@ -64,4 +65,6 @@ export declare class GridElement extends EventEmitterBase {
     private createVisual(cell, region);
     private forwardMouseEvent(event);
     private forwardKeyEvent(event);
+    private enableEnterExitEvents();
+    private createGridMouseEvent(type, source);
 }
