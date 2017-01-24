@@ -434,7 +434,7 @@ export class GridElement extends EventEmitterBase
                 {
                     let newEvt = this.createGridMouseEvent('cellexit', e) as any;
                     newEvt.cell = this.hotCell;
-                    this.emit('cellexit', e);
+                    this.emit('cellexit', newEvt);
                 }
 
                 this.hotCell = e.cell;
@@ -443,7 +443,7 @@ export class GridElement extends EventEmitterBase
                 {
                     let newEvt = this.createGridMouseEvent('cellenter', e) as any;
                     newEvt.cell = this.hotCell;
-                    this.emit('cellenter', e);
+                    this.emit('cellenter', newEvt);
                 }
             }
         });

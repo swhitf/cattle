@@ -305,15 +305,15 @@ var GridElement = (function (_super) {
         this.on('mousemove', function (e) {
             if (e.cell != _this.hotCell) {
                 if (_this.hotCell) {
-                    var newEvt = _this.createGridMouseEvent('cellenter', e);
-                    newEvt.cell = _this.hotCell;
-                    _this.emit('cellenter', e);
-                }
-                _this.hotCell = e.cell;
-                if (_this.hotCell) {
                     var newEvt = _this.createGridMouseEvent('cellexit', e);
                     newEvt.cell = _this.hotCell;
                     _this.emit('cellexit', e);
+                }
+                _this.hotCell = e.cell;
+                if (_this.hotCell) {
+                    var newEvt = _this.createGridMouseEvent('cellenter', e);
+                    newEvt.cell = _this.hotCell;
+                    _this.emit('cellenter', e);
                 }
             }
         });
