@@ -1,3 +1,4 @@
+import { MouseInput } from '../input/MouseInput';
 import { GridRow } from '../model/GridRow';
 import { DefaultGridModel } from '../model/default/DefaultGridModel';
 import { EventEmitterBase } from './internal/EventEmitter';
@@ -69,6 +70,7 @@ export class GridElement extends EventEmitterBase
 
     public readonly kernel:GridKernel;
 
+    private hotCell:GridCell;
     private layout:GridLayout;
     private dirty:boolean = false;
     private buffers:ObjectMap<Buffer> = {};
@@ -85,6 +87,8 @@ export class GridElement extends EventEmitterBase
             .forEach(x => this.forwardMouseEvent(x));
         ['keydown', 'keypress', 'keyup']
             .forEach(x => this.forwardKeyEvent(x));
+
+        this.enableEnterExitEvents();
     }
 
     public get width():number
@@ -418,6 +422,40 @@ export class GridElement extends EventEmitterBase
         {
             this.emit(event, <GridKeyboardEvent>ne);
         });
+    }
+
+    private enableEnterExitEvents():void
+    {
+        this.on('mousemove', (e:GridMouseEvent) =>
+        {
+            if (e.cell != this.hotCell)
+            {
+                if (this.hotCell)
+                {
+                    let newEvt = this.createGridMouseEvent('cellenter', e) as any;
+                    newEvt.cell = this.hotCell;
+                    this.emit('cellenter', e);
+                }
+
+                this.hotCell = e.cell;
+
+                if (this.hotCell)
+                {
+                    let newEvt = this.createGridMouseEvent('cellexit', e) as any;
+                    newEvt.cell = this.hotCell;
+                    this.emit('cellexit', e);
+                }
+            }
+        });
+    }
+
+    private createGridMouseEvent(type:string, source:GridMouseEvent):GridMouseEvent
+    {
+        let event = <any>(new MouseEvent(type, source));
+        event.cell = source.cell;
+        event.gridX = source.gridX;
+        event.gridY = source.gridY;
+        return event;
     }
 }
 
