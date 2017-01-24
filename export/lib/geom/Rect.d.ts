@@ -25,7 +25,7 @@ export declare class Rect {
     size(): Point;
     offset(pt: PointLike): Rect;
     contains(input: Point | RectLike): boolean;
-    inflate(size: Point): Rect;
+    inflate(size: PointLike): Rect;
     intersects(rect: RectLike): boolean;
     normalize(): Rect;
     toString(): string;

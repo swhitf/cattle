@@ -195,6 +195,14 @@ export class GridRange
 
         return !!this.index[cellRef];
     }
+    
+    /**
+     * Returns an array of the references for all the cells in the range.
+     */
+    public refs():string[]
+    {
+        return this.ltr.map(x => x.ref);
+    }
 }
 
 function ltr_sort(a:GridCell, b:GridCell):number

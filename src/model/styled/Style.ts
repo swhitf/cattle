@@ -24,6 +24,11 @@ export function cascade():PropertyDecorator
 
 export type TextAlignment = 'left'|'center'|'right';
 
+export interface ValueFormatter
+{
+    (value:string):string;
+}
+
 export class Style
 {
     public readonly parent:Style;
@@ -33,6 +38,9 @@ export class Style
 
     @cascade()
     public fillColor:string;
+
+    @cascade()
+    public formatter:ValueFormatter;
 
     @cascade()
     public textAlignment:TextAlignment;
@@ -68,6 +76,7 @@ export class Style
 export const BaseStyle = new Style(null, {
     borderColor: 'lightgray',
     fillColor: 'white',
+    formatter: v => v,
     textAlignment: 'left',
     textColor: 'black',
     textFont: 'Segoe UI',

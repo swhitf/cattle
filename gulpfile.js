@@ -26,7 +26,8 @@ gulp.task('export-lib', function() {
         .src([
             './build/**/*',
             '!./build/_dev/',
-            '!./build/_dev/*'
+            '!./build/_dev/',
+            '!./build/browser.js'
         ])
         .pipe(gulp.dest('export/lib'));
 });

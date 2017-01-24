@@ -15,7 +15,7 @@ export declare class GridRange {
      */
     static create(model: GridModel, cellRefs: string[]): GridRange;
     /**
-     * Selects a resolveExpr of cells from the specified model based on the specified vectors.  The vectors should be
+     * Captures a range of cells from the specified model based on the specified vectors.  The vectors should be
      * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
      * Any cells falling into the rectangle created from these two points will be included in the selected resolveExpr.
      *
@@ -25,7 +25,17 @@ export declare class GridRange {
      * @param toInclusive
      * @returns {Range}
      */
-    static select(model: GridModel, from: Point, to: Point, toInclusive?: boolean): GridRange;
+    static capture(model: GridModel, from: Point, to: Point, toInclusive?: boolean): GridRange;
+    /**
+     * Selects a range of cells using an Excel-like range expression. For example:
+     * - A1 selects a 1x1 range of the first cell
+     * - A1:A5 selects a 1x5 range from the first cell horizontally.
+     * - A1:E5 selects a 5x5 range from the first cell evenly.
+     *
+     * @param model
+     * @param query
+     */
+    static select(model: GridModel, query: string): GridRange;
     /**
      * Creates an empty GridRange object.
      *
@@ -56,5 +66,14 @@ export declare class GridRange {
      * The length of the resolveExpr (number of rows * number of columns).
      */
     readonly length: number;
+    private index;
     private constructor(values);
+    /**
+     * Indicates whether or not a cell is included in the range.
+     */
+    contains(cellRef: string): boolean;
+    /**
+     * Returns an array of the references for all the cells in the range.
+     */
+    refs(): string[];
 }

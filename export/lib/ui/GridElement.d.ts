@@ -55,7 +55,7 @@ export declare class GridElement extends EventEmitterBase {
     scrollTo(ptOrRect: PointLike | RectLike): void;
     bash(): void;
     invalidate(): void;
-    redraw(): void;
+    redraw(forceImmediate?: boolean): void;
     private draw();
     private computeViewport();
     private updateVisuals();

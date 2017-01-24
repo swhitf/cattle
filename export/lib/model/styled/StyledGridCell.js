@@ -62,10 +62,10 @@ function draw(gfx, visual) {
     if (style.textAlignment === 'right') {
         textPt.x = visual.width - 3;
     }
-    gfx.font = style.textSize + "px " + style.textFont;
+    gfx.font = style.textStyle + " " + style.textVariant + " " + style.textWeight + " " + style.textSize + "px " + style.textFont;
     gfx.textAlign = style.textAlignment;
     gfx.textBaseline = 'middle';
     gfx.fillStyle = style.textColor;
-    gfx.fillText(visual.value || visual.placeholder, textPt.x, textPt.y);
+    gfx.fillText(style.formatter(visual.value) || visual.placeholder, textPt.x, textPt.y);
 }
 //# sourceMappingURL=StyledGridCell.js.map

@@ -1,4 +1,5 @@
 "use strict";
+var Base26_1 = require("../misc/Base26");
 var Point_1 = require("../geom/Point");
 var Rect_1 = require("../geom/Rect");
 var _ = require("../misc/Util");
@@ -48,7 +49,7 @@ var GridRange = (function () {
         });
     };
     /**
-     * Selects a resolveExpr of cells from the specified model based on the specified vectors.  The vectors should be
+     * Captures a range of cells from the specified model based on the specified vectors.  The vectors should be
      * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
      * Any cells falling into the rectangle created from these two points will be included in the selected resolveExpr.
      *
@@ -58,7 +59,7 @@ var GridRange = (function () {
      * @param toInclusive
      * @returns {Range}
      */
-    GridRange.select = function (model, from, to, toInclusive) {
+    GridRange.capture = function (model, from, to, toInclusive) {
         if (toInclusive === void 0) { toInclusive = false; }
         //TODO: Explain this...
         var tl = new Point_1.Point(from.x < to.x ? from.x : to.x, from.y < to.y ? from.y : to.y);
@@ -79,6 +80,33 @@ var GridRange = (function () {
         return GridRange.create(model, results);
     };
     /**
+     * Selects a range of cells using an Excel-like range expression. For example:
+     * - A1 selects a 1x1 range of the first cell
+     * - A1:A5 selects a 1x5 range from the first cell horizontally.
+     * - A1:E5 selects a 5x5 range from the first cell evenly.
+     *
+     * @param model
+     * @param query
+     */
+    GridRange.select = function (model, query) {
+        var _a = query.split(':'), from = _a[0], to = _a[1];
+        var fromCell = resolve_expr_ref(model, from);
+        if (!to) {
+            if (!!fromCell) {
+                return GridRange.create(model, [fromCell.ref]);
+            }
+        }
+        else {
+            var toCell = resolve_expr_ref(model, to);
+            if (!!fromCell && !!toCell) {
+                var fromVector = new Point_1.Point(fromCell.colRef, fromCell.rowRef);
+                var toVector = new Point_1.Point(toCell.colRef, toCell.rowRef);
+                return GridRange.capture(model, fromVector, toVector, true);
+            }
+        }
+        return GridRange.empty();
+    };
+    /**
      * Creates an empty GridRange object.
      *
      * @returns {Range}
@@ -92,6 +120,21 @@ var GridRange = (function () {
             length: 0,
             count: 0,
         });
+    };
+    /**
+     * Indicates whether or not a cell is included in the range.
+     */
+    GridRange.prototype.contains = function (cellRef) {
+        if (!this.index) {
+            this.index = _.index(this.ltr, function (x) { return x.ref; });
+        }
+        return !!this.index[cellRef];
+    };
+    /**
+     * Returns an array of the references for all the cells in the range.
+     */
+    GridRange.prototype.refs = function () {
+        return this.ltr.map(function (x) { return x.ref; });
     };
     return GridRange;
 }());
@@ -111,5 +154,13 @@ function ttb_sort(a, b) {
         n = a.rowRef - b.rowRef;
     }
     return n;
+}
+function resolve_expr_ref(model, value) {
+    var RefConvert = /([A-Za-z]+)([0-9]+)/g;
+    RefConvert.lastIndex = 0;
+    var result = RefConvert.exec(value);
+    var colRef = Base26_1.Base26.str(result[1]).num;
+    var rowRef = parseInt(result[2]) - 1;
+    return model.locateCell(colRef, rowRef);
 }
 //# sourceMappingURL=GridRange.js.map

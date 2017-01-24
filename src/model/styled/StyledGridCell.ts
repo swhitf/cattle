@@ -63,5 +63,5 @@ function draw(gfx:CanvasRenderingContext2D, visual:any):void
     gfx.textAlign = style.textAlignment;
     gfx.textBaseline = 'middle';
     gfx.fillStyle = style.textColor;
-    gfx.fillText(visual.value || visual.placeholder, textPt.x, textPt.y);
+    gfx.fillText(style.formatter(visual.value) || visual.placeholder, textPt.x, textPt.y);
 }

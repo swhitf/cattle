@@ -43,7 +43,7 @@ var GridElement = (function (_super) {
         canvas.className = target.className;
         canvas.tabIndex = target.tabIndex || 0;
         target.parentNode.insertBefore(canvas, target);
-        target.remove();
+        target.parentNode.removeChild(target);
         var grid = new GridElement(canvas);
         grid.model = initialModel || DefaultGridModel_1.DefaultGridModel.dim(26, 100);
         grid.bash();
@@ -110,7 +110,8 @@ var GridElement = (function (_super) {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        this.kernel.commands.exec(command, args);
+        (_a = this.kernel.commands).exec.apply(_a, [command].concat(args));
+        var _a;
     };
     GridElement.prototype.get = function (variable) {
         this.kernel.variables.get(variable);
@@ -188,11 +189,17 @@ var GridElement = (function (_super) {
         this.redraw();
         this.emit('invalidate');
     };
-    GridElement.prototype.redraw = function () {
+    GridElement.prototype.redraw = function (forceImmediate) {
+        if (forceImmediate === void 0) { forceImmediate = false; }
         if (!this.dirty) {
             this.dirty = true;
             console.time('GridElement.redraw');
-            setTimeout(this.draw.bind(this), 0);
+            if (forceImmediate) {
+                this.draw();
+            }
+            else {
+                setTimeout(this.draw.bind(this), 0);
+            }
         }
     };
     GridElement.prototype.draw = function () {
@@ -295,7 +302,7 @@ var GridElement = (function (_super) {
     return GridElement;
 }(EventEmitter_1.EventEmitterBase));
 __decorate([
-    Property_1.property(DefaultGridModel_1.DefaultGridModel.empty(), function (t) { return t.invalidate(); }),
+    Property_1.property(DefaultGridModel_1.DefaultGridModel.empty(), function (t) { t.emit('load', t.model); t.invalidate(); }),
     __metadata("design:type", Object)
 ], GridElement.prototype, "model", void 0);
 __decorate([

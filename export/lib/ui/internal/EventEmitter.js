@@ -1,5 +1,4 @@
 "use strict";
-EventTarget;
 var EventEmitterBase = (function () {
     function EventEmitterBase() {
         this.buckets = {};
@@ -17,6 +16,10 @@ var EventEmitterBase = (function () {
         }
     };
     EventEmitterBase.prototype.emit = function (event) {
+        // if (!event.match('mouse') && !event.match('key') && !event.match('drag'))
+        // {
+        //     console.log(event, ...args);
+        // }
         var args = [];
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];

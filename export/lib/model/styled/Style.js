@@ -43,6 +43,10 @@ __decorate([
 ], Style.prototype, "fillColor", void 0);
 __decorate([
     cascade(),
+    __metadata("design:type", Function)
+], Style.prototype, "formatter", void 0);
+__decorate([
+    cascade(),
     __metadata("design:type", String)
 ], Style.prototype, "textAlignment", void 0);
 __decorate([
@@ -57,13 +61,29 @@ __decorate([
     cascade(),
     __metadata("design:type", Number)
 ], Style.prototype, "textSize", void 0);
+__decorate([
+    cascade(),
+    __metadata("design:type", String)
+], Style.prototype, "textStyle", void 0);
+__decorate([
+    cascade(),
+    __metadata("design:type", String)
+], Style.prototype, "textVariant", void 0);
+__decorate([
+    cascade(),
+    __metadata("design:type", String)
+], Style.prototype, "textWeight", void 0);
 exports.Style = Style;
 exports.BaseStyle = new Style(null, {
     borderColor: 'lightgray',
     fillColor: 'white',
+    formatter: function (v) { return v; },
     textAlignment: 'left',
     textColor: 'black',
     textFont: 'Segoe UI',
     textSize: 13,
+    textStyle: 'normal',
+    textVariant: 'normal',
+    textWeight: 'normal',
 });
 //# sourceMappingURL=Style.js.map

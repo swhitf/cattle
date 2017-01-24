@@ -15,6 +15,20 @@ function index(arr, indexer) {
     return obj;
 }
 exports.index = index;
+function flatten(aa) {
+    var a = [];
+    for (var _i = 0, aa_1 = aa; _i < aa_1.length; _i++) {
+        var tm = aa_1[_i];
+        if (Array.isArray(tm)) {
+            a = a.concat(flatten(tm));
+        }
+        else {
+            a.push(tm);
+        }
+    }
+    return a;
+}
+exports.flatten = flatten;
 function keys(ix) {
     return Object.keys(ix);
 }
