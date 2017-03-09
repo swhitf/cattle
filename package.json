@@ -1,6 +1,6 @@
 {
   "name": "cattle",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A spreadsheet-like grid component library.",
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
@@ -11,16 +11,12 @@
   "author": "Stephen Whitfield",
   "license": "MIT",
   "dependencies": {
-    "@types/csv-parse": "^1.1.6",
     "@types/papaparse": "^4.1.28",
-    "@types/shortid": "0.0.28",
     "@types/tether": "^1.4.0",
     "bases": "^0.2.1",
     "clipboard-js": "^0.3.2",
-    "csv-parse": "^1.1.7",
     "es6-promise": "^4.0.5",
     "papaparse": "^4.1.2",
-    "shortid": "^2.2.6",
     "tether": "^1.4.0"
   },
   "devDependencies": {
