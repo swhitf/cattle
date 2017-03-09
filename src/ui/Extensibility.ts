@@ -2,9 +2,6 @@ import { GridKernel } from './GridKernel';
 import { Rect } from '../geom/Rect';
 import { isBoolean } from 'util';
 
-//This keeps WebStorm quiet, for some reason it is complaining...
-declare var Reflect:any;
-
 
 /**
  * Do not use directly.

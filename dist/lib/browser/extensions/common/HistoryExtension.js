@@ -1,0 +1,140 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+define(["require", "exports", "../../misc/Util", "./EditingExtension", "../../input/KeyInput", "../../ui/Extensibility"], function (require, exports, Util_1, EditingExtension_1, KeyInput_1, Extensibility_1) {
+    "use strict";
+    var HistoryExtension = (function () {
+        function HistoryExtension() {
+            this.future = [];
+            this.past = [];
+            this.noCapture = false;
+        }
+        HistoryExtension.prototype.init = function (grid, kernel) {
+            var _this = this;
+            this.grid = grid;
+            KeyInput_1.KeyInput.for(grid.root)
+                .on('!CTRL+KEY_Z', function () { return _this.undo(); })
+                .on('!CTRL+KEY_Y', function () { return _this.redo(); });
+            grid.kernel.routines.hook('before:commit', this.beforeCommit.bind(this));
+            grid.kernel.routines.hook('after:commit', this.afterCommit.bind(this));
+        };
+        HistoryExtension.prototype.undo = function () {
+            if (!this.past.length) {
+                return;
+            }
+            var action = this.past.pop();
+            action.rollback();
+            this.future.push(action);
+        };
+        HistoryExtension.prototype.redo = function () {
+            if (!this.future.length) {
+                return;
+            }
+            var action = this.future.pop();
+            action.apply();
+            this.past.push(action);
+        };
+        HistoryExtension.prototype.push = function (action) {
+            this.past.push(action);
+            this.future = [];
+        };
+        HistoryExtension.prototype.clearHistory = function () {
+            this.past = [];
+            this.future = [];
+        };
+        HistoryExtension.prototype.beforeCommit = function (changes) {
+            if (this.noCapture)
+                return;
+            var model = this.grid.model;
+            this.capture = Util_1.zipPairs(changes.refs().map(function (r) { return [r, model.findCell(r).value]; }));
+        };
+        HistoryExtension.prototype.afterCommit = function (changes) {
+            if (this.noCapture || !this.capture)
+                return;
+            var snapshots = this.createSnapshots(this.capture, changes);
+            var action = this.createEditAction(snapshots);
+            this.push(action);
+            this.capture = null;
+        };
+        HistoryExtension.prototype.createSnapshots = function (capture, changes) {
+            var model = this.grid.model;
+            var batch = [];
+            var compiled = changes.compile(model);
+            for (var _i = 0, compiled_1 = compiled; _i < compiled_1.length; _i++) {
+                var entry = compiled_1[_i];
+                batch.push({
+                    ref: entry.cell.ref,
+                    newVal: entry.value,
+                    oldVal: capture[entry.cell.ref],
+                    cascaded: entry.cascaded,
+                });
+            }
+            return batch;
+        };
+        HistoryExtension.prototype.createEditAction = function (snapshots) {
+            var _this = this;
+            return {
+                apply: function () {
+                    _this.invokeSilentCommit(create_changes(snapshots, function (x) { return x.newVal; }));
+                },
+                rollback: function () {
+                    _this.invokeSilentCommit(create_changes(snapshots, function (x) { return x.oldVal; }));
+                },
+            };
+        };
+        HistoryExtension.prototype.invokeSilentCommit = function (changes) {
+            var grid = this.grid;
+            try {
+                this.noCapture = true;
+                grid.exec('commit', changes);
+            }
+            finally {
+                this.noCapture = false;
+            }
+            var compiled = changes.compile(grid.model);
+            var refs = compiled.filter(function (x) { return !x.cascaded; }).map(function (x) { return x.cell.ref; });
+            grid.exec('select', refs);
+        };
+        return HistoryExtension;
+    }());
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "undo", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "redo", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object]),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "push", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "clearHistory", null);
+    exports.HistoryExtension = HistoryExtension;
+    function create_changes(snapshots, valSelector) {
+        var changeSet = new EditingExtension_1.GridChangeSet();
+        for (var _i = 0, snapshots_1 = snapshots; _i < snapshots_1.length; _i++) {
+            var s = snapshots_1[_i];
+            changeSet.put(s.ref, valSelector(s), s.cascaded);
+        }
+        return changeSet;
+    }
+});
+//# sourceMappingURL=HistoryExtension.js.map

@@ -5,6 +5,7 @@ import { EventEmitterBase } from './internal/EventEmitter';
 import { GridKernel } from './GridKernel';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
+import { GridRange } from '../model/GridRange';
 import { GridLayout } from './internal/GridLayout';
 import { MouseDragEvent } from '../input/MouseDragEvent';
 import { Rect, RectLike } from '../geom/Rect';
@@ -17,6 +18,11 @@ import * as _ from '../misc/Util';
 export interface GridExtension
 {
     init?(grid:GridElement, kernel:GridKernel):void;
+}
+
+export interface GridExtender
+{
+    (grid:GridElement, kernel:GridKernel):void;
 }
 
 export interface GridMouseEvent extends MouseEvent
@@ -83,7 +89,7 @@ export class GridElement extends EventEmitterBase
         this.root = canvas;
         let kernel = this.kernel = new GridKernel(this.emit.bind(this));
 
-        ['mousedown', 'mousemove', 'mouseup', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
+        ['mousedown', 'mousemove', 'mouseup', 'mouseenter', 'mouseleave', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
             .forEach(x => this.forwardMouseEvent(x));
         ['keydown', 'keypress', 'keyup']
             .forEach(x => this.forwardKeyEvent(x));
@@ -126,13 +132,20 @@ export class GridElement extends EventEmitterBase
         return new Point(this.scrollLeft, this.scrollTop);
     }
 
-    public extend(ext:GridExtension):GridElement
+    public extend(ext:GridExtension|GridExtender):GridElement
     {
-        this.kernel.install(ext);
-
-        if (ext.init)
+        if (typeof(ext) === 'function')
         {
-            ext.init(this, this.kernel);
+            ext(this, this.kernel);
+        }
+        else
+        {
+            this.kernel.install(ext);
+
+            if (ext.init)
+            {
+                ext.init(this, this.kernel);
+            }
         }
 
         return this;
@@ -251,13 +264,26 @@ export class GridElement extends EventEmitterBase
         this.invalidate();
     }
 
-    public invalidate():void
+    public invalidate(query:string = null):void
     {
-        this.buffers = {};
         this.layout = GridLayout.compute(this.model);
+        
+        if (!!query)
+        {
+            let range = GridRange.select(this.model, query);
+            for (let cell of range.ltr) {
+                delete cell['__dirty'];
+                delete this.buffers[cell.ref];
+            }
+        }
+        else
+        {
+            this.buffers = {};
+            this.model.cells.forEach(x => delete x['__dirty']);
+        }
+
 
         this.redraw();
-
         this.emit('invalidate');
     }
 
@@ -274,7 +300,7 @@ export class GridElement extends EventEmitterBase
             }
             else
             {
-                setTimeout(this.draw.bind(this), 0);
+                requestAnimationFrame(this.draw.bind(this));
             }
         }
     }
@@ -351,6 +377,11 @@ export class GridElement extends EventEmitterBase
             let cell = this.model.findCell(cr);
             let visual = this.visuals[cr];
 
+            if (visual.width == 0 || visual.height == 0)
+            {
+                continue;
+            }
+
             if (!viewport.intersects(visual))
             {
                 continue;
@@ -389,7 +420,7 @@ export class GridElement extends EventEmitterBase
         {
             if (visual[p] === undefined)
             {
-                visual[p] = _.shadowClone(cell[p]);
+                visual[p] = clone(cell[p]);
             }
             else
             {
@@ -456,6 +487,18 @@ export class GridElement extends EventEmitterBase
         event.gridX = source.gridX;
         event.gridY = source.gridY;
         return event;
+    }
+}
+
+function clone(x:any):any
+{
+    if (Array.isArray(x))
+    {
+        return x.map(clone);
+    }
+    else
+    {
+        return _.shadowClone(x);
     }
 }
 

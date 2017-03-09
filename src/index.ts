@@ -1,11 +1,13 @@
 export * from './extensions/common/SelectorExtension';
 export * from './extensions/common/EditingExtension';
 export * from './extensions/common/ClipboardExtension';
-export * from './extensions/common/HistoryExtension';
 export * from './extensions/common/ScrollerExtension';
+export * from './extensions/history/HistoryExtension';
+export * from './extensions/history/HistoryManager';
 export * from './extensions/compute/ComputeEngine';
 export * from './extensions/compute/JavaScriptComputeEngine';
 export * from './extensions/compute/ComputeExtension';
+export * from './extensions/extra/ClickZoneExtension';
 export * from './extensions/extra/PanExtension';
 export * from './geom/Point';
 export * from './geom/Rect';
@@ -26,3 +28,9 @@ export * from './ui/GridElement';
 export * from './ui/GridKernel';
 export * from './ui/Widget';
 export * from './ui/internal/EventEmitter';
+
+import * as Tether from 'tether';
+export { Tether };
+
+import * as Dom from './misc/Dom';
+export { Dom };

@@ -76,7 +76,7 @@ export class GridRange
         }
 
         let dims = Rect.fromPoints(tl, br);
-        let results = [] as string[];
+        let results = [] as GridCell[];
 
         for (let r = dims.top; r < dims.bottom; r++)
         {
@@ -85,12 +85,12 @@ export class GridRange
                 let cell = model.locateCell(c, r);
                 if (cell)
                 {
-                    results.push(cell.ref);
+                    results.push(cell);
                 }
             }
         }
 
-        return GridRange.create(model, results);
+        return GridRange.createInternal(model, results);
     }
     
     /**
@@ -111,7 +111,7 @@ export class GridRange
         {
             if (!!fromCell)
             {
-                return GridRange.create(model, [fromCell.ref]);
+                return GridRange.createInternal(model, [fromCell]);
             }
         }
         else
@@ -143,6 +143,42 @@ export class GridRange
             height: 0,
             length: 0,
             count: 0,
+        });
+    }
+
+    private static createInternal(model:GridModel, cells:GridCell[]):GridRange
+    {
+        let lc = Number.MAX_VALUE, lr = Number.MAX_VALUE;
+        let hc = Number.MIN_VALUE, hr = Number.MIN_VALUE;
+
+        for (let c of cells)
+        {
+            if (lc > c.colRef) lc = c.colRef;
+            if (hc < c.colRef) hc = c.colRef;
+            if (lr > c.rowRef) lr = c.rowRef;
+            if (hr < c.rowRef) hr = c.rowRef;
+        }
+
+        let ltr:GridCell[];
+        let ttb:GridCell[];
+
+        if (cells.length > 1)
+        {
+            ltr = cells.sort(ltr_sort);
+            ttb = cells.slice(0).sort(ttb_sort);
+        }
+        else
+        {
+            ltr = ttb = cells;
+        }
+
+        return new GridRange({
+            ltr: ltr,
+            ttb: ttb,
+            width: hc - lc,
+            height: hr - lr,
+            length: (hc - lc) * (hr - lr),
+            count: cells.length,
         });
     }
 

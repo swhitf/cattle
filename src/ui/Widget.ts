@@ -55,8 +55,8 @@ export class AbsWidgetBase<T extends HTMLElement> implements Widget
     {
         return new Rect
         (
-            parseInt(this.root.style.left),
-            parseInt(this.root.style.top),
+            parseFloat(this.root.style.left),
+            parseFloat(this.root.style.top),
             this.root.clientWidth,
             this.root.clientHeight
         );

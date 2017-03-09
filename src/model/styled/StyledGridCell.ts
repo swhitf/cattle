@@ -50,18 +50,18 @@ function draw(gfx:CanvasRenderingContext2D, visual:any):void
     gfx.strokeRect(-av, -av, visual.width, visual.height);
 
     let textPt = new Point(3, visual.height / 2) as PointLike;
-    if (style.textAlignment === 'center')
+    if (style.text.alignment === 'center')
     {
         textPt.x = visual.width / 2;
     }
-    if (style.textAlignment === 'right')
+    if (style.text.alignment === 'right')
     {
         textPt.x = visual.width - 3;
     }
 
-    gfx.font = `${style.textStyle} ${style.textVariant} ${style.textWeight} ${style.textSize}px ${style.textFont}`;
-    gfx.textAlign = style.textAlignment;
+    gfx.font = `${style.text} ${style.text.variant} ${style.text.weight} ${style.text.size}px ${style.text.font}`;
+    gfx.textAlign = style.text.alignment;
     gfx.textBaseline = 'middle';
-    gfx.fillStyle = style.textColor;
-    gfx.fillText(style.formatter(visual.value) || visual.placeholder, textPt.x, textPt.y);
+    gfx.fillStyle = style.text.color;
+    gfx.fillText(style.formatter(visual.value, visual) || visual.placeholder, textPt.x, textPt.y);
 }

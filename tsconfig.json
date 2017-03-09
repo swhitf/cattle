@@ -2,6 +2,14 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es5",
+        "lib": [
+            "dom",
+            "es5",
+            "es2015.core",
+            "es2015.promise",
+            "es2015.reflect",
+            "scripthost"
+        ],
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "declaration": true,
@@ -11,6 +19,7 @@
     },
     "exclude": [
         "build",
+        "export",
         "dist",
         "node_modules",
         "play",

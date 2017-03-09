@@ -1,6 +1,6 @@
+import { RefGen } from '../../misc/RefGen';
 import { GridCell } from '../GridCell';
 import * as _ from '../../misc/Util';
-import * as shortid from 'shortid';
 import { visualize, renderer } from '../../ui/Extensibility';
 
 
@@ -60,7 +60,7 @@ export class DefaultGridCell implements GridCell
      */
     constructor(params:DefaultGridCellParams)
     {
-        params.ref = params.ref || shortid.generate();
+        params.ref = params.ref || RefGen.next();
         params.colSpan = params.colSpan || 1;
         params.rowSpan = params.rowSpan || 1;
         params.value = (params.value === undefined || params.value === null) ? '' : params.value;

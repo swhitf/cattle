@@ -21,18 +21,31 @@ export function cascade():PropertyDecorator
     };
 }
 
+export class Cascading<T>
+{
+    public readonly parent:T;
+
+    constructor(parent?:T, values?:any)
+    {
+        this.parent = parent || null;
+        if (values)
+        {
+            extend(this, values);
+        }
+    }
+}
+
+
 
 export type TextAlignment = 'left'|'center'|'right';
 
 export interface ValueFormatter
 {
-    (value:string):string;
+    (value:string, visual:any):string;
 }
 
-export class Style
+export class Style extends Cascading<Style>
 {
-    public readonly parent:Style;
-
     @cascade()
     public borderColor:string;
 
@@ -43,45 +56,54 @@ export class Style
     public formatter:ValueFormatter;
 
     @cascade()
-    public textAlignment:TextAlignment;
+    public text:TextStyle;
+}
+
+export class TextStyle extends Cascading<TextStyle>
+{
+    public static Default:TextStyle = new TextStyle(null, {
+        alignment: 'left',
+        color: 'black',
+        font: 'Segoe UI',
+        size: 13,
+        style: 'normal',
+        variant: 'normal',
+        weight: 'normal',
+    });
 
     @cascade()
-    public textColor:string;
+    public alignment:TextAlignment;
 
     @cascade()
-    public textFont:string;
+    public color:string;
 
     @cascade()
-    public textSize:number;
+    public font:string;
 
     @cascade()
-    public textStyle:string;
+    public size:number;
 
     @cascade()
-    public textVariant:string;
+    public style:string;
 
     @cascade()
-    public textWeight:string;
+    public variant:string;
 
-    constructor(parent?:Style, values?:any)
-    {
-        this.parent = parent || null;
-        if (values)
-        {
-            extend(this, values);
-        }
-    }
+    @cascade()
+    public weight:string;
 }
 
 export const BaseStyle = new Style(null, {
     borderColor: 'lightgray',
     fillColor: 'white',
     formatter: v => v,
-    textAlignment: 'left',
-    textColor: 'black',
-    textFont: 'Segoe UI',
-    textSize: 13,
-    textStyle: 'normal',
-    textVariant: 'normal',
-    textWeight: 'normal',
+    text: new TextStyle(null, {
+        alignment: 'left',
+        color: 'black',
+        font: 'Segoe UI',
+        size: 13,
+        style: 'normal',
+        variant: 'normal',
+        weight: 'normal',
+    })
 });
