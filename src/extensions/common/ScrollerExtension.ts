@@ -1,5 +1,6 @@
 import { coalesce } from '../../misc/Util';
 import { Padding } from '../../geom/Padding';
+import { Point } from '../../geom/Point';
 import { GridElement, GridMouseEvent } from '../../ui/GridElement';
 import { GridKernel } from '../../ui/GridKernel';
 import * as Tether from 'tether';
@@ -10,11 +11,11 @@ export class ScrollerExtension
 {
     private grid:GridElement;
 
+    private scrollCaptureEnabled:boolean;
+
     private layer:HTMLDivElement;
-    private scrollerX:HTMLDivElement;
-    private scrollerY:HTMLDivElement;
-    private wedgeX:HTMLDivElement;
-    private wedgeY:HTMLDivElement;
+    private scroller:HTMLDivElement;
+    private wedge:HTMLDivElement;
 
     constructor(private scrollerWidth?:number) 
     {
@@ -33,16 +34,12 @@ export class ScrollerExtension
             grid.padding.bottom + this.scrollerWidth,
             grid.padding.left);
 
-        grid.on('mousemove', (e:GridMouseEvent) =>
-        {
-            console.log('grid:', e.gridX);
-            console.log('client:', e.clientX);
-            console.log('offset:', e.offsetX);
-            console.log('page:', e.pageX);
-        });
-
         grid.on('invalidate', () => this.alignElements());
         grid.on('scroll', () => this.alignElements());
+
+        grid.on('mousedown', this.onGridMouseDown.bind(this));
+        grid.on('mousemove', this.onGridAreaMouseMove.bind(this));
+        grid.on('mousewheel', this.onGridMouseWheel.bind(this));
     }
 
     private createElements(target:HTMLElement):void
@@ -69,82 +66,101 @@ export class ScrollerExtension
         this.grid.on('bash', onBash);
         onBash();
 
-        let scrollerX = this.scrollerX = document.createElement('div');
-        scrollerX.className = 'grid-scroller grid-scroller-x';
-        scrollerX.addEventListener('scroll', this.onScrollHorizontal.bind(this));
-        layer.appendChild(scrollerX);
+        let scroller = this.scroller = document.createElement('div');
+        scroller.className = 'grid-scroller';
+        scroller.addEventListener('scroll', this.onScrollerScroll.bind(this));
+        scroller.addEventListener('mousemove', this.onGridAreaMouseMove.bind(this));
+        layer.appendChild(scroller);
 
-        let wedgeX = this.wedgeX = document.createElement('div');
-        scrollerX.appendChild(wedgeX);
+        let wedge = this.wedge = document.createElement('div');
+        Dom.css(wedge, { pointerEvents: 'none', });
+        scroller.appendChild(wedge);
 
-        let scrollerY = this.scrollerY = document.createElement('div');
-        scrollerY.className = 'grid-scroller grid-scroller-y';
-        scrollerY.addEventListener('scroll', this.onScrollVertical.bind(this));
-        layer.appendChild(scrollerY);
-
-        let wedgeY = this.wedgeY = document.createElement('div');
-        scrollerY.appendChild(wedgeY);
-
-        Dom.css(this.scrollerX, {
-            pointerEvents: 'auto',
+        Dom.css(this.scroller, {
             position: 'absolute',
-            overflow: 'auto',
-            width: `${this.grid.width - this.scrollerWidth}px`,
-            height: this.scrollerWidth + 'px',
+            overflow: 'scroll',
             left: '0px',
-            bottom: '0px',
-        });
-
-        Dom.css(this.scrollerY, {
-            pointerEvents: 'auto',
-            position: 'absolute',
-            overflow: 'auto',
-            width: this.scrollerWidth + 'px',
-            height: `${this.grid.height - this.scrollerWidth}px`,
-            right: '0px',
             top: '0px',
         });
+
+        this.alignElements();
     }
 
     private alignElements():void
     {
-        Dom.css(this.scrollerX, {
-            width: `${this.grid.width - this.scrollerWidth}px`,
+        Dom.css(this.scroller, {
+            pointerEvents: !!this.scrollCaptureEnabled ? 'auto' : 'auto',
+            width: `${this.grid.width}px`,
+            height: `${this.grid.height}px`,
         });
 
-        Dom.css(this.wedgeX, {
+        Dom.css(this.wedge, {
             width: `${this.grid.virtualWidth - this.scrollerWidth}px`,
-            height: '1px',
-        });
-
-        if (this.scrollerX.scrollLeft != this.grid.scrollLeft)
-        {
-            this.scrollerX.scrollLeft = this.grid.scrollLeft;
-        }
-
-        Dom.css(this.scrollerY, {
-            height: `${this.grid.height - this.scrollerWidth}px`,
-        });
-
-        Dom.css(this.wedgeY, {
-            width: '1px',
             height: `${this.grid.virtualHeight - this.scrollerWidth}px`,
         });
 
-        if (this.scrollerY.scrollTop != this.grid.scrollTop)
+        if (this.scroller.scrollLeft != this.grid.scrollLeft)
         {
-            this.scrollerY.scrollTop = this.grid.scrollTop;
+            this.scroller.scrollLeft = this.grid.scrollLeft;
+        }
+
+        if (this.scroller.scrollTop != this.grid.scrollTop)
+        {
+            this.scroller.scrollTop = this.grid.scrollTop;
         }
     }
 
-    private onScrollHorizontal():void
+    private toggleScrollCapture(to:boolean):void
     {
-        this.grid.scrollLeft = this.scrollerX.scrollLeft;
+        if (this.scrollCaptureEnabled !== to)
+        {
+            this.scrollCaptureEnabled = to;
+            this.alignElements();
+        }   
     }
 
-    private onScrollVertical():void
+    private onGridMouseDown(e:MouseEvent):void 
     {
-        this.grid.scrollTop = this.scrollerY.scrollTop;
+        //Middle click:
+        if (e.button == 1)
+        {
+            this.toggleScrollCapture(true);
+            this.scroller.dispatchEvent(new MouseEvent( "click", { "button": 1, }));           
+        }
+    }
+
+    private onGridMouseWheel(e:MouseWheelEvent):void 
+    {
+        let grid = this.grid;
+
+        let maxScroll = new Point(
+            grid.virtualWidth - grid.width,
+            grid.virtualHeight - grid.height,
+        );
+
+        grid.scroll = grid.scroll
+            .add([e.deltaX, e.deltaY])
+            .clamp(Point.empty, maxScroll);
+    }
+
+    private onGridAreaMouseMove(e:MouseEvent):void 
+    {
+        let grid = this.grid;
+        
+        if (e.offsetX > (grid.width - this.scrollerWidth) ||
+            e.offsetY > (grid.height - this.scrollerWidth)) 
+        {
+            this.toggleScrollCapture(true);    
+        }
+        else 
+        {
+            this.toggleScrollCapture(false);
+        }
+    }
+
+    private onScrollerScroll():void
+    {
+        this.grid.scroll = new Point(this.scroller.scrollLeft, this.scroller.scrollTop);
     }
 }
 

@@ -70,11 +70,8 @@ export class GridElement extends EventEmitterBase
     @property(Padding.empty, t => t.invalidate())
     public padding:Padding;
 
-    @property(0, t => { t.redraw(); t.emit('scroll'); })
-    public scrollLeft:number;
-
-    @property(0, t => { t.redraw(); t.emit('scroll'); })
-    public scrollTop:number;
+    @property(Point.empty, t => { t.redraw(); t.emit('scroll'); })
+    public scroll:Point;
 
     public readonly root:HTMLCanvasElement;
 
@@ -93,7 +90,7 @@ export class GridElement extends EventEmitterBase
         this.root = canvas;
         let kernel = this.kernel = new GridKernel(this.emit.bind(this));
 
-        ['mousedown', 'mousemove', 'mouseup', 'mouseenter', 'mouseleave', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
+        ['mousedown', 'mousemove', 'mouseup', 'mouseenter', 'mouseleave', 'mousewheel', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
             .forEach(x => this.forwardMouseEvent(x));
         ['keydown', 'keypress', 'keyup']
             .forEach(x => this.forwardKeyEvent(x));
@@ -131,9 +128,14 @@ export class GridElement extends EventEmitterBase
         return this.layout.height;
     }
 
-    public get scroll():Point
+    public get scrollLeft():number
     {
-        return new Point(this.scrollLeft, this.scrollTop);
+        return this.scroll.x;
+    }
+
+    public get scrollTop():number
+    {
+        return this.scroll.y;
     }
 
     public extend(ext:GridExtension|GridExtender):GridElement
@@ -241,21 +243,31 @@ export class GridElement extends EventEmitterBase
             dest = new Rect(dest.x, dest.y, 1, 1);
         }
 
+        let newScroll = {
+            x: this.scroll.x,
+            y: this.scroll.y,
+        };
+
         if (dest.left < 0)
         {
-            this.scrollLeft += dest.left;
+            newScroll.x += dest.left;
         }
         if (dest.right > this.width)
         {
-            this.scrollLeft += dest.right - this.width;
+            newScroll.x += dest.right - this.width;
         }
         if (dest.top < 0)
         {
-            this.scrollTop += dest.top;
+            newScroll.y += dest.top;
         }
         if (dest.bottom > this.height)
         {
-            this.scrollTop += dest.bottom - this.height;
+            newScroll.y += dest.bottom - this.height;
+        }
+
+        if (!this.scroll.equals(newScroll))
+        {
+            this.scroll = Point.create(newScroll);
         }
     }
 

@@ -29,7 +29,7 @@ let grid = GridElement
     .create(document.getElementById('x'))
     .extend(new ScrollerExtension())
     .extend(new SelectorExtension())
-    // .extend(new EditingExtension())
+    .extend(new EditingExtension())
     // .extend(new ClipboardExtension())
     // .extend(new HistoryExtension(history))
     // .extend(new ComputeExtension())

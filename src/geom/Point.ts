@@ -191,6 +191,19 @@ export class Point implements PointLike
         return this.add(pt.reverse());
     }
 
+    public clamp(lower:Point, upper:Point):Point
+    {
+        let x = this.x;
+        if (x < lower.x) x = lower.x;
+        if (x > upper.x) x = upper.x;
+
+        let y = this.y;
+        if (y < lower.y) y = lower.y;
+        if (y > upper.y) y = upper.y;
+
+        return new Point(x, y);
+    }
+
     //endregion
 
     //region Conversion
