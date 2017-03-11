@@ -143,11 +143,21 @@ export class Rect
 
     public inflate(size:PointLike):Rect
     {
-        return new Rect(
+        return Rect.fromEdges(
             this.left - size.x,
             this.top - size.y,
-            this.width + size.x,
-            this.height + size.y
+            this.right + size.x,
+            this.bottom + size.y
+        );
+    }
+
+    public extend(size:PointLike):Rect
+    {
+        return Rect.fromEdges(
+            this.left,
+            this.top,
+            this.right + size.x,
+            this.bottom + size.y
         );
     }
 

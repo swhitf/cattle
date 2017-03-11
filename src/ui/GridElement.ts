@@ -74,6 +74,9 @@ export class GridElement extends EventEmitterBase
     @property(DefaultGridModel.empty(), t => { t.emit('load', t.model); t.invalidate(); })
     public model:GridModel;
 
+    @property(Point.empty, t => t.invalidate())
+    public freezeMargin:Point;
+
     @property(Padding.empty, t => t.invalidate())
     public padding:Padding;
 
@@ -381,6 +384,8 @@ export class GridElement extends EventEmitterBase
                 nextFrame[cell.ref] = visual;
             }
         }
+
+        //let frozenCells = layout.captureCells(viewport.inflate)
 
         this.visuals = nextFrame;
 
