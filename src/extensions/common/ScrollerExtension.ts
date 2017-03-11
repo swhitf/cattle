@@ -10,11 +10,6 @@ import * as Dom from '../../misc/Dom';
 export class ScrollerExtension
 {
     private grid:GridElement;
-
-    private scrollCaptureEnabled:boolean;
-
-    private layer:HTMLDivElement;
-    private scroller:HTMLDivElement;
     private wedge:HTMLDivElement;
 
     constructor(private scrollerWidth?:number) 
@@ -36,131 +31,66 @@ export class ScrollerExtension
 
         grid.on('invalidate', () => this.alignElements());
         grid.on('scroll', () => this.alignElements());
-
-        grid.on('mousedown', this.onGridMouseDown.bind(this));
-        grid.on('mousemove', this.onGridAreaMouseMove.bind(this));
-        grid.on('mousewheel', this.onGridMouseWheel.bind(this));
     }
 
     private createElements(target:HTMLElement):void
     {
-        const scrollWidth = detect_native_scroller_width();
+        //ScrollerExtension is a special case, we need to modify the grid container element in order
+        //to reliability enable all scroll interaction without logs of emulation and buggy crap.  We
+        //inject a wedge element that simulates the overflow for the container scroll bars and then
+        //hold the grid in place while mirroring the scroll property against the container scorll 
+        //position. Vuala!
 
-        let layer = document.createElement('div');
-        layer.className = 'grid-layer';
-        Dom.css(layer, { pointerEvents: 'none', });
-        target.parentElement.insertBefore(layer, target);
-
-        let t = new Tether({
-            element: layer,
-            target: target,
-            attachment: 'middle center',
-            targetAttachment: 'middle center',
+        let container = this.grid.container;
+        container.addEventListener('scroll', this.onContainerScroll.bind(this));
+        Dom.css(container, {
+            overflow: 'auto',
         });
-
-        let onBash = () => {
-            Dom.fit(layer, target);
-            t.position();
-        };
-
-        this.grid.on('bash', onBash);
-        onBash();
-
-        let scroller = this.scroller = document.createElement('div');
-        scroller.className = 'grid-scroller';
-        scroller.addEventListener('scroll', this.onScrollerScroll.bind(this));
-        scroller.addEventListener('mousemove', this.onGridAreaMouseMove.bind(this));
-        layer.appendChild(scroller);
 
         let wedge = this.wedge = document.createElement('div');
         Dom.css(wedge, { pointerEvents: 'none', });
-        scroller.appendChild(wedge);
-
-        Dom.css(this.scroller, {
-            position: 'absolute',
-            overflow: 'scroll',
-            left: '0px',
-            top: '0px',
-        });
+        container.appendChild(wedge);
 
         this.alignElements();
     }
 
     private alignElements():void
     {
-        Dom.css(this.scroller, {
-            pointerEvents: !!this.scrollCaptureEnabled ? 'auto' : 'auto',
-            width: `${this.grid.width}px`,
-            height: `${this.grid.height}px`,
+        let grid = this.grid;
+        let conatiner = grid.container;
+
+        Dom.css(grid.root, {
+            position: 'absolute',
+            left: (grid.scrollLeft) + 'px',
+            top: (grid.scrollTop) + 'px',
         });
 
         Dom.css(this.wedge, {
-            width: `${this.grid.virtualWidth - this.scrollerWidth}px`,
-            height: `${this.grid.virtualHeight - this.scrollerWidth}px`,
+            width: `${grid.virtualWidth - this.scrollerWidth}px`,
+            height: `${grid.virtualHeight - this.scrollerWidth}px`,
         });
 
-        if (this.scroller.scrollLeft != this.grid.scrollLeft)
+        if (conatiner.scrollLeft != grid.scrollLeft)
         {
-            this.scroller.scrollLeft = this.grid.scrollLeft;
+            conatiner.scrollLeft = grid.scrollLeft;
         }
 
-        if (this.scroller.scrollTop != this.grid.scrollTop)
+        if (conatiner.scrollTop != grid.scrollTop)
         {
-            this.scroller.scrollTop = this.grid.scrollTop;
-        }
-    }
-
-    private toggleScrollCapture(to:boolean):void
-    {
-        if (this.scrollCaptureEnabled !== to)
-        {
-            this.scrollCaptureEnabled = to;
-            this.alignElements();
-        }   
-    }
-
-    private onGridMouseDown(e:MouseEvent):void 
-    {
-        //Middle click:
-        if (e.button == 1)
-        {
-            this.toggleScrollCapture(true);
-            this.scroller.dispatchEvent(new MouseEvent( "click", { "button": 1, }));           
+            conatiner.scrollTop = grid.scrollTop;
         }
     }
 
-    private onGridMouseWheel(e:MouseWheelEvent):void 
+    private onContainerScroll():void
     {
         let grid = this.grid;
-
         let maxScroll = new Point(
             grid.virtualWidth - grid.width,
             grid.virtualHeight - grid.height,
         );
 
-        grid.scroll = grid.scroll
-            .add([e.deltaX, e.deltaY])
+        grid.scroll = new Point(grid.container.scrollLeft, grid.container.scrollTop)
             .clamp(Point.empty, maxScroll);
-    }
-
-    private onGridAreaMouseMove(e:MouseEvent):void 
-    {
-        let grid = this.grid;
-        
-        if (e.offsetX > (grid.width - this.scrollerWidth) ||
-            e.offsetY > (grid.height - this.scrollerWidth)) 
-        {
-            this.toggleScrollCapture(true);    
-        }
-        else 
-        {
-            this.toggleScrollCapture(false);
-        }
-    }
-
-    private onScrollerScroll():void
-    {
-        this.grid.scroll = new Point(this.scroller.scrollLeft, this.scroller.scrollTop);
     }
 }
 

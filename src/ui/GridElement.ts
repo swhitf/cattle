@@ -42,20 +42,27 @@ export interface GridMouseDragEvent extends MouseDragEvent
 
 export interface GridKeyboardEvent extends KeyboardEvent
 {
-
 }
 
 export class GridElement extends EventEmitterBase
 {
     public static create(target:HTMLElement, initialModel?:GridModel):GridElement
     {
+        let parent = target.parentElement;
+
         let canvas = target.ownerDocument.createElement('canvas');
         canvas.id = target.id;
         canvas.className = target.className;
         canvas.tabIndex = target.tabIndex || 0;
 
-        target.parentNode.insertBefore(canvas, target);
-        target.parentNode.removeChild(target);
+        target.id = null;
+        parent.insertBefore(canvas, target);
+        parent.removeChild(target);
+
+        if (!parent.style.position || parent.style.position === 'static') 
+        {
+            parent.style.position = 'relative';
+        }
 
         let grid = new GridElement(canvas);
         grid.model = initialModel || DefaultGridModel.dim(26, 100);
@@ -74,7 +81,7 @@ export class GridElement extends EventEmitterBase
     public scroll:Point;
 
     public readonly root:HTMLCanvasElement;
-
+    public readonly container:HTMLElement;
     public readonly kernel:GridKernel;
 
     private hotCell:GridCell;
@@ -88,6 +95,8 @@ export class GridElement extends EventEmitterBase
         super();
 
         this.root = canvas;
+        this.container = canvas.parentElement;
+
         let kernel = this.kernel = new GridKernel(this.emit.bind(this));
 
         ['mousedown', 'mousemove', 'mouseup', 'mouseenter', 'mouseleave', 'mousewheel', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
