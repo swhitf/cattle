@@ -1,3 +1,4 @@
+import { Padding } from '../../geom/Padding';
 import { DefaultGridColumn } from '../../model/default/DefaultGridColumn';
 import { DefaultGridRow } from '../../model/default/DefaultGridRow';
 import { GridCell } from '../../model/GridCell';
@@ -17,7 +18,7 @@ export interface GridLayoutRegion<T> extends RectLike
 
 export class GridLayout
 {
-    public static compute(model:GridModel):GridLayout
+    public static compute(model:GridModel, padding:Padding):GridLayout
     {
         let colLookup = <ObjectIndex<GridColumn>>model.columns.reduce((t, x) => { t[x.ref] = x; return t }, {});
         let rowLookup = <ObjectIndex<GridRow>>model.rows.reduce((t, x) => { t[x.ref] = x; return t }, {});
@@ -38,15 +39,15 @@ export class GridLayout
         }
 
         // Compute width and height of whole grid
-        let width = _.values(colLookup).reduce((t, x) => t + x.width, 0);
-        let height = _.values(rowLookup).reduce((t, x) => t + x.height, 0);
+        let width = _.values(colLookup).reduce((t, x) => t + x.width, 0) + padding.horizontal;
+        let height = _.values(rowLookup).reduce((t, x) => t + x.height, 0) + padding.vertical;
 
         // Compute the layout regions for the various bits
         let colRegs:GridLayoutRegion<number>[] = [];
         let rowRegs:GridLayoutRegion<number>[] = [];
         let cellRegs:GridLayoutRegion<string>[] = [];
 
-        let accLeft = 0;
+        let accLeft = padding.left;
         for (let ci = 0; ci <= maxCol; ci++)
         {
             let col = colLookup[ci];
@@ -59,7 +60,7 @@ export class GridLayout
                 height: height,
             });
 
-            let accTop = 0;
+            let accTop = padding.top;
             for (let ri = 0; ri <= maxRow; ri++)
             {
                 let row = rowLookup[ri];

@@ -1,3 +1,4 @@
+import { Padding } from '../geom/Padding';
 import { DefaultHistoryManager, GridExtension, GridKernel } from '../';
 import { ClickZoneExtension } from '../extensions/extra/ClickZoneExtension';
 import { EditingExtension, GridEditEvent } from '../extensions/common/EditingExtension';
@@ -28,11 +29,11 @@ let grid = GridElement
     .create(document.getElementById('x'))
     .extend(new ScrollerExtension())
     .extend(new SelectorExtension())
-    .extend(new EditingExtension())
-    .extend(new ClipboardExtension())
-    .extend(new HistoryExtension(history))
-    .extend(new ComputeExtension())
-    .extend(new ClickZoneExtension())
+    // .extend(new EditingExtension())
+    // .extend(new ClipboardExtension())
+    // .extend(new HistoryExtension(history))
+    // .extend(new ComputeExtension())
+    // .extend(new ClickZoneExtension())
     .mergeInterface()
 ;
 
@@ -51,7 +52,9 @@ grid.on('input', (e:GridEditEvent) =>
 
 grid.on('click', (e:any) =>
 {
-    console.log(Base26.num(e.cell.colRef).str + (e.cell.rowRef + 1));
+    if (e.cell) {
+        console.log(Base26.num(e.cell.colRef).str + (e.cell.rowRef + 1));
+    }
 });
 
 grid.on('zoneenter', e => console.log(e.type, e.zone.type));

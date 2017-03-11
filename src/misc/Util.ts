@@ -1,5 +1,18 @@
 
 
+export function coalesce<T>(...inputs:T[]):T
+{
+    for (let x of inputs)
+    {
+        if (x !== undefined && x !== null)
+        {
+            return x;
+        }
+    }
+
+    return undefined;
+}
+
 export function extend(target:any, data:any):any
 {
     for (let k in data)

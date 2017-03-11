@@ -1,3 +1,4 @@
+import { Padding } from '../geom/Padding';
 import { MouseInput } from '../input/MouseInput';
 import { GridRow } from '../model/GridRow';
 import { DefaultGridModel } from '../model/default/DefaultGridModel';
@@ -66,6 +67,9 @@ export class GridElement extends EventEmitterBase
     @property(DefaultGridModel.empty(), t => { t.emit('load', t.model); t.invalidate(); })
     public model:GridModel;
 
+    @property(Padding.empty, t => t.invalidate())
+    public padding:Padding;
+
     @property(0, t => { t.redraw(); t.emit('scroll'); })
     public scrollLeft:number;
 
@@ -77,8 +81,8 @@ export class GridElement extends EventEmitterBase
     public readonly kernel:GridKernel;
 
     private hotCell:GridCell;
-    private layout:GridLayout;
     private dirty:boolean = false;
+    private layout:GridLayout;    
     private buffers:ObjectMap<Buffer> = {};
     private visuals:ObjectMap<Visual> = {};
 
@@ -266,7 +270,8 @@ export class GridElement extends EventEmitterBase
 
     public invalidate(query:string = null):void
     {
-        this.layout = GridLayout.compute(this.model);
+        console.time('GridElement.invalidate');
+        this.layout = GridLayout.compute(this.model, this.padding);
         
         if (!!query)
         {
@@ -282,7 +287,7 @@ export class GridElement extends EventEmitterBase
             this.model.cells.forEach(x => delete x['__dirty']);
         }
 
-
+        console.timeEnd('GridElement.invalidate');
         this.redraw();
         this.emit('invalidate');
     }
