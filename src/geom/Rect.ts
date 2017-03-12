@@ -28,9 +28,9 @@ export class Rect
         return new Rect(like.left, like.top, like.width, like.height);
     }
 
-    public static fromMany(rects:Rect[]):Rect
+    public static fromMany(rects:RectLike[]):Rect
     {
-        let points = [].concat.apply([], rects.map(x => x.points()));
+        let points = [].concat.apply([], rects.map(x => Rect.prototype.points.call(x)));
         return Rect.fromPointBuffer(points);
     }
     

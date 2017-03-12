@@ -134,9 +134,33 @@ export class GridLayout
         return this.columnIndex[ref] || null;
     }
 
+    public queryColumnRange(fromRef:number, toRefEx:number):RectLike
+    {
+        let likes = [] as RectLike[];        
+
+        for (let i = fromRef; i < toRefEx; i++)
+        {
+            likes.push(this.queryColumn(i));
+        }
+        
+        return Rect.fromMany(likes);
+    }
+
     public queryRow(ref:number):RectLike
     {
         return this.rowIndex[ref] || null;
+    }
+
+    public queryRowRange(fromRef:number, toRefEx:number):RectLike
+    {
+        let likes = [] as RectLike[];        
+
+        for (let i = fromRef; i < toRefEx; i++)
+        {
+            likes.push(this.queryRow(i));
+        }
+        
+        return Rect.fromMany(likes);
     }
 
     public queryCell(ref:string):RectLike
