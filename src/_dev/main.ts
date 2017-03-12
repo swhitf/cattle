@@ -30,8 +30,8 @@ let grid = GridElement
     .extend(new ScrollerExtension())
     .extend(new SelectorExtension())
     .extend(new EditingExtension())
-    // .extend(new ClipboardExtension())
-    // .extend(new HistoryExtension(history))
+    .extend(new ClipboardExtension())
+    .extend(new HistoryExtension(history))
     // .extend(new ComputeExtension())
     // .extend(new ClickZoneExtension())
     .mergeInterface()
@@ -104,7 +104,7 @@ function make_model(cols:number, rows:number)
             cells.push(new DefaultGridCell({
                 colRef: c,
                 rowRef: r,
-                value: '123',
+                value: Base26.num(c).str  + (r + 1),
             }));
         }   
     }

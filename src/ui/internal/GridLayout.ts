@@ -143,7 +143,7 @@ export class GridLayout
             likes.push(this.queryColumn(i));
         }
         
-        return Rect.fromMany(likes);
+        return Rect.fromMany(likes.map(Rect.fromLike));
     }
 
     public queryRow(ref:number):RectLike
@@ -160,7 +160,7 @@ export class GridLayout
             likes.push(this.queryRow(i));
         }
         
-        return Rect.fromMany(likes);
+        return Rect.fromMany(likes.map(Rect.fromLike));
     }
 
     public queryCell(ref:string):RectLike
