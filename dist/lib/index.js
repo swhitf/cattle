@@ -11,7 +11,7 @@ __export(require("./extensions/history/HistoryManager"));
 __export(require("./extensions/compute/JavaScriptComputeEngine"));
 __export(require("./extensions/compute/ComputeExtension"));
 __export(require("./extensions/extra/ClickZoneExtension"));
-__export(require("./extensions/extra/PanExtension"));
+__export(require("./geom/Padding"));
 __export(require("./geom/Point"));
 __export(require("./geom/Rect"));
 __export(require("./misc/Base26"));

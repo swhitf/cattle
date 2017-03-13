@@ -111,6 +111,19 @@ var Point = (function () {
         }
         return this.add(pt.reverse());
     };
+    Point.prototype.clamp = function (lower, upper) {
+        var x = this.x;
+        if (x < lower.x)
+            x = lower.x;
+        if (x > upper.x)
+            x = upper.x;
+        var y = this.y;
+        if (y < lower.y)
+            y = lower.y;
+        if (y > upper.y)
+            y = upper.y;
+        return new Point(x, y);
+    };
     //endregion
     //region Conversion
     Point.prototype.clone = function () {

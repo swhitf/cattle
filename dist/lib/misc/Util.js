@@ -1,4 +1,18 @@
 "use strict";
+function coalesce() {
+    var inputs = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        inputs[_i] = arguments[_i];
+    }
+    for (var _a = 0, inputs_1 = inputs; _a < inputs_1.length; _a++) {
+        var x = inputs_1[_a];
+        if (x !== undefined && x !== null) {
+            return x;
+        }
+    }
+    return undefined;
+}
+exports.coalesce = coalesce;
 function extend(target, data) {
     for (var k in data) {
         target[k] = data[k];
