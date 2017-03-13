@@ -48,6 +48,22 @@ gulp.task('export-browser', function() {
         .pipe(gulp.dest('dist/browser'))
 });
 
+gulp.task('export-example', function() {
+
+    var cfg = {
+        entries: ['./src/_dev/main.ts'],
+        cache: {},
+        packageCache: {},
+        plugin: [tsify],
+        debug: true
+    };
+
+    return browserify(cfg)
+        .bundle()
+        .pipe(source('cattle-example.js'))
+        .pipe(gulp.dest('dist/browser'))
+});
+
 /**
  * Packs the application static resources.
  */
