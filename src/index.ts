@@ -8,7 +8,6 @@ export * from './extensions/compute/ComputeEngine';
 export * from './extensions/compute/JavaScriptComputeEngine';
 export * from './extensions/compute/ComputeExtension';
 export * from './extensions/extra/ClickZoneExtension';
-export * from './extensions/extra/PanExtension';
 export * from './geom/Point';
 export * from './geom/Rect';
 export * from './misc/Base26';

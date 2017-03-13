@@ -22,7 +22,6 @@ import {ComputeEngine} from "./extensions/compute/ComputeEngine";
 import {ComputeExtension} from "./extensions/compute/ComputeExtension";
 import {JavaScriptComputeEngine} from "./extensions/compute/JavaScriptComputeEngine";
 import {WatchManager} from "./extensions/compute/WatchManager";
-import {PanExtension} from "./extensions/extra/PanExtension";
 import {ClickZoneExtension} from "./extensions/extra/ClickZoneExtension";
 import {Base26} from "./misc/Base26";
 
@@ -38,7 +37,6 @@ import {Base26} from "./misc/Base26";
     ext.ComputeExtension = ComputeExtension;
     ext.JavaScriptComputeEngine = JavaScriptComputeEngine;
     ext.WatchManager = WatchManager;
-    ext.PanExtension = PanExtension;
     ext.ClickZoneExtension = ClickZoneExtension;
     ext.Point = Point;
     ext.Rect = Rect;
