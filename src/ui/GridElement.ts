@@ -211,11 +211,8 @@ export class GridElement extends EventEmitterBase
 
     public getCellAtViewPoint(pt:PointLike):GridCell
     {
-        let fragment = this.computeViewFragments()
-            .filter(x => Rect.prototype.contains.call(x, pt))[0];
-
         let viewport = this.computeViewport();
-        let gpt = Point.create(pt).add([fragment.left, fragment.top]);
+        let gpt = Point.create(pt).add(viewport.topLeft());
 
         return this.getCellAtGridPoint(gpt);
     }
@@ -228,9 +225,8 @@ export class GridElement extends EventEmitterBase
 
     public getCellsInViewRect(rect:RectLike):GridCell[]
     {
-        let fragment = this.computeViewFragments()
-            .filter(x => Rect.prototype.contains.call(x, new Point(rect.left, rect.top)))[0];
-        let grt = Rect.fromLike(rect).offset([fragment.left, fragment.top]);
+        let viewport = this.computeViewport();
+        let grt = Rect.fromLike(rect).offset(viewport.topLeft());
 
         return this.getCellsInGridRect(grt);
     }
