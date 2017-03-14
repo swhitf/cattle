@@ -155,10 +155,8 @@ var GridElement = (function (_super) {
         return null;
     };
     GridElement.prototype.getCellAtViewPoint = function (pt) {
-        var fragment = this.computeViewFragments()
-            .filter(function (x) { return Rect_1.Rect.prototype.contains.call(x, pt); })[0];
         var viewport = this.computeViewport();
-        var gpt = Point_1.Point.create(pt).add([fragment.left, fragment.top]);
+        var gpt = Point_1.Point.create(pt).add(viewport.topLeft());
         return this.getCellAtGridPoint(gpt);
     };
     GridElement.prototype.getCellsInGridRect = function (rect) {
@@ -167,9 +165,8 @@ var GridElement = (function (_super) {
         return refs.map(function (x) { return _this.model.findCell(x); });
     };
     GridElement.prototype.getCellsInViewRect = function (rect) {
-        var fragment = this.computeViewFragments()
-            .filter(function (x) { return Rect_1.Rect.prototype.contains.call(x, new Point_1.Point(rect.left, rect.top)); })[0];
-        var grt = Rect_1.Rect.fromLike(rect).offset([fragment.left, fragment.top]);
+        var viewport = this.computeViewport();
+        var grt = Rect_1.Rect.fromLike(rect).offset(viewport.topLeft());
         return this.getCellsInGridRect(grt);
     };
     GridElement.prototype.getCellGridRect = function (ref) {
@@ -539,7 +536,7 @@ __decorate([
     __metadata("design:type", Object)
 ], GridElement.prototype, "model", void 0);
 __decorate([
-    Property_1.property(new Point_1.Point(3, 2), function (t) { return t.invalidate(); }),
+    Property_1.property(new Point_1.Point(0, 0), function (t) { return t.invalidate(); }),
     __metadata("design:type", Point_1.Point)
 ], GridElement.prototype, "freezeMargin", void 0);
 __decorate([

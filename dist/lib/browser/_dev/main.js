@@ -17,6 +17,8 @@ define(["require", "exports", "../", "../extensions/extra/ClickZoneExtension", "
         .extend(new HistoryExtension_1.HistoryExtension(history))
         .extend(new ComputeExtension_1.ComputeExtension())
         .extend(new ClickZoneExtension_1.ClickZoneExtension())
+        .extend(new ComputeExtension_1.ComputeExtension())
+        .extend(new ClickZoneExtension_1.ClickZoneExtension())
         .mergeInterface();
     grid.on('input', function (e) {
         e.changes.forEach(function (x) {
