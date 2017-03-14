@@ -1,4 +1,4 @@
-import { Point, PointLike } from './Point';
+import { Point, PointLike, PointInput } from './Point';
 
 
 export interface RectLike
@@ -30,7 +30,7 @@ export class Rect
 
     public static fromMany(rects:Rect[]):Rect
     {
-        let points = [].concat.apply([], rects.map(x => x.points()));
+        let points = [].concat.apply([], rects.map(x => Rect.prototype.points.call(x)));
         return Rect.fromPointBuffer(points);
     }
     
@@ -106,20 +106,11 @@ export class Rect
         return new Point(this.width, this.height);
     }
 
-    public offset(pt:PointLike):Rect
-    {
-        return new Rect(
-            this.left + pt.x,
-            this.top + pt.y,
-            this.width,
-            this.height);
-    }
-
-    public contains(input:Point|RectLike):boolean
+    public contains(input:PointLike|RectLike):boolean
     {
         if (input['x'] !== undefined && input['y'] !== undefined)
         {
-            let pt = <Point>input;
+            let pt = <PointLike>input;
 
             return (
                 pt.x >= this.left
@@ -141,13 +132,39 @@ export class Rect
         }
     }
 
-    public inflate(size:PointLike):Rect
+    public extend(size:PointInput):Rect
     {
+        let pt = Point.create(size);
+
         return new Rect(
-            this.left - size.x,
-            this.top - size.y,
-            this.width + size.x,
-            this.height + size.y
+            this.left,
+            this.top,
+            this.width + pt.x,
+            this.height + pt.y,
+        );
+    }
+
+    public inflate(size:PointInput):Rect
+    {
+        let pt = Point.create(size);
+        
+        return Rect.fromEdges(
+            this.left - pt.x,
+            this.top - pt.y,
+            this.right + pt.x,
+            this.bottom + pt.y
+        );
+    }
+
+    public offset(by:PointInput):Rect
+    {
+        let pt = Point.create(by);
+
+        return new Rect(
+            this.left + pt.x,
+            this.top + pt.y,
+            this.width,
+            this.height
         );
     }
 

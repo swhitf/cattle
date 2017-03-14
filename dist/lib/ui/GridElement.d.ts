@@ -66,7 +66,6 @@ export declare class GridElement extends EventEmitterBase {
     invalidate(query?: string): void;
     redraw(forceImmediate?: boolean): void;
     private draw();
-    private computeMarginSize();
     private computeViewFragments();
     private computeViewport();
     private updateVisuals();

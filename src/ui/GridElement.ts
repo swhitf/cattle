@@ -44,6 +44,8 @@ export interface GridKeyboardEvent extends KeyboardEvent
 {
 }
 
+
+
 export class GridElement extends EventEmitterBase
 {
     public static create(target:HTMLElement, initialModel?:GridModel):GridElement
@@ -74,6 +76,9 @@ export class GridElement extends EventEmitterBase
     @property(DefaultGridModel.empty(), t => { t.emit('load', t.model); t.invalidate(); })
     public model:GridModel;
 
+    @property(new Point(0, 0), t => t.invalidate())
+    public freezeMargin:Point;
+
     @property(Padding.empty, t => t.invalidate())
     public padding:Padding;
 
@@ -89,6 +94,7 @@ export class GridElement extends EventEmitterBase
     private layout:GridLayout;    
     private buffers:ObjectMap<Buffer> = {};
     private visuals:ObjectMap<Visual> = {};
+    private frame:ViewAspect[];
 
     private constructor(private canvas:HTMLCanvasElement)
     {
@@ -205,8 +211,11 @@ export class GridElement extends EventEmitterBase
 
     public getCellAtViewPoint(pt:PointLike):GridCell
     {
+        let fragment = this.computeViewFragments()
+            .filter(x => Rect.prototype.contains.call(x, pt))[0];
+
         let viewport = this.computeViewport();
-        let gpt = Point.create(pt).add(viewport.topLeft());
+        let gpt = Point.create(pt).add([fragment.left, fragment.top]);
 
         return this.getCellAtGridPoint(gpt);
     }
@@ -219,8 +228,9 @@ export class GridElement extends EventEmitterBase
 
     public getCellsInViewRect(rect:RectLike):GridCell[]
     {
-        let viewport = this.computeViewport();
-        let grt = Rect.fromLike(rect).offset(viewport.topLeft());
+        let fragment = this.computeViewFragments()
+            .filter(x => Rect.prototype.contains.call(x, new Point(rect.left, rect.top)))[0];
+        let grt = Rect.fromLike(rect).offset([fragment.left, fragment.top]);
 
         return this.getCellsInGridRect(grt);
     }
@@ -245,11 +255,15 @@ export class GridElement extends EventEmitterBase
 
     public scrollTo(ptOrRect:PointLike|RectLike):void
     {
-        let dest = <any>ptOrRect;
+        let dest:Rect;
 
-        if (dest.width === undefined && dest.height === undefined)
+        if (ptOrRect['width'] === undefined && ptOrRect['height'] === undefined)
         {
-            dest = new Rect(dest.x, dest.y, 1, 1);
+            dest = new Rect(ptOrRect['x'], ptOrRect['y'], 1, 1);
+        }
+        else
+        {
+            dest = Rect.fromLike(ptOrRect as RectLike);
         }
 
         let newScroll = {
@@ -344,12 +358,122 @@ export class GridElement extends EventEmitterBase
         this.emit('draw');
     }
 
+    private computeViewFragments():ViewFragment[]
+    {
+        let { freezeMargin, layout } = this;
+
+        let make = (l:number, t:number, w:number, h:number, ol:number, ot:number) => ({
+            left: l,
+            top: t,
+            width: w,
+            height: h,
+            offsetLeft: ol,
+            offsetTop: ot,
+        });
+
+        let viewport = this.computeViewport();
+
+        if (freezeMargin.equals(Point.empty))
+        {
+            return [ make(viewport.left, viewport.top, viewport.width, viewport.height, 0, 0) ];
+        }
+        else
+        {
+            let marginLeft = layout.queryColumnRange(0, freezeMargin.x).width;
+            let marginTop = layout.queryRowRange(0, freezeMargin.y).height;
+            let margin = new Point(marginLeft, marginTop);
+
+            //Aliases to prevent massive lines;
+            let vp = viewport;
+            let mg = margin;
+
+            return [ 
+                make(vp.left + mg.x, vp.top + mg.y, vp.width - mg.x, vp.height - mg.y, mg.x, mg.y), //Main
+                make(0, vp.top + mg.y, mg.x, vp.height - mg.y, 0, mg.y), //Left
+                make(vp.left + mg.x, 0, vp.width - mg.x, mg.y, mg.x, 0), //Top
+                make(0, 0, mg.x, mg.y, 0, 0), //LeftTop
+            ];
+        }
+    }
+
     private computeViewport():Rect
     {
         return new Rect(Math.floor(this.scrollLeft), Math.floor(this.scrollTop), this.canvas.width, this.canvas.height);
     }
 
     private updateVisuals():void
+    {
+        console.time('GridElement.drawVisuals');
+        
+        let { model, layout } = this;
+        let fragments = this.computeViewFragments();
+
+        console.log(fragments);
+        
+        let prevFrame = this.frame;
+        let nextFrame = [] as ViewAspect[];
+
+        //If the fragments have changed, nerf the prevFrame since we don't want to recycle anything.
+        if (!prevFrame || prevFrame.length != fragments.length)
+        {
+            prevFrame = [];
+        }
+
+        for (let i = 0; i < fragments.length; i++)
+        {
+            let prevAspect = prevFrame[i];
+            let aspect = <ViewAspect>{
+                view: fragments[i],
+                visuals: {},
+            };
+
+            let viewCells = layout.captureCells(aspect.view)
+                .map(ref => model.findCell(ref));
+
+            for (let cell of viewCells)
+            {
+                let region = layout.queryCell(cell.ref);
+                let visual = !!prevAspect ? prevAspect.visuals[cell.ref] : null;
+
+                // If we didn't have a previous visual or if the cell was dirty, create new visual
+                if (!visual || cell.value !== visual.value || cell['__dirty'] !== false)
+                {
+                    aspect.visuals[cell.ref] = this.createVisual(cell, region);
+                    delete this.buffers[cell.ref];
+
+                    cell['__dirty'] = false;
+                }
+                // Otherwise just use the previous
+                else
+                {
+                    aspect.visuals[cell.ref] = visual;
+                }
+            }
+
+            nextFrame.push(aspect);
+        }
+
+        this.frame = nextFrame;
+
+
+        // setTimeout(() =>
+        // {
+        //     let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
+        //     gfx.save();
+            
+        //     for (let f of fragments) 
+        //     {
+        //         //gfx.translate(f.left * -1, f.top * -1);
+        //         gfx.strokeStyle = 'red';
+        //         gfx.strokeRect(f.offsetLeft, f.offsetTop, f.width, f.height);            
+        //     }
+
+        //     gfx.restore();
+
+        // }, 50);
+    }
+
+    private updateVisuals2():void
     {
         console.time('GridElement.updateVisuals');
 
@@ -382,12 +506,128 @@ export class GridElement extends EventEmitterBase
             }
         }
 
+        //let frozenCells = layout.captureCells(viewport.inflate)
+        let fm = this.freezeMargin;
+        
+        let fragments = [] as Rect[];
+        fragments.push(viewport);
+        fragments.push(new Rect(0, 0, layout.queryColumnRange(0, fm.x).width, layout.queryRowRange(0, fm.y).height));
+        fragments.push(new Rect(0, viewport.top + fragments[1].height, fragments[1].width, (viewport.height - fragments[1].height)));
+        fragments.push(new Rect(viewport.left + fragments[1].width, 0, viewport.width - fragments[1].width, fragments[1].height));
+
+        setTimeout(() =>
+        {
+            let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
+            gfx.save();
+            gfx.translate(viewport.left * -1, viewport.top * -1);
+            
+            for (let f of fragments) 
+            {
+                gfx.strokeStyle = 'red';
+                gfx.strokeRect(f.left, f.top, f.width, f.height);            
+            }
+
+            gfx.restore();
+
+        }, 50);
+
+        fragments.splice(0, 1);
+        fragments[0]['m'] = (r:Rect, v:Visual) => { v.left = r.left + viewport.left; v.top = r.top + viewport.top }
+        fragments[1]['m'] = (r:Rect, v:Visual) => v.left = r.left + viewport.left;
+        fragments[2]['m'] = (r:Rect, v:Visual) => v.top = r.top + viewport.top;
+
+        nextFrame = <ObjectMap<Visual>>{};
+
+        for (let f of fragments.reverse()) 
+        {
+            let fragmentCells = layout.captureCells(f)
+                .map(ref => model.findCell(ref));
+
+            let prevFrame = this.visuals;
+
+            for (let cell of fragmentCells)
+            {
+                let region = layout.queryCell(cell.ref);
+                let visual = prevFrame[cell.ref] || nextFrame[cell.ref];
+
+                // If we didn't have a previous visual or if the cell was dirty, create new visual
+                if (!visual || cell.value !== visual.value || cell['__dirty'] !== false)
+                {
+                    nextFrame[cell.ref] = visual = this.createVisual(cell, region);
+                    delete this.buffers[cell.ref];
+                    
+                    cell['__dirty'] = false;
+                }
+                // Otherwise just use the previous
+                else
+                {
+                    nextFrame[cell.ref] = visual;
+                }
+
+                f['m'](region, visual);
+            }
+        }
+
+        console.log(fragments);
+
         this.visuals = nextFrame;
 
         console.timeEnd('GridElement.updateVisuals');
     }
 
     private drawVisuals():void
+    {
+        let { canvas, model, frame } = this;
+        
+        console.time('GridElement.drawVisuals');
+
+        let gfx = canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
+        gfx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let aspect of frame)
+        {
+            let view = Rect.fromLike(aspect.view);
+
+            gfx.save();
+            gfx.translate(aspect.view.offsetLeft, aspect.view.offsetTop);
+            gfx.translate(aspect.view.left * -1, aspect.view.top * -1);
+
+            for (let cr in aspect.visuals)
+            {
+                let cell = model.findCell(cr);
+                let visual = aspect.visuals[cr];
+
+                if (visual.width == 0 || visual.height == 0)
+                {
+                    continue;
+                }
+
+                if (!view.intersects(visual))
+                {
+                    continue;
+                }
+
+                let buffer = this.buffers[cell.ref];
+
+                if (!buffer)
+                {
+                    buffer = this.buffers[cell.ref] = this.createBuffer(visual.width, visual.height);
+                    //noinspection TypeScriptUnresolvedFunction
+                    let renderer = Reflect.getMetadata('custom:renderer', cell.constructor);
+
+                    renderer(buffer.gfx, visual, cell);
+                }
+
+                gfx.drawImage(buffer.canvas, visual.left - buffer.inflation, visual.top - buffer.inflation);
+            }
+
+            gfx.restore();
+        }
+
+        console.timeEnd('GridElement.drawVisuals');
+    }
+
+    private drawVisuals2():void
     {
         console.time('GridElement.drawVisuals');
 
@@ -514,6 +754,18 @@ export class GridElement extends EventEmitterBase
         event.gridY = source.gridY;
         return event;
     }
+}
+
+interface ViewFragment extends RectLike
+{
+    offsetLeft:number;
+    offsetTop:number;
+}
+
+interface ViewAspect
+{
+    view:ViewFragment;
+    visuals:ObjectMap<Visual>;
 }
 
 function clone(x:any):any

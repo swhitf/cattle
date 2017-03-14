@@ -1,93 +1,80 @@
-define(["require", "exports", "tether", "../../misc/Dom"], function (require, exports, Tether, Dom) {
+define(["require", "exports", "../../misc/Util", "../../geom/Padding", "../../geom/Point", "../../misc/Dom"], function (require, exports, Util_1, Padding_1, Point_1, Dom) {
     "use strict";
     var ScrollerExtension = (function () {
-        function ScrollerExtension() {
+        function ScrollerExtension(scrollerWidth) {
+            this.scrollerWidth = scrollerWidth;
+            this.scrollerWidth = Util_1.coalesce(scrollerWidth, detect_native_scroller_width());
         }
         ScrollerExtension.prototype.init = function (grid, kernel) {
             var _this = this;
             this.grid = grid;
             this.createElements(grid.root);
+            //Set padding right and bottom to scroller width to prevent overlap
+            grid.padding = new Padding_1.Padding(grid.padding.top, grid.padding.right + this.scrollerWidth, grid.padding.bottom + this.scrollerWidth, grid.padding.left);
             grid.on('invalidate', function () { return _this.alignElements(); });
             grid.on('scroll', function () { return _this.alignElements(); });
         };
         ScrollerExtension.prototype.createElements = function (target) {
-            var layer = document.createElement('div');
-            layer.className = 'grid-layer';
-            Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
-            target.parentElement.insertBefore(layer, target);
-            var t = new Tether({
-                element: layer,
-                target: target,
-                attachment: 'middle center',
-                targetAttachment: 'middle center',
-            });
-            var onBash = function () {
-                Dom.fit(layer, target);
-                t.position();
-            };
-            this.grid.on('bash', onBash);
-            onBash();
-            var scrollerX = this.scrollerX = document.createElement('div');
-            scrollerX.className = 'grid-scroller grid-scroller-x';
-            scrollerX.addEventListener('scroll', this.onScrollHorizontal.bind(this));
-            layer.appendChild(scrollerX);
-            var wedgeX = this.wedgeX = document.createElement('div');
-            scrollerX.appendChild(wedgeX);
-            var scrollerY = this.scrollerY = document.createElement('div');
-            scrollerY.className = 'grid-scroller grid-scroller-y';
-            scrollerY.addEventListener('scroll', this.onScrollVertical.bind(this));
-            layer.appendChild(scrollerY);
-            var wedgeY = this.wedgeY = document.createElement('div');
-            scrollerY.appendChild(wedgeY);
-            Dom.css(this.scrollerX, {
-                pointerEvents: 'auto',
-                position: 'absolute',
+            //ScrollerExtension is a special case, we need to modify the grid container element in order
+            //to reliability enable all scroll interaction without logs of emulation and buggy crap.  We
+            //inject a wedge element that simulates the overflow for the container scroll bars and then
+            //hold the grid in place while mirroring the scroll property against the container scorll 
+            //position. Vuala!
+            var container = this.grid.container;
+            container.addEventListener('scroll', this.onContainerScroll.bind(this));
+            Dom.css(container, {
                 overflow: 'auto',
-                width: this.grid.width + "px",
-                height: '16px',
-                left: '0px',
-                bottom: '0px',
             });
-            Dom.css(this.scrollerY, {
-                pointerEvents: 'auto',
-                position: 'absolute',
-                overflow: 'auto',
-                width: '16px',
-                height: this.grid.height + "px",
-                right: '0px',
-                top: '0px',
-            });
+            var wedge = this.wedge = document.createElement('div');
+            Dom.css(wedge, { pointerEvents: 'none', });
+            container.appendChild(wedge);
+            this.alignElements();
         };
         ScrollerExtension.prototype.alignElements = function () {
-            Dom.css(this.scrollerX, {
-                width: this.grid.width + "px",
+            var grid = this.grid;
+            var conatiner = grid.container;
+            Dom.css(grid.root, {
+                position: 'absolute',
+                left: (grid.scrollLeft) + 'px',
+                top: (grid.scrollTop) + 'px',
             });
-            Dom.css(this.wedgeX, {
-                width: this.grid.virtualWidth + "px",
-                height: '1px',
+            Dom.css(this.wedge, {
+                width: grid.virtualWidth - this.scrollerWidth + "px",
+                height: grid.virtualHeight - this.scrollerWidth + "px",
             });
-            if (this.scrollerX.scrollLeft != this.grid.scrollLeft) {
-                this.scrollerX.scrollLeft = this.grid.scrollLeft;
+            if (conatiner.scrollLeft != grid.scrollLeft) {
+                conatiner.scrollLeft = grid.scrollLeft;
             }
-            Dom.css(this.scrollerY, {
-                height: this.grid.height + "px",
-            });
-            Dom.css(this.wedgeY, {
-                width: '1px',
-                height: this.grid.virtualHeight + "px",
-            });
-            if (this.scrollerY.scrollTop != this.grid.scrollTop) {
-                this.scrollerY.scrollTop = this.grid.scrollTop;
+            if (conatiner.scrollTop != grid.scrollTop) {
+                conatiner.scrollTop = grid.scrollTop;
             }
         };
-        ScrollerExtension.prototype.onScrollHorizontal = function () {
-            this.grid.scrollLeft = this.scrollerX.scrollLeft;
-        };
-        ScrollerExtension.prototype.onScrollVertical = function () {
-            this.grid.scrollTop = this.scrollerY.scrollTop;
+        ScrollerExtension.prototype.onContainerScroll = function () {
+            var grid = this.grid;
+            var maxScroll = new Point_1.Point(grid.virtualWidth - grid.width, grid.virtualHeight - grid.height);
+            grid.scroll = new Point_1.Point(grid.container.scrollLeft, grid.container.scrollTop)
+                .clamp(Point_1.Point.empty, maxScroll);
         };
         return ScrollerExtension;
     }());
     exports.ScrollerExtension = ScrollerExtension;
+    function detect_native_scroller_width() {
+        var outer = document.createElement("div");
+        outer.style.visibility = "hidden";
+        outer.style.width = "100px";
+        outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+        document.body.appendChild(outer);
+        var widthNoScroll = outer.offsetWidth;
+        // force scrollbars
+        outer.style.overflow = "scroll";
+        // add innerdiv
+        var inner = document.createElement("div");
+        inner.style.width = "100%";
+        outer.appendChild(inner);
+        var widthWithScroll = inner.offsetWidth;
+        // remove divs
+        outer.parentNode.removeChild(outer);
+        return widthNoScroll - widthWithScroll;
+    }
 });
 //# sourceMappingURL=ScrollerExtension.js.map

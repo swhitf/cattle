@@ -27,7 +27,9 @@ define(["require", "exports", "../", "../extensions/extra/ClickZoneExtension", "
         grid.redraw(true);
     });
     grid.on('click', function (e) {
-        console.log(Base26_1.Base26.num(e.cell.colRef).str + (e.cell.rowRef + 1));
+        if (e.cell) {
+            console.log(Base26_1.Base26.num(e.cell.colRef).str + (e.cell.rowRef + 1));
+        }
     });
     grid.on('zoneenter', function (e) { return console.log(e.type, e.zone.type); });
     grid.on('zoneexit', function (e) { return console.log(e.type, e.zone.type); });
@@ -68,7 +70,7 @@ define(["require", "exports", "../", "../extensions/extra/ClickZoneExtension", "
                 cells.push(new DefaultGridCell_1.DefaultGridCell({
                     colRef: c,
                     rowRef: r,
-                    value: '123',
+                    value: Base26_1.Base26.num(c).str + (r + 1),
                 }));
             }
         }

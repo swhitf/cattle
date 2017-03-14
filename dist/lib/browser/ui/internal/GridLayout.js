@@ -12,7 +12,7 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
             this.rowIndex = _.index(rows, function (x) { return x.ref; });
             this.cellIndex = _.index(cells, function (x) { return x.ref; });
         }
-        GridLayout.compute = function (model) {
+        GridLayout.compute = function (model, padding) {
             var colLookup = model.columns.reduce(function (t, x) { t[x.ref] = x; return t; }, {});
             var rowLookup = model.rows.reduce(function (t, x) { t[x.ref] = x; return t; }, {});
             var cellLookup = buildCellLookup(model.cells); //by col then row
@@ -27,13 +27,13 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
                 (rowLookup[i] || (rowLookup[i] = new DefaultGridRow_1.DefaultGridRow(i)));
             }
             // Compute width and height of whole grid
-            var width = _.values(colLookup).reduce(function (t, x) { return t + x.width; }, 0);
-            var height = _.values(rowLookup).reduce(function (t, x) { return t + x.height; }, 0);
+            var width = _.values(colLookup).reduce(function (t, x) { return t + x.width; }, 0) + padding.horizontal;
+            var height = _.values(rowLookup).reduce(function (t, x) { return t + x.height; }, 0) + padding.vertical;
             // Compute the layout regions for the various bits
             var colRegs = [];
             var rowRegs = [];
             var cellRegs = [];
-            var accLeft = 0;
+            var accLeft = padding.left;
             for (var ci = 0; ci <= maxCol; ci++) {
                 var col = colLookup[ci];
                 colRegs.push({
@@ -43,7 +43,7 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
                     width: col.width,
                     height: height,
                 });
-                var accTop = 0;
+                var accTop = padding.top;
                 for (var ri = 0; ri <= maxRow; ri++) {
                     var row = rowLookup[ri];
                     if (ci === 0) {
@@ -74,8 +74,22 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
         GridLayout.prototype.queryColumn = function (ref) {
             return this.columnIndex[ref] || null;
         };
+        GridLayout.prototype.queryColumnRange = function (fromRef, toRefEx) {
+            var likes = [];
+            for (var i = fromRef; i < toRefEx; i++) {
+                likes.push(this.queryColumn(i));
+            }
+            return Rect_1.Rect.fromMany(likes.map(Rect_1.Rect.fromLike));
+        };
         GridLayout.prototype.queryRow = function (ref) {
             return this.rowIndex[ref] || null;
+        };
+        GridLayout.prototype.queryRowRange = function (fromRef, toRefEx) {
+            var likes = [];
+            for (var i = fromRef; i < toRefEx; i++) {
+                likes.push(this.queryRow(i));
+            }
+            return Rect_1.Rect.fromMany(likes.map(Rect_1.Rect.fromLike));
         };
         GridLayout.prototype.queryCell = function (ref) {
             return this.cellIndex[ref] || null;

@@ -18,7 +18,7 @@ define(["require", "exports", "./Point"], function (require, exports, Point_1) {
             return new Rect(like.left, like.top, like.width, like.height);
         };
         Rect.fromMany = function (rects) {
-            var points = [].concat.apply([], rects.map(function (x) { return x.points(); }));
+            var points = [].concat.apply([], rects.map(function (x) { return Rect.prototype.points.call(x); }));
             return Rect.fromPointBuffer(points);
         };
         Rect.fromPoints = function () {
@@ -68,9 +68,6 @@ define(["require", "exports", "./Point"], function (require, exports, Point_1) {
         Rect.prototype.size = function () {
             return new Point_1.Point(this.width, this.height);
         };
-        Rect.prototype.offset = function (pt) {
-            return new Rect(this.left + pt.x, this.top + pt.y, this.width, this.height);
-        };
         Rect.prototype.contains = function (input) {
             if (input['x'] !== undefined && input['y'] !== undefined) {
                 var pt = input;
@@ -87,8 +84,17 @@ define(["require", "exports", "./Point"], function (require, exports, Point_1) {
                     rect.top + rect.height <= this.top + this.height);
             }
         };
+        Rect.prototype.extend = function (size) {
+            var pt = Point_1.Point.create(size);
+            return new Rect(this.left, this.top, this.width + pt.x, this.height + pt.y);
+        };
         Rect.prototype.inflate = function (size) {
-            return new Rect(this.left - size.x, this.top - size.y, this.width + size.x, this.height + size.y);
+            var pt = Point_1.Point.create(size);
+            return Rect.fromEdges(this.left - pt.x, this.top - pt.y, this.right + pt.x, this.bottom + pt.y);
+        };
+        Rect.prototype.offset = function (by) {
+            var pt = Point_1.Point.create(by);
+            return new Rect(this.left + pt.x, this.top + pt.y, this.width, this.height);
         };
         Rect.prototype.intersects = function (rect) {
             return rect.left + rect.width > this.left

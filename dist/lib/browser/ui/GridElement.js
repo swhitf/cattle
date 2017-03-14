@@ -12,7 +12,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-define(["require", "exports", "../model/default/DefaultGridModel", "./internal/EventEmitter", "./GridKernel", "../model/GridRange", "./internal/GridLayout", "../geom/Rect", "../geom/Point", "../misc/Property", "../misc/Util"], function (require, exports, DefaultGridModel_1, EventEmitter_1, GridKernel_1, GridRange_1, GridLayout_1, Rect_1, Point_1, Property_1, _) {
+define(["require", "exports", "../geom/Padding", "../model/default/DefaultGridModel", "./internal/EventEmitter", "./GridKernel", "../model/GridRange", "./internal/GridLayout", "../geom/Rect", "../geom/Point", "../misc/Property", "../misc/Util"], function (require, exports, Padding_1, DefaultGridModel_1, EventEmitter_1, GridKernel_1, GridRange_1, GridLayout_1, Rect_1, Point_1, Property_1, _) {
     "use strict";
     var GridElement = (function (_super) {
         __extends(GridElement, _super);
@@ -23,8 +23,9 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             _this.buffers = {};
             _this.visuals = {};
             _this.root = canvas;
+            _this.container = canvas.parentElement;
             var kernel = _this.kernel = new GridKernel_1.GridKernel(_this.emit.bind(_this));
-            ['mousedown', 'mousemove', 'mouseup', 'mouseenter', 'mouseleave', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
+            ['mousedown', 'mousemove', 'mouseup', 'mouseenter', 'mouseleave', 'mousewheel', 'click', 'dblclick', 'dragbegin', 'drag', 'dragend']
                 .forEach(function (x) { return _this.forwardMouseEvent(x); });
             ['keydown', 'keypress', 'keyup']
                 .forEach(function (x) { return _this.forwardKeyEvent(x); });
@@ -32,12 +33,17 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             return _this;
         }
         GridElement.create = function (target, initialModel) {
+            var parent = target.parentElement;
             var canvas = target.ownerDocument.createElement('canvas');
             canvas.id = target.id;
             canvas.className = target.className;
             canvas.tabIndex = target.tabIndex || 0;
-            target.parentNode.insertBefore(canvas, target);
-            target.parentNode.removeChild(target);
+            target.id = null;
+            parent.insertBefore(canvas, target);
+            parent.removeChild(target);
+            if (!parent.style.position || parent.style.position === 'static') {
+                parent.style.position = 'relative';
+            }
             var grid = new GridElement(canvas);
             grid.model = initialModel || DefaultGridModel_1.DefaultGridModel.dim(26, 100);
             grid.bash();
@@ -85,9 +91,16 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(GridElement.prototype, "scroll", {
+        Object.defineProperty(GridElement.prototype, "scrollLeft", {
             get: function () {
-                return new Point_1.Point(this.scrollLeft, this.scrollTop);
+                return this.scroll.x;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(GridElement.prototype, "scrollTop", {
+            get: function () {
+                return this.scroll.y;
             },
             enumerable: true,
             configurable: true
@@ -133,8 +146,10 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             return null;
         };
         GridElement.prototype.getCellAtViewPoint = function (pt) {
+            var fragment = this.computeViewFragments()
+                .filter(function (x) { return Rect_1.Rect.prototype.contains.call(x, pt); })[0];
             var viewport = this.computeViewport();
-            var gpt = Point_1.Point.create(pt).add(viewport.topLeft());
+            var gpt = Point_1.Point.create(pt).add([fragment.left, fragment.top]);
             return this.getCellAtGridPoint(gpt);
         };
         GridElement.prototype.getCellsInGridRect = function (rect) {
@@ -143,8 +158,9 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             return refs.map(function (x) { return _this.model.findCell(x); });
         };
         GridElement.prototype.getCellsInViewRect = function (rect) {
-            var viewport = this.computeViewport();
-            var grt = Rect_1.Rect.fromLike(rect).offset(viewport.topLeft());
+            var fragment = this.computeViewFragments()
+                .filter(function (x) { return Rect_1.Rect.prototype.contains.call(x, new Point_1.Point(rect.left, rect.top)); })[0];
+            var grt = Rect_1.Rect.fromLike(rect).offset([fragment.left, fragment.top]);
             return this.getCellsInGridRect(grt);
         };
         GridElement.prototype.getCellGridRect = function (ref) {
@@ -159,21 +175,31 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             return rect;
         };
         GridElement.prototype.scrollTo = function (ptOrRect) {
-            var dest = ptOrRect;
-            if (dest.width === undefined && dest.height === undefined) {
-                dest = new Rect_1.Rect(dest.x, dest.y, 1, 1);
+            var dest;
+            if (ptOrRect['width'] === undefined && ptOrRect['height'] === undefined) {
+                dest = new Rect_1.Rect(ptOrRect['x'], ptOrRect['y'], 1, 1);
             }
+            else {
+                dest = Rect_1.Rect.fromLike(ptOrRect);
+            }
+            var newScroll = {
+                x: this.scroll.x,
+                y: this.scroll.y,
+            };
             if (dest.left < 0) {
-                this.scrollLeft += dest.left;
+                newScroll.x += dest.left;
             }
             if (dest.right > this.width) {
-                this.scrollLeft += dest.right - this.width;
+                newScroll.x += dest.right - this.width;
             }
             if (dest.top < 0) {
-                this.scrollTop += dest.top;
+                newScroll.y += dest.top;
             }
             if (dest.bottom > this.height) {
-                this.scrollTop += dest.bottom - this.height;
+                newScroll.y += dest.bottom - this.height;
+            }
+            if (!this.scroll.equals(newScroll)) {
+                this.scroll = Point_1.Point.create(newScroll);
             }
         };
         GridElement.prototype.bash = function () {
@@ -184,7 +210,8 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
         };
         GridElement.prototype.invalidate = function (query) {
             if (query === void 0) { query = null; }
-            this.layout = GridLayout_1.GridLayout.compute(this.model);
+            console.time('GridElement.invalidate');
+            this.layout = GridLayout_1.GridLayout.compute(this.model, this.padding);
             if (!!query) {
                 var range = GridRange_1.GridRange.select(this.model, query);
                 for (var _i = 0, _a = range.ltr; _i < _a.length; _i++) {
@@ -197,6 +224,7 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
                 this.buffers = {};
                 this.model.cells.forEach(function (x) { return delete x['__dirty']; });
             }
+            console.timeEnd('GridElement.invalidate');
             this.redraw();
             this.emit('invalidate');
         };
@@ -222,10 +250,89 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
             console.timeEnd('GridElement.redraw');
             this.emit('draw');
         };
+        GridElement.prototype.computeViewFragments = function () {
+            var _a = this, freezeMargin = _a.freezeMargin, layout = _a.layout;
+            var make = function (l, t, w, h, ol, ot) { return ({
+                left: l,
+                top: t,
+                width: w,
+                height: h,
+                offsetLeft: ol,
+                offsetTop: ot,
+            }); };
+            var viewport = this.computeViewport();
+            if (freezeMargin.equals(Point_1.Point.empty)) {
+                return [make(viewport.left, viewport.top, viewport.width, viewport.height, 0, 0)];
+            }
+            else {
+                var marginLeft = layout.queryColumnRange(0, freezeMargin.x).width;
+                var marginTop = layout.queryRowRange(0, freezeMargin.y).height;
+                var margin = new Point_1.Point(marginLeft, marginTop);
+                //Aliases to prevent massive lines;
+                var vp = viewport;
+                var mg = margin;
+                return [
+                    make(vp.left + mg.x, vp.top + mg.y, vp.width - mg.x, vp.height - mg.y, mg.x, mg.y),
+                    make(0, vp.top + mg.y, mg.x, vp.height - mg.y, 0, mg.y),
+                    make(vp.left + mg.x, 0, vp.width - mg.x, mg.y, mg.x, 0),
+                    make(0, 0, mg.x, mg.y, 0, 0),
+                ];
+            }
+        };
         GridElement.prototype.computeViewport = function () {
             return new Rect_1.Rect(Math.floor(this.scrollLeft), Math.floor(this.scrollTop), this.canvas.width, this.canvas.height);
         };
         GridElement.prototype.updateVisuals = function () {
+            console.time('GridElement.drawVisuals');
+            var _a = this, model = _a.model, layout = _a.layout;
+            var fragments = this.computeViewFragments();
+            console.log(fragments);
+            var prevFrame = this.frame;
+            var nextFrame = [];
+            //If the fragments have changed, nerf the prevFrame since we don't want to recycle anything.
+            if (!prevFrame || prevFrame.length != fragments.length) {
+                prevFrame = [];
+            }
+            for (var i = 0; i < fragments.length; i++) {
+                var prevAspect = prevFrame[i];
+                var aspect = {
+                    view: fragments[i],
+                    visuals: {},
+                };
+                var viewCells = layout.captureCells(aspect.view)
+                    .map(function (ref) { return model.findCell(ref); });
+                for (var _i = 0, viewCells_1 = viewCells; _i < viewCells_1.length; _i++) {
+                    var cell = viewCells_1[_i];
+                    var region = layout.queryCell(cell.ref);
+                    var visual = !!prevAspect ? prevAspect.visuals[cell.ref] : null;
+                    // If we didn't have a previous visual or if the cell was dirty, create new visual
+                    if (!visual || cell.value !== visual.value || cell['__dirty'] !== false) {
+                        aspect.visuals[cell.ref] = this.createVisual(cell, region);
+                        delete this.buffers[cell.ref];
+                        cell['__dirty'] = false;
+                    }
+                    else {
+                        aspect.visuals[cell.ref] = visual;
+                    }
+                }
+                nextFrame.push(aspect);
+            }
+            this.frame = nextFrame;
+            // setTimeout(() =>
+            // {
+            //     let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
+            //     gfx.save();
+            //     for (let f of fragments) 
+            //     {
+            //         //gfx.translate(f.left * -1, f.top * -1);
+            //         gfx.strokeStyle = 'red';
+            //         gfx.strokeRect(f.offsetLeft, f.offsetTop, f.width, f.height);            
+            //     }
+            //     gfx.restore();
+            // }, 50);
+        };
+        GridElement.prototype.updateVisuals2 = function () {
+            var _this = this;
             console.time('GridElement.updateVisuals');
             var _a = this, model = _a.model, layout = _a.layout;
             var viewport = this.computeViewport();
@@ -247,10 +354,88 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
                     nextFrame[cell.ref] = visual;
                 }
             }
+            //let frozenCells = layout.captureCells(viewport.inflate)
+            var fm = this.freezeMargin;
+            var fragments = [];
+            fragments.push(viewport);
+            fragments.push(new Rect_1.Rect(0, 0, layout.queryColumnRange(0, fm.x).width, layout.queryRowRange(0, fm.y).height));
+            fragments.push(new Rect_1.Rect(0, viewport.top + fragments[1].height, fragments[1].width, (viewport.height - fragments[1].height)));
+            fragments.push(new Rect_1.Rect(viewport.left + fragments[1].width, 0, viewport.width - fragments[1].width, fragments[1].height));
+            setTimeout(function () {
+                var gfx = _this.canvas.getContext('2d', { alpha: true });
+                gfx.save();
+                gfx.translate(viewport.left * -1, viewport.top * -1);
+                for (var _i = 0, fragments_1 = fragments; _i < fragments_1.length; _i++) {
+                    var f = fragments_1[_i];
+                    gfx.strokeStyle = 'red';
+                    gfx.strokeRect(f.left, f.top, f.width, f.height);
+                }
+                gfx.restore();
+            }, 50);
+            fragments.splice(0, 1);
+            fragments[0]['m'] = function (r, v) { v.left = r.left + viewport.left; v.top = r.top + viewport.top; };
+            fragments[1]['m'] = function (r, v) { return v.left = r.left + viewport.left; };
+            fragments[2]['m'] = function (r, v) { return v.top = r.top + viewport.top; };
+            nextFrame = {};
+            for (var _b = 0, _c = fragments.reverse(); _b < _c.length; _b++) {
+                var f = _c[_b];
+                var fragmentCells = layout.captureCells(f)
+                    .map(function (ref) { return model.findCell(ref); });
+                var prevFrame_1 = this.visuals;
+                for (var _d = 0, fragmentCells_1 = fragmentCells; _d < fragmentCells_1.length; _d++) {
+                    var cell = fragmentCells_1[_d];
+                    var region = layout.queryCell(cell.ref);
+                    var visual = prevFrame_1[cell.ref] || nextFrame[cell.ref];
+                    // If we didn't have a previous visual or if the cell was dirty, create new visual
+                    if (!visual || cell.value !== visual.value || cell['__dirty'] !== false) {
+                        nextFrame[cell.ref] = visual = this.createVisual(cell, region);
+                        delete this.buffers[cell.ref];
+                        cell['__dirty'] = false;
+                    }
+                    else {
+                        nextFrame[cell.ref] = visual;
+                    }
+                    f['m'](region, visual);
+                }
+            }
+            console.log(fragments);
             this.visuals = nextFrame;
             console.timeEnd('GridElement.updateVisuals');
         };
         GridElement.prototype.drawVisuals = function () {
+            var _a = this, canvas = _a.canvas, model = _a.model, frame = _a.frame;
+            console.time('GridElement.drawVisuals');
+            var gfx = canvas.getContext('2d', { alpha: true });
+            gfx.clearRect(0, 0, canvas.width, canvas.height);
+            for (var _i = 0, frame_1 = frame; _i < frame_1.length; _i++) {
+                var aspect = frame_1[_i];
+                var view = Rect_1.Rect.fromLike(aspect.view);
+                gfx.save();
+                gfx.translate(aspect.view.offsetLeft, aspect.view.offsetTop);
+                gfx.translate(aspect.view.left * -1, aspect.view.top * -1);
+                for (var cr in aspect.visuals) {
+                    var cell = model.findCell(cr);
+                    var visual = aspect.visuals[cr];
+                    if (visual.width == 0 || visual.height == 0) {
+                        continue;
+                    }
+                    if (!view.intersects(visual)) {
+                        continue;
+                    }
+                    var buffer = this.buffers[cell.ref];
+                    if (!buffer) {
+                        buffer = this.buffers[cell.ref] = this.createBuffer(visual.width, visual.height);
+                        //noinspection TypeScriptUnresolvedFunction
+                        var renderer = Reflect.getMetadata('custom:renderer', cell.constructor);
+                        renderer(buffer.gfx, visual, cell);
+                    }
+                    gfx.drawImage(buffer.canvas, visual.left - buffer.inflation, visual.top - buffer.inflation);
+                }
+                gfx.restore();
+            }
+            console.timeEnd('GridElement.drawVisuals');
+        };
+        GridElement.prototype.drawVisuals2 = function () {
             console.time('GridElement.drawVisuals');
             var viewport = this.computeViewport();
             var gfx = this.canvas.getContext('2d', { alpha: true });
@@ -345,13 +530,17 @@ define(["require", "exports", "../model/default/DefaultGridModel", "./internal/E
         __metadata("design:type", Object)
     ], GridElement.prototype, "model", void 0);
     __decorate([
-        Property_1.property(0, function (t) { t.redraw(); t.emit('scroll'); }),
-        __metadata("design:type", Number)
-    ], GridElement.prototype, "scrollLeft", void 0);
+        Property_1.property(new Point_1.Point(3, 2), function (t) { return t.invalidate(); }),
+        __metadata("design:type", Point_1.Point)
+    ], GridElement.prototype, "freezeMargin", void 0);
     __decorate([
-        Property_1.property(0, function (t) { t.redraw(); t.emit('scroll'); }),
-        __metadata("design:type", Number)
-    ], GridElement.prototype, "scrollTop", void 0);
+        Property_1.property(Padding_1.Padding.empty, function (t) { return t.invalidate(); }),
+        __metadata("design:type", Padding_1.Padding)
+    ], GridElement.prototype, "padding", void 0);
+    __decorate([
+        Property_1.property(Point_1.Point.empty, function (t) { t.redraw(); t.emit('scroll'); }),
+        __metadata("design:type", Point_1.Point)
+    ], GridElement.prototype, "scroll", void 0);
     exports.GridElement = GridElement;
     function clone(x) {
         if (Array.isArray(x)) {
