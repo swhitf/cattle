@@ -9,7 +9,7 @@ define(["require", "exports", "../", "../extensions/extra/ClickZoneExtension", "
     }());
     var history = new _1.DefaultHistoryManager();
     var grid = GridElement_1.GridElement
-        .create(document.getElementById('x'))
+        .create(document.getElementById('x'), make_model(0, 0))
         .extend(new ScrollerExtension_1.ScrollerExtension())
         .extend(new SelectorExtension_1.SelectorExtension())
         .extend(new EditingExtension_1.EditingExtension())
@@ -36,27 +36,15 @@ define(["require", "exports", "../", "../extensions/extra/ClickZoneExtension", "
     grid.on('zoneenter', function (e) { return console.log(e.type, e.zone.type); });
     grid.on('zoneexit', function (e) { return console.log(e.type, e.zone.type); });
     grid.on('zoneclick', function (e) { return console.log(e.type, e.zone.type); });
-    grid.model = make_model(26 * 5, 250);
-    grid.model.cells[0]['formula'] = '=SUM(B1:B10)';
-    grid.model.cells[0]['readonly'] = true;
-    grid.model.cells[0]['zones'] = [
-        {
-            mode: 'rel',
-            left: 0,
-            top: 0,
-            width: 50,
-            height: 100,
-            type: 'test1',
-        },
-        {
-            mode: 'rel',
-            left: 50,
-            top: 0,
-            width: 50,
-            height: 100,
-            type: 'test2',
-        }
-    ];
+    //grid.model = make_model(26 * 5, 250);
+    grid.model = make_model(5, 5);
+    grid.model.cells.push(new DefaultGridCell_1.DefaultGridCell({
+        colRef: 0,
+        rowRef: 5,
+        value: 'Hello...',
+        colSpan: 5,
+    }));
+    grid.model.refresh();
     grid.invalidate();
     history.clear();
     history.push({

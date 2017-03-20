@@ -62,4 +62,8 @@ export declare class DefaultGridModel implements GridModel {
      * @param rowRef
      */
     locateCell(col: number, row: number): GridCell;
+    /**
+     * Refreshes internal caches used to optimize lookups and should be invoked after the model has been changed (structurally).
+     */
+    refresh(): void;
 }

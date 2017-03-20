@@ -46,6 +46,7 @@ export class GridLayout
         let colRegs:GridLayoutRegion<number>[] = [];
         let rowRegs:GridLayoutRegion<number>[] = [];
         let cellRegs:GridLayoutRegion<string>[] = [];
+        let loadTracker = {} as { [key:string]:boolean };
 
         let accLeft = padding.left;
         for (let ci = 0; ci <= maxCol; ci++)
@@ -79,14 +80,30 @@ export class GridLayout
                 if (cellLookup[ci] !== undefined && cellLookup[ci][ri] !== undefined)
                 {
                     let cell = cellLookup[ci][ri];
+                    if (cell && !loadTracker[cell.ref])
+                    {
+                        let width = 0, height = 0;
 
-                    cellRegs.push({
-                        ref: cell.ref,
-                        left: accLeft,
-                        top: accTop,
-                        width: col.width,
-                        height: row.height,
-                    });
+                        //Take colSpan and rowSpan into account
+                        for (let cix = ci; cix <= maxCol && cix < (ci + cell.colSpan); cix++)
+                        {
+                            width += colLookup[cix].width;
+                        }
+                        for (let rix = ri; rix <= maxRow && rix < (ri + cell.rowSpan); rix++)
+                        {
+                            height += rowLookup[rix].height;
+                        }
+
+                        cellRegs.push({
+                            ref: cell.ref,
+                            left: accLeft,
+                            top: accTop,
+                            width: width,
+                            height: height,
+                        });
+                        
+                        loadTracker[cell.ref] = true;
+                    }
                 }
 
                 accTop += row.height;
@@ -184,19 +201,22 @@ export class GridLayout
 
     public captureCells(region:RectLike):string[]
     {
+        let lookup = this.cellLookup;
         let cols = this.captureColumns(region);
         let rows = this.captureRows(region);
         let cells = new Array<string>();
 
         for (let c of cols)
         {
+            if (!lookup[c])
+                continue;
+
             for (let r of rows)
             {
-                let cell = this.cellLookup[c][r];
-                if (!!cell)
-                {
-                    cells.push(cell.ref);
-                }
+                if (!lookup[c][r])
+                    continue;
+
+                cells.push(lookup[c][r].ref);
             }
         }
 
@@ -208,10 +228,24 @@ function buildCellLookup(cells:GridCell[]):CellColRowLookup
 {
     let ix = {};
     
-    for (let c of cells)
+    for (let cell of cells)
     {
-        let cix = ix[c.colRef] || (ix[c.colRef] = {});
-        cix[c.rowRef] = c;
+        for (let co = 0; co < cell.colSpan; co++) 
+        {
+            for (let ro = 0; ro < cell.rowSpan; ro++)
+            {
+                let c = cell.colRef + co;
+                let r = cell.rowRef + ro;
+
+                let cix = ix[c] || (ix[c] = {});
+                if (cix[r])
+                {
+                    console.warn('Two cells appear to occupy', c, 'x', r);
+                }
+                
+                cix[r] = cell;
+            }
+        }        
     }
     
     return ix;

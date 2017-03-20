@@ -76,7 +76,7 @@ gulp.task('reserve', ['js', 'artifacts']);
  */
 gulp.task('serve', ['make', 'watch'], function() {
     connect.server({
-        port: 3000,
+        port: 8080,
         root: 'dev/local',
         fallback: 'dev/local/index.html',
         livereload: true

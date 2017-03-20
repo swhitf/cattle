@@ -404,8 +404,6 @@ export class GridElement extends EventEmitterBase
         let { model, layout } = this;
         let fragments = this.computeViewFragments();
 
-        console.log(fragments);
-        
         let prevFrame = this.frame;
         let nextFrame = [] as ViewAspect[];
 
@@ -422,6 +420,8 @@ export class GridElement extends EventEmitterBase
                 view: fragments[i],
                 visuals: {},
             };
+
+            let xxx = layout.captureCells(aspect.view);
 
             let viewCells = layout.captureCells(aspect.view)
                 .map(ref => model.findCell(ref));
@@ -450,125 +450,6 @@ export class GridElement extends EventEmitterBase
         }
 
         this.frame = nextFrame;
-
-
-        // setTimeout(() =>
-        // {
-        //     let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
-        //     gfx.save();
-            
-        //     for (let f of fragments) 
-        //     {
-        //         //gfx.translate(f.left * -1, f.top * -1);
-        //         gfx.strokeStyle = 'red';
-        //         gfx.strokeRect(f.offsetLeft, f.offsetTop, f.width, f.height);            
-        //     }
-
-        //     gfx.restore();
-
-        // }, 50);
-    }
-
-    private updateVisuals2():void
-    {
-        console.time('GridElement.updateVisuals');
-
-        let { model, layout } = this;
-
-        let viewport = this.computeViewport();
-        let visibleCells = layout.captureCells(viewport)
-            .map(ref => model.findCell(ref));
-
-        let prevFrame = this.visuals;
-        let nextFrame = <ObjectMap<Visual>>{};
-
-        for (let cell of visibleCells)
-        {
-            let region = layout.queryCell(cell.ref);
-            let visual = prevFrame[cell.ref];
-
-            // If we didn't have a previous visual or if the cell was dirty, create new visual
-            if (!visual || cell.value !== visual.value || cell['__dirty'] !== false)
-            {
-                nextFrame[cell.ref] = this.createVisual(cell, region);
-                delete this.buffers[cell.ref];
-
-                cell['__dirty'] = false;
-            }
-            // Otherwise just use the previous
-            else
-            {
-                nextFrame[cell.ref] = visual;
-            }
-        }
-
-        //let frozenCells = layout.captureCells(viewport.inflate)
-        let fm = this.freezeMargin;
-        
-        let fragments = [] as Rect[];
-        fragments.push(viewport);
-        fragments.push(new Rect(0, 0, layout.queryColumnRange(0, fm.x).width, layout.queryRowRange(0, fm.y).height));
-        fragments.push(new Rect(0, viewport.top + fragments[1].height, fragments[1].width, (viewport.height - fragments[1].height)));
-        fragments.push(new Rect(viewport.left + fragments[1].width, 0, viewport.width - fragments[1].width, fragments[1].height));
-
-        setTimeout(() =>
-        {
-            let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
-            gfx.save();
-            gfx.translate(viewport.left * -1, viewport.top * -1);
-            
-            for (let f of fragments) 
-            {
-                gfx.strokeStyle = 'red';
-                gfx.strokeRect(f.left, f.top, f.width, f.height);            
-            }
-
-            gfx.restore();
-
-        }, 50);
-
-        fragments.splice(0, 1);
-        fragments[0]['m'] = (r:Rect, v:Visual) => { v.left = r.left + viewport.left; v.top = r.top + viewport.top }
-        fragments[1]['m'] = (r:Rect, v:Visual) => v.left = r.left + viewport.left;
-        fragments[2]['m'] = (r:Rect, v:Visual) => v.top = r.top + viewport.top;
-
-        nextFrame = <ObjectMap<Visual>>{};
-
-        for (let f of fragments.reverse()) 
-        {
-            let fragmentCells = layout.captureCells(f)
-                .map(ref => model.findCell(ref));
-
-            let prevFrame = this.visuals;
-
-            for (let cell of fragmentCells)
-            {
-                let region = layout.queryCell(cell.ref);
-                let visual = prevFrame[cell.ref] || nextFrame[cell.ref];
-
-                // If we didn't have a previous visual or if the cell was dirty, create new visual
-                if (!visual || cell.value !== visual.value || cell['__dirty'] !== false)
-                {
-                    nextFrame[cell.ref] = visual = this.createVisual(cell, region);
-                    delete this.buffers[cell.ref];
-                    
-                    cell['__dirty'] = false;
-                }
-                // Otherwise just use the previous
-                else
-                {
-                    nextFrame[cell.ref] = visual;
-                }
-
-                f['m'](region, visual);
-            }
-        }
-
-        console.log(fragments);
-
-        this.visuals = nextFrame;
-
-        console.timeEnd('GridElement.updateVisuals');
     }
 
     private drawVisuals():void
@@ -619,51 +500,6 @@ export class GridElement extends EventEmitterBase
 
             gfx.restore();
         }
-
-        console.timeEnd('GridElement.drawVisuals');
-    }
-
-    private drawVisuals2():void
-    {
-        console.time('GridElement.drawVisuals');
-
-        let viewport = this.computeViewport();
-        let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
-        gfx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        gfx.save();
-        gfx.translate(viewport.left * -1, viewport.top * -1);
-
-        for (let cr in this.visuals)
-        {
-            let cell = this.model.findCell(cr);
-            let visual = this.visuals[cr];
-
-            if (visual.width == 0 || visual.height == 0)
-            {
-                continue;
-            }
-
-            if (!viewport.intersects(visual))
-            {
-                continue;
-            }
-
-            let buffer = this.buffers[cell.ref];
-
-            if (!buffer)
-            {
-                buffer = this.buffers[cell.ref] = this.createBuffer(visual.width, visual.height);
-                //noinspection TypeScriptUnresolvedFunction
-                let renderer = Reflect.getMetadata('custom:renderer', cell.constructor);
-
-                renderer(buffer.gfx, visual, cell);
-            }
-
-            gfx.drawImage(buffer.canvas, visual.left - buffer.inflation, visual.top - buffer.inflation);
-        }
-
-        gfx.restore();
 
         console.timeEnd('GridElement.drawVisuals');
     }

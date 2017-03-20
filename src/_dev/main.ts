@@ -26,7 +26,7 @@ class TestExtension implements GridExtension
 let history = new DefaultHistoryManager();
 
 let grid = GridElement
-    .create(document.getElementById('x'))
+    .create(document.getElementById('x'), make_model(0, 0))
     .extend(new ScrollerExtension())
     .extend(new SelectorExtension())
     .extend(new EditingExtension())
@@ -63,27 +63,16 @@ grid.on('zoneenter', e => console.log(e.type, e.zone.type));
 grid.on('zoneexit', e => console.log(e.type, e.zone.type));
 grid.on('zoneclick', e => console.log(e.type, e.zone.type));
 
-grid.model = make_model(26 * 5, 250);
-grid.model.cells[0]['formula'] = '=SUM(B1:B10)';
-grid.model.cells[0]['readonly'] = true;
-grid.model.cells[0]['zones'] = [
-    {
-        mode: 'rel',
-        left: 0,
-        top: 0,
-        width: 50,
-        height: 100,
-        type: 'test1',
-    },
-    {
-        mode: 'rel',
-        left: 50,
-        top: 0,
-        width: 50,
-        height: 100,
-        type: 'test2',
-    }
-];
+//grid.model = make_model(26 * 5, 250);
+
+grid.model = make_model(5, 5);
+grid.model.cells.push(new DefaultGridCell({
+    colRef: 0,
+    rowRef: 5,
+    value: 'Hello...',
+    colSpan: 5,
+}));
+(grid.model as DefaultGridModel).refresh();
 
 grid.invalidate();
 history.clear();

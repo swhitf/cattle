@@ -16,13 +16,7 @@ var DefaultGridModel = (function () {
         this.cells = cells;
         this.columns = columns;
         this.rows = rows;
-        this.refs = _.index(cells, function (x) { return x.ref; });
-        this.coords = {};
-        for (var _i = 0, cells_1 = cells; _i < cells_1.length; _i++) {
-            var c = cells_1[_i];
-            var x = this.coords[c.colRef] || (this.coords[c.colRef] = {});
-            x[c.rowRef] = c;
-        }
+        this.refresh();
     }
     /**
      * Creates an grid model with the specified number of columns and rows populated with default cells.
@@ -79,6 +73,28 @@ var DefaultGridModel = (function () {
      */
     DefaultGridModel.prototype.locateCell = function (col, row) {
         return (this.coords[col] || {})[row] || null;
+    };
+    /**
+     * Refreshes internal caches used to optimize lookups and should be invoked after the model has been changed (structurally).
+     */
+    DefaultGridModel.prototype.refresh = function () {
+        var cells = this.cells;
+        this.refs = _.index(cells, function (x) { return x.ref; });
+        this.coords = {};
+        for (var _i = 0, cells_1 = cells; _i < cells_1.length; _i++) {
+            var cell = cells_1[_i];
+            for (var co = 0; co < cell.colSpan; co++) {
+                for (var ro = 0; ro < cell.rowSpan; ro++) {
+                    var c = cell.colRef + co;
+                    var r = cell.rowRef + ro;
+                    var cix = this.coords[c] || (this.coords[c] = {});
+                    if (cix[r]) {
+                        console.warn('Two cells appear to occupy', c, 'x', r);
+                    }
+                    cix[r] = cell;
+                }
+            }
+        }
     };
     return DefaultGridModel;
 }());

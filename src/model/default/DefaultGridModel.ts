@@ -78,14 +78,7 @@ export class DefaultGridModel implements GridModel
         this.columns = columns;
         this.rows = rows;
 
-        this.refs = _.index(cells, x => x.ref);
-        this.coords = {};
-
-        for (let c of cells)
-        {
-            let x = this.coords[c.colRef] || (this.coords[c.colRef] = {});
-            x[c.rowRef] = c;
-        }
+        this.refresh();
     }
 
     /**
@@ -122,5 +115,36 @@ export class DefaultGridModel implements GridModel
     public locateCell(col:number, row:number):GridCell
     {
         return (this.coords[col] || {})[row] || null;
+    }
+
+    /**
+     * Refreshes internal caches used to optimize lookups and should be invoked after the model has been changed (structurally).
+     */
+    public refresh():void
+    {
+        let { cells } = this;
+
+        this.refs = _.index(cells, x => x.ref);
+        this.coords = {};
+
+        for (let cell of cells)
+        {
+            for (let co = 0; co < cell.colSpan; co++) 
+            {
+                for (let ro = 0; ro < cell.rowSpan; ro++)
+                {
+                    let c = cell.colRef + co;
+                    let r = cell.rowRef + ro;
+
+                    let cix = this.coords[c] || (this.coords[c] = {});
+                    if (cix[r])
+                    {
+                        console.warn('Two cells appear to occupy', c, 'x', r);
+                    }
+                    
+                    cix[r] = cell;
+                }
+            }        
+        }
     }
 }

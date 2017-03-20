@@ -69,9 +69,7 @@ export declare class GridElement extends EventEmitterBase {
     private computeViewFragments();
     private computeViewport();
     private updateVisuals();
-    private updateVisuals2();
     private drawVisuals();
-    private drawVisuals2();
     private createBuffer(width, height);
     private createVisual(cell, region);
     private forwardMouseEvent(event);
