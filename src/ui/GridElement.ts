@@ -1,3 +1,4 @@
+import { ie_safe_create_mouse_event } from '../misc/Polyfill';
 import { Padding } from '../geom/Padding';
 import { MouseInput } from '../input/MouseInput';
 import { GridRow } from '../model/GridRow';
@@ -328,20 +329,20 @@ export class GridElement extends EventEmitterBase
         if (!this.dirty)
         {
             this.dirty = true;
-            console.time('GridElement.redraw');
+            console.time(`GridElement.redraw(force=${forceImmediate})`);
 
             if (forceImmediate)
             {
-                this.draw();
+                this.draw(forceImmediate);
             }
             else
             {
-                requestAnimationFrame(this.draw.bind(this));
+                requestAnimationFrame(this.draw.bind(this, forceImmediate));
             }
         }
     }
 
-    private draw():void
+    private draw(forced:boolean):void
     {
         if (!this.dirty)
             return;
@@ -350,7 +351,7 @@ export class GridElement extends EventEmitterBase
         this.drawVisuals();
 
         this.dirty = false;
-        console.timeEnd('GridElement.redraw');
+        console.timeEnd(`GridElement.redraw(force=${forced})`);
         this.emit('draw');
     }
 
@@ -399,7 +400,7 @@ export class GridElement extends EventEmitterBase
 
     private updateVisuals():void
     {
-        console.time('GridElement.drawVisuals');
+        console.time('GridElement.updateVisuals');
         
         let { model, layout } = this;
         let fragments = this.computeViewFragments();
@@ -420,8 +421,6 @@ export class GridElement extends EventEmitterBase
                 view: fragments[i],
                 visuals: {},
             };
-
-            let xxx = layout.captureCells(aspect.view);
 
             let viewCells = layout.captureCells(aspect.view)
                 .map(ref => model.findCell(ref));
@@ -450,6 +449,8 @@ export class GridElement extends EventEmitterBase
         }
 
         this.frame = nextFrame;
+        
+        console.timeEnd('GridElement.updateVisuals');
     }
 
     private drawVisuals():void
@@ -580,7 +581,7 @@ export class GridElement extends EventEmitterBase
 
     private createGridMouseEvent(type:string, source:GridMouseEvent):GridMouseEvent
     {
-        let event = <any>(new MouseEvent(type, source));
+        let event = <any>(ie_safe_create_mouse_event(type, source));
         event.cell = source.cell;
         event.gridX = source.gridX;
         event.gridY = source.gridY;

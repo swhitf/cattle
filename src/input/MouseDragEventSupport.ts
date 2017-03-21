@@ -1,3 +1,4 @@
+import { ie_safe_create_mouse_event } from '../misc/Polyfill';
 import { Point } from '../geom/Point';
 import { MouseDragEvent } from './MouseDragEvent';
 
@@ -99,7 +100,7 @@ export class MouseDragEventSupport
 
     private createEvent(type:string, source:MouseEvent, dist?:Point):MouseDragEvent
     {
-        let event = <MouseDragEvent>(new MouseEvent(type, source));
+        let event = <MouseDragEvent>(ie_safe_create_mouse_event(type, source));
         event.startX = this.startPoint.x;
         event.startY = this.startPoint.y;
 
@@ -108,7 +109,7 @@ export class MouseDragEventSupport
             event.distX = dist.x;
             event.distY = dist.y;
         }
-
         return event;
     }
 }
+

@@ -7,15 +7,16 @@ import { Point } from '../../geom/Point';
 import { SelectorWidget } from './SelectorExtension';
 import { AbsWidgetBase } from '../../ui/Widget';
 import { variable, command, routine } from '../../ui/Extensibility';
-import { Clipboard } from '../../vendor/clipboard';
 import * as _ from '../../misc/Util';
 import * as Dom from '../../misc/Dom';
 import * as Papa from 'papaparse';
 import * as Tether from 'tether';
+import * as clipboard from 'clipboard-js';
 
 
 //I know... :(
-const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+//const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+const NewLine = '\r\n';
 
 export class ClipboardExtension implements GridExtension
 {
@@ -122,8 +123,8 @@ export class ClipboardExtension implements GridExtension
                 text += delimiter;
             }
         }
-
-        Clipboard.copy(text);
+        
+        clipboard.copy(text);
     }
 
     @routine()
