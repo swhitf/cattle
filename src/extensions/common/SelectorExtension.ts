@@ -1,4 +1,5 @@
 import { GridCell } from '../../model/GridCell';
+import { GridRange } from '../../model/GridRange';
 import { GridKernel } from '.././../ui/GridKernel';
 import { GridElement, GridMouseEvent, GridMouseDragEvent } from '.././../ui/GridElement';
 import { KeyInput } from '../../input/KeyInput';
@@ -100,9 +101,9 @@ export class SelectorExtension
 
         MouseDragEventSupport.enable(grid.root);
         MouseInput.for(grid)
-            .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
-            .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
-            .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
+            .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.offsetX, e.offsetY)))
+            .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.offsetX, e.offsetY))
+            .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.offsetX, e.offsetY))
             .on('UP:PRIMARY', (e:GridMouseDragEvent) => this.endSelectGesture(/*e.gridX, e.gridY*/))
         ;
 
@@ -352,8 +353,7 @@ export class SelectorExtension
 
             if (autoScroll)
             {
-                let primaryRect = grid.getCellViewRect(cells[0]);
-                grid.scrollTo(primaryRect);
+                grid.scrollToCell(cells[0]);
             }
         }
         else
@@ -372,8 +372,15 @@ export class SelectorExtension
             let primaryRect = grid.getCellViewRect(selection[0]);
             primarySelector.goto(primaryRect, animate);
 
-            //TODO: Improve the shit out of this:
-            let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
+            //Take upper left most and lower right most
+            let range = GridRange.create(grid.model, selection);
+            let tl = grid.getCellViewRect(range.ltr[0].ref);
+            let br = grid.getCellViewRect(range.ltr[range.ltr.length - 1].ref);
+
+            console.log(tl);
+            console.log(br);
+
+            let captureRect = Rect.fromMany([tl, br]);
             captureSelector.goto(captureRect, animate);
             captureSelector.toggle(selection.length > 1);
         }

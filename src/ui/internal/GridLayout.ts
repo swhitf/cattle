@@ -157,7 +157,11 @@ export class GridLayout
 
         for (let i = fromRef; i < toRefEx; i++)
         {
-            likes.push(this.queryColumn(i));
+            let col = this.queryColumn(i);
+            if (col)
+            {
+                likes.push(col);
+            }
         }
         
         return Rect.fromMany(likes.map(Rect.fromLike));
@@ -174,7 +178,11 @@ export class GridLayout
 
         for (let i = fromRef; i < toRefEx; i++)
         {
-            likes.push(this.queryRow(i));
+            let row = this.queryRow(i);
+            if (row)
+            {
+                likes.push(row);
+            }
         }
         
         return Rect.fromMany(likes.map(Rect.fromLike));

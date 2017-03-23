@@ -1,3 +1,4 @@
+import { PointInput } from '../';
 import { Padding } from '../geom/Padding';
 import { MouseInput } from '../input/MouseInput';
 import { GridRow } from '../model/GridRow';
@@ -44,7 +45,19 @@ export interface GridKeyboardEvent extends KeyboardEvent
 {
 }
 
+export type GridViewScrollBehavior = 'none'|'x'|'y'|'xy';
 
+export interface GridView extends RectLike
+{
+    readonly id:string;
+    readonly offsetLeft:number;
+    readonly offsetTop:number;
+    readonly left:number;
+    readonly top:number;
+    readonly width:number;
+    readonly height:number;
+    readonly scrolling:GridViewScrollBehavior;
+}
 
 export class GridElement extends EventEmitterBase
 {
@@ -76,13 +89,13 @@ export class GridElement extends EventEmitterBase
     @property(DefaultGridModel.empty(), t => { t.emit('load', t.model); t.invalidate(); })
     public model:GridModel;
 
-    @property(new Point(0, 0), t => t.invalidate())
+    @property(new Point(0, 0), t => t.dimension())
     public freezeMargin:Point;
 
     @property(Padding.empty, t => t.invalidate())
     public padding:Padding;
 
-    @property(Point.empty, t => { t.redraw(); t.emit('scroll'); })
+    @property(Point.empty, t => { t.dimension(); t.emit('scroll'); })
     public scroll:Point;
 
     public readonly root:HTMLCanvasElement;
@@ -94,7 +107,8 @@ export class GridElement extends EventEmitterBase
     private layout:GridLayout;    
     private buffers:ObjectMap<Buffer> = {};
     private visuals:ObjectMap<Visual> = {};
-    private frame:ViewAspect[];
+    private views_:GridView[];
+    private frame:GridViewAspect[];
 
     private constructor(private canvas:HTMLCanvasElement)
     {
@@ -153,6 +167,11 @@ export class GridElement extends EventEmitterBase
         return this.scroll.y;
     }
 
+    public get views():GridView[]
+    {
+        return this.views_;
+    }
+
     public extend(ext:GridExtension|GridExtender):GridElement
     {
         if (typeof(ext) === 'function')
@@ -198,6 +217,12 @@ export class GridElement extends EventEmitterBase
         this.root.focus();
     }
 
+    /**
+     * Gets the GridCell that occupies the specified point, relative to the virtual surface of 
+     * the grid.  If there is no cell at the specified point, null is returned.
+     * 
+     * @param pt 
+     */
     public getCellAtGridPoint(pt:PointLike):GridCell
     {
         let refs = this.layout.captureCells(new Rect(pt.x, pt.y, 1, 1));
@@ -209,85 +234,131 @@ export class GridElement extends EventEmitterBase
         return null;
     }
 
-    public getCellAtViewPoint(pt:PointLike):GridCell
+    /**
+     * Gets the GridCell that occupies the specified point, relative to the current view.  This
+     * method takes into account the freezeMargin that may be causing multiple view fragments to
+     * exist.  If there is no cell at the specified point, null is returned.
+     * 
+     * @param pt 
+     */
+    public getCellAtViewPoint(pti:PointInput):GridCell
     {
-        let viewport = this.computeViewport();
-        let gpt = Point.create(pt).add(viewport.topLeft());
-
-        return this.getCellAtGridPoint(gpt);
+        //Convert the point to a grid point (catering for fragments) then use grid point method
+        let pt = this.convertViewPointToGridPoint(pti);
+        return this.getCellAtGridPoint(pt);
     }
 
+    /**
+     * Gets the GridCells that occupy the specified rectangle, relative to the virtual surface 
+     * of the grid.  If there are no cells at the specified point, an empty array is returned.
+     * 
+     * @param rect 
+     */
     public getCellsInGridRect(rect:RectLike):GridCell[]
     {
         let refs = this.layout.captureCells(rect);
         return refs.map(x => this.model.findCell(x));
     }
 
+    /**
+     * Gets the GridCells that occupy the specified rectangle, relative to the current view.  
+     * This method takes into account the freezeMargin that may be causing multiple view 
+     * fragments to exist.  The input rectangle may span more than one view fragment, in which
+     * case the points will be resolved to their respective locations on the grid virtual surface
+     * as per their fragments and the range of cells returned will be those falling between 
+     * these points.
+     * 
+     * @param rect 
+     */
     public getCellsInViewRect(rect:RectLike):GridCell[]
     {
-        let viewport = this.computeViewport();
-        let grt = Rect.fromLike(rect).offset(viewport.topLeft());
+        //Take the top/left and bottom/right and convert these to grid points
+        let tl = this.convertViewPointToGridPoint([rect.left, rect.top]);
+        let br = this.convertViewPointToGridPoint([rect.left + rect.width, rect.top + rect.height]);
 
-        return this.getCellsInGridRect(grt);
+        //Make this into a rect and use grid capture method
+        return this.getCellsInGridRect(Rect.fromPoints(tl, br));
     }
 
+    /**
+     * Gets the rectangle, relative to the virtual surface of the grid, that the cell with the
+     * specified id occupies.  If the cell does not exist in the model, null is returned.
+     * 
+     * @param ref 
+     */
     public getCellGridRect(ref:string):Rect
     {
         let region = this.layout.queryCell(ref);
         return !!region ? Rect.fromLike(region) : null;
     }
 
+    /**
+     * Gets the rectangle, relative to the viewport, that the cell with the cell with the specified 
+     * id occupies.  This method takes into account freezeMargin when computing the rectangle.
+     * @param ref 
+     */
     public getCellViewRect(ref:string):Rect
     {
-        let rect = this.getCellGridRect(ref);
-
-        if (rect)
+        let gridRect = this.getCellGridRect(ref);
+        if (gridRect)
         {
-            rect = rect.offset(this.scroll.inverse());
+            let viewPt = this.convertGridPointToViewPoint(gridRect.topLeft());
+            return new Rect(viewPt.x, viewPt.y, gridRect.width, gridRect.height);
         }
-
-        return rect;
     }
 
-    public scrollTo(ptOrRect:PointLike|RectLike):void
+    public scrollToCell(ref:string):void
     {
-        let dest:Rect;
+        let rect = this.getCellGridRect(ref);
+        if (rect)
+        {
+            this.scrollToGridRect(rect);
+        }
+    }
 
-        if (ptOrRect['width'] === undefined && ptOrRect['height'] === undefined)
+    public scrollToGridPoint(pti:PointInput):void
+    {
+        let pt = Point.create(pti);
+        return this.scrollToGridRect(new Rect(pt.x, pt.y, 1, 1));
+    }
+
+    public scrollToGridRect(rl:RectLike):void
+    {
+        if (rl.width > this.width || rl.height > this.height)
         {
-            dest = new Rect(ptOrRect['x'], ptOrRect['y'], 1, 1);
-        }
-        else
-        {
-            dest = Rect.fromLike(ptOrRect as RectLike);
+            return this.scrollToGridPoint([rl.left, rl.top]);
         }
 
-        let newScroll = {
-            x: this.scroll.x,
-            y: this.scroll.y,
-        };
+        let rect = Rect.fromLike(rl);
+        let viewport = this.computeViewport();
+        let newScroll = this.scroll.clone() as PointLike;
 
-        if (dest.left < 0)
+        if (rect.left < viewport.left)
         {
-            newScroll.x += dest.left;
+            newScroll.x = rect.left;
         }
-        if (dest.right > this.width)
+        if (rect.right > viewport.right)
         {
-            newScroll.x += dest.right - this.width;
+            newScroll.x = rect.right - this.width;
         }
-        if (dest.top < 0)
+        if (rect.top < viewport.top)
         {
-            newScroll.y += dest.top;
+            newScroll.y = rect.top;
         }
-        if (dest.bottom > this.height)
+        if (rect.bottom > viewport.bottom)
         {
-            newScroll.y += dest.bottom - this.height;
+            newScroll.y = rect.bottom - this.height;
         }
 
         if (!this.scroll.equals(newScroll))
         {
             this.scroll = Point.create(newScroll);
         }
+    }
+
+    public scrollToViewPoint(pti:PointInput):void
+    {
+        this.scrollToGridPoint(this.convertViewPointToGridPoint(pti));
     }
 
     public bash():void
@@ -302,6 +373,7 @@ export class GridElement extends EventEmitterBase
     public invalidate(query:string = null):void
     {
         console.time('GridElement.invalidate');
+        this.views_ = this.computeViews();
         this.layout = GridLayout.compute(this.model, this.padding);
         
         if (!!query)
@@ -341,6 +413,12 @@ export class GridElement extends EventEmitterBase
         }
     }
 
+    private dimension():void
+    {
+        this.views_ = this.computeViews();
+        this.redraw();
+    }
+
     private draw():void
     {
         if (!this.dirty)
@@ -354,11 +432,13 @@ export class GridElement extends EventEmitterBase
         this.emit('draw');
     }
 
-    private computeViewFragments():ViewFragment[]
+    private computeViews():GridView[]
     {
         let { freezeMargin, layout } = this;
 
-        let make = (l:number, t:number, w:number, h:number, ol:number, ot:number) => ({
+        let make = (id:string, s:GridViewScrollBehavior, l:number, t:number, w:number, h:number, ol:number, ot:number) => ({
+            id: id,
+            scrolling: s,
             left: l,
             top: t,
             width: w,
@@ -371,7 +451,7 @@ export class GridElement extends EventEmitterBase
 
         if (freezeMargin.equals(Point.empty))
         {
-            return [ make(viewport.left, viewport.top, viewport.width, viewport.height, 0, 0) ];
+            return [ make('main', 'xy', viewport.left, viewport.top, viewport.width, viewport.height, 0, 0) ];
         }
         else
         {
@@ -384,10 +464,10 @@ export class GridElement extends EventEmitterBase
             let mg = margin;
 
             return [ 
-                make(vp.left + mg.x, vp.top + mg.y, vp.width - mg.x, vp.height - mg.y, mg.x, mg.y), //Main
-                make(0, vp.top + mg.y, mg.x, vp.height - mg.y, 0, mg.y), //Left
-                make(vp.left + mg.x, 0, vp.width - mg.x, mg.y, mg.x, 0), //Top
-                make(0, 0, mg.x, mg.y, 0, 0), //LeftTop
+                make('main', 'xy', vp.left + mg.x, vp.top + mg.y, vp.width - mg.x, vp.height - mg.y, mg.x, mg.y), //Main
+                make('left', 'y', 0, vp.top + mg.y, mg.x, vp.height - mg.y, 0, mg.y), //Left
+                make('top', 'x', vp.left + mg.x, 0, vp.width - mg.x, mg.y, mg.x, 0), //Top
+                make('topLeft', 'none', 0, 0, mg.x, mg.y, 0, 0), //LeftTop
             ];
         }
     }
@@ -397,27 +477,80 @@ export class GridElement extends EventEmitterBase
         return new Rect(Math.floor(this.scrollLeft), Math.floor(this.scrollTop), this.canvas.width, this.canvas.height);
     }
 
+    private convertGridPointToViewPoint(pti:PointInput):Point
+    {
+        let pt = Point.create(pti);
+        let view = this.views.filter(v => {
+            let area = new Rect(
+                v.offsetLeft, 
+                v.offsetTop,
+                (v.scrolling == 'x' || v.scrolling == 'xy') 
+                    ? this.virtualWidth - v.offsetLeft 
+                    : this.width - v.offsetLeft,
+                (v.scrolling == 'y' || v.scrolling == 'xy') 
+                    ? this.virtualHeight - v.offsetTop 
+                    : this.height - v.offsetTop,
+            );
+            return area.contains(pt);
+        })[0];
+
+        switch (view.scrolling) {
+            case 'x':
+                return Point.create(pt).subtract([this.scrollLeft, 0]);
+            case 'y':
+                return Point.create(pt).subtract([0, this.scrollTop]);
+            case 'xy':
+                return Point.create(pt).subtract(this.scroll);
+            default:
+                return Point.create(pt);
+        }
+    }
+
+    private convertViewPointToGridPoint(pti:PointInput, fallbackToMainFragment:boolean = true):Point
+    {
+        let pt = Point.create(pti);
+
+        //Find the view the point falls in... or if none fallback to main
+        let view = (
+            this.views.filter(x => new Rect(x.offsetLeft, x.offsetTop, x.width, x.height).contains(pt))[0] ||
+            this.views.filter(x => x.id == 'main')[0]
+        );
+
+        if (!view) throw 'Unexpected fatal error: no main view fragment.';
+
+        //Based on scroll behavior, apply offset to point and return
+        switch (view.scrolling) {
+            case 'x':
+                return Point.create(pt).add([this.scrollLeft, 0]);
+            case 'y':
+                return Point.create(pt).add([0, this.scrollTop]);
+            case 'xy':
+                return Point.create(pt).add(this.scroll);
+            default:
+                return Point.create(pt);
+        }
+    }
+
     private updateVisuals():void
     {
         console.time('GridElement.drawVisuals');
         
-        let { model, layout } = this;
-        let fragments = this.computeViewFragments();
+        let { model, layout, views } = this;
 
         let prevFrame = this.frame;
-        let nextFrame = [] as ViewAspect[];
+        let nextFrame = [] as GridViewAspect[];
 
         //If the fragments have changed, nerf the prevFrame since we don't want to recycle anything.
-        if (!prevFrame || prevFrame.length != fragments.length)
+        if (!prevFrame || prevFrame.length != views.length)
         {
             prevFrame = [];
         }
 
-        for (let i = 0; i < fragments.length; i++)
+        for (let i = 0; i < views.length; i++)
         {
             let prevAspect = prevFrame[i];
-            let aspect = <ViewAspect>{
-                view: fragments[i],
+            let aspect = <GridViewAspect>{
+                view: views[i],
                 visuals: {},
             };
 
@@ -588,15 +721,9 @@ export class GridElement extends EventEmitterBase
     }
 }
 
-interface ViewFragment extends RectLike
+interface GridViewAspect
 {
-    offsetLeft:number;
-    offsetTop:number;
-}
-
-interface ViewAspect
-{
-    view:ViewFragment;
+    view:GridView;
     visuals:ObjectMap<Visual>;
 }
 

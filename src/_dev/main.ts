@@ -1,5 +1,5 @@
 import { Padding } from '../geom/Padding';
-import { DefaultHistoryManager, GridExtension, GridKernel } from '../';
+import { DefaultHistoryManager, GridExtension, GridKernel, GridMouseEvent, Point } from '../';
 import { ClickZoneExtension } from '../extensions/extra/ClickZoneExtension';
 import { EditingExtension, GridEditEvent } from '../extensions/common/EditingExtension';
 import { GridElement } from '../ui/GridElement';
@@ -29,13 +29,13 @@ let grid = GridElement
     .create(document.getElementById('x'), make_model(0, 0))
     .extend(new ScrollerExtension())
     .extend(new SelectorExtension())
-    .extend(new EditingExtension())
-    .extend(new ClipboardExtension())
-    .extend(new HistoryExtension(history))
-    .extend(new ComputeExtension())
-    .extend(new ClickZoneExtension())
-    .extend(new ComputeExtension())
-    .extend(new ClickZoneExtension())
+    // .extend(new EditingExtension())
+    // .extend(new ClipboardExtension())
+    // .extend(new HistoryExtension(history))
+    // .extend(new ComputeExtension())
+    // .extend(new ClickZoneExtension())
+    // .extend(new ComputeExtension())
+    // .extend(new ClickZoneExtension())
     .mergeInterface()
 ;
 
@@ -52,11 +52,16 @@ grid.on('input', (e:GridEditEvent) =>
     grid.redraw(true);
 });
 
-grid.on('click', (e:any) =>
+grid.on('click', (e:GridMouseEvent) =>
 {
     if (e.cell) {
-        console.log(Base26.num(e.cell.colRef).str + (e.cell.rowRef + 1));
+        //console.log(Base26.num(e.cell.colRef).str + (e.cell.rowRef + 1));
     }
+
+    let pt = new Point(e.offsetX, e.offsetY);
+    let cell = grid.getCellAtViewPoint(pt);
+
+    console.log(Base26.num(cell.colRef).str + (cell.rowRef + 1));
 });
 
 grid.on('zoneenter', e => console.log(e.type, e.zone.type));
@@ -65,14 +70,15 @@ grid.on('zoneclick', e => console.log(e.type, e.zone.type));
 
 //grid.model = make_model(26 * 5, 250);
 
-grid.model = make_model(5, 5);
-grid.model.cells.push(new DefaultGridCell({
-    colRef: 0,
-    rowRef: 5,
-    value: 'Hello...',
-    colSpan: 5,
-}));
-(grid.model as DefaultGridModel).refresh();
+grid.freezeMargin = new Point(2, 2);
+grid.model = make_model(26, 52);
+// grid.model.cells.push(new DefaultGridCell({
+//     colRef: 0,
+//     rowRef: 5,
+//     value: 'Hello...',
+//     colSpan: 5,
+// }));
+// (grid.model as DefaultGridModel).refresh();
 
 grid.invalidate();
 history.clear();
