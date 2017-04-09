@@ -38,6 +38,7 @@ export declare class Point implements PointLike {
     multiply(multipler: number): Point;
     round(): Point;
     subtract(val: number | PointInput): Point;
+    clamp(lower: Point, upper: Point): Point;
     clone(): Point;
     equals(another: PointLike): boolean;
     toArray(): number[];

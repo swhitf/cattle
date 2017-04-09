@@ -1,4 +1,4 @@
-import { Point, PointLike } from './Point';
+import { Point, PointLike, PointInput } from './Point';
 export interface RectLike {
     left: number;
     top: number;
@@ -23,9 +23,10 @@ export declare class Rect {
     topLeft(): Point;
     points(): Point[];
     size(): Point;
-    offset(pt: PointLike): Rect;
-    contains(input: Point | RectLike): boolean;
-    inflate(size: PointLike): Rect;
+    contains(input: PointLike | RectLike): boolean;
+    extend(size: PointInput): Rect;
+    inflate(size: PointInput): Rect;
+    offset(by: PointInput): Rect;
     intersects(rect: RectLike): boolean;
     normalize(): Rect;
     toString(): string;
