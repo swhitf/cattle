@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node scripts\\build.es6",
     "dev": "parallelshell \"scripts\\build.es6\" \"lite-server\"",
-    "export:browser": "tsc -p tsconfig-browser.json && node scripts\\export-browser.es6"
+    "export:browser": "node scripts\\export-browser.es6"
   },
   "author": "Stephen Whitfield",
   "license": "MIT",

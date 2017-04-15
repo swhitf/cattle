@@ -15,4 +15,4 @@ const cfg = {
 
 browserify(cfg)
     .bundle()
-    .pipe(fs.createWriteStream('./export/browser/kpmglib.js'));
+    .pipe(fs.createWriteStream('./dist/browser/cattle.js'));

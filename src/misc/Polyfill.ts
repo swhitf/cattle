@@ -6,7 +6,7 @@ export function ie_safe_create_mouse_event(type:string, source:MouseEvent):Mouse
     {
         let event = document.createEvent("MouseEvent");
         event.initMouseEvent(
-            source.type,
+            type,
             source.bubbles,
             source.cancelable,
             window,
