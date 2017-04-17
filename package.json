@@ -5,8 +5,9 @@
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
   "scripts": {
-    "pretest": "tsc -p tsconfig-test.json",
-    "test": "mocha test/build/**/*.js"
+    "build": "node scripts/build.js",
+    "dev": "parallelshell \"node scripts/build.js -w -s\" \"http-server ./dist/dev -c-1\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Stephen Whitfield",
   "license": "MIT",
