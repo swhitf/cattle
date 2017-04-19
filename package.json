@@ -13,6 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/papaparse": "^4.1.28",
+    "@types/reflect-metadata": "0.0.5",
     "@types/tether": "^1.4.0",
     "bases": "^0.2.1",
     "clipboard-js": "^0.3.3",
