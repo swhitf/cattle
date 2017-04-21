@@ -11,6 +11,7 @@ import { Widget, AbsWidgetBase } from '../../ui/Widget';
 import { command, routine, variable } from '../../ui/Extensibility';
 import * as Tether from 'tether';
 import * as Dom from '../../misc/Dom';
+import * as Util from '../../misc/Util';
 
 
 const Vectors = {
@@ -43,7 +44,7 @@ export interface SelectorExtensionExports
 
     readonly primarySelector:SelectorWidget;
 
-    readonly captureSelector:SelectorWidget;
+    readonly selectors:SelectorWidget[];
 
     select(cells:string[], autoScroll?:boolean):void;
 
@@ -62,19 +63,17 @@ export class SelectorExtension
 {
     private grid:GridElement;
     private layer:HTMLElement;
+    private selection:Selection = Selection.empty;
     private selectGesture:SelectGesture;
 
     @variable()
     private canSelect:boolean = true;
 
     @variable(false)
-    private selection:string[] = [];
-
-    @variable(false)
     private primarySelector:Selector;
 
     @variable(false)
-    private captureSelector:Selector;
+    private selectors:Selector[] = [];
 
     public init(grid:GridElement, kernel:GridKernel)
     {
@@ -113,6 +112,10 @@ export class SelectorExtension
         kernel.variables.define('isSelecting', {
             get: () => !!this.selectGesture
         });
+
+        kernel.variables.define('selection', {
+            get: () => !!this.selection.items
+        });
     }
 
     private createElements(target:HTMLElement):void
@@ -138,16 +141,13 @@ export class SelectorExtension
         onBash();
 
         this.layer = layer;
-
-        this.primarySelector = Selector.create(layer, true);
-        this.captureSelector = Selector.create(layer, false);
     }
 
     @command()
     private select(cells:string[], autoScroll = true):void
     {
         this.doSelect(cells, autoScroll);
-        this.alignSelectors(true);
+        this.updateSelectors();
     }
 
     @command()
@@ -161,7 +161,7 @@ export class SelectorExtension
     {
         let { grid } = this;
 
-        let ref = this.selection[0] || null;
+        let ref = this.selection.primary || null;
         if (ref)
         {
             vector = vector.normalize();
@@ -203,7 +203,7 @@ export class SelectorExtension
 
         let empty = (cell:GridCell) => <any>(cell.value === ''  || cell.value === '0' || cell.value === undefined || cell.value === null);
 
-        let ref = this.selection[0] || null;
+        let ref = this.selection.primary || null;
         if (ref)
         {
             let startCell = grid.model.findCell(ref);
@@ -245,7 +245,7 @@ export class SelectorExtension
     {
         let { grid } = this;
 
-        let ref = this.selection[0] || null;
+        let ref = this.selection.primary || null;
         if (!ref)
             return;
 
@@ -267,7 +267,7 @@ export class SelectorExtension
 
         vector = vector.normalize();
 
-        let ref = this.selection[0] || null;
+        let ref = this.selection.primary || null;
         if (ref)
         {
             let cell = grid.model.findCellNeighbor(ref, vector);
@@ -282,7 +282,7 @@ export class SelectorExtension
     {
         let { grid, selection } = this;
 
-        let remaining = selection.filter(x => !!grid.model.findCell(x));
+        let remaining = selection.items.filter(x => !!grid.model.findCell(x));
         if (remaining.length != selection.length)
         {
             this.select(remaining, autoScroll);
@@ -340,61 +340,134 @@ export class SelectorExtension
     }
 
     @routine()
-    private doSelect(cells:string[] = [], autoScroll:boolean = true):void
+    private doSelect(cellRefs:string[] = [], autoScroll:boolean = true):void
     {
         let { grid } = this;
 
         if (!this.canSelect)
             return;
 
-        if (cells.length)
+        if (cellRefs.length)
         {
-            this.selection = cells;
+            this.selection = new Selection(cellRefs);
 
             if (autoScroll)
             {
-                grid.scrollToCell(cells[0]);
+                grid.scrollToCell(this.selection.primary);
             }
         }
         else
         {
-            this.selection = [];
+            this.selection = Selection.empty;
             this.selectGesture = null;
         }
     }
 
-    private alignSelectors(animate:boolean):void
+    private updateSelectors():void
     {
-        let { grid, selection, primarySelector, captureSelector } = this;
+        let { grid, selection, primarySelector, selectors } = this;
+        
+        //Create list of cell refs that are currently selected AND represented - always include the primary so we destory it
+        let represented = Util.lookup(
+            selectors.filter(x => selection.primary != x.cellRef && selection.contains(x.cellRef)).map(x => x.cellRef),
+            x => x);
+
+        //Destroy selectors that represent no longer selected cells
+        let orphaned = selectors.filter(x => !represented[x.cellRef]);
+        orphaned.forEach(x => x.destroy());
+
+        //Filter selectors for only those that represent currently selected cells
+        selectors = selectors.filter(x => !!represented[x.cellRef]);
 
         if (selection.length)
         {
-            let primaryRect = grid.getCellViewRect(selection[0]);
-            primarySelector.goto(primaryRect, animate);
+            //Create any selectors for cells that are not represented         
+            for (let cellRef of selection.items)
+            {
+                if (!!represented[cellRef])
+                    continue;
 
-            //Take upper left most and lower right most
-            let range = GridRange.create(grid.model, selection);
-            let tl = grid.getCellViewRect(range.ltr[0].ref);
-            let br = grid.getCellViewRect(range.ltr[range.ltr.length - 1].ref);
+                selectors.push(Selector.create(cellRef, this.layer, cellRef == selection.primary));
 
-            console.log(tl);
-            console.log(br);
-
-            let captureRect = Rect.fromMany([tl, br]);
-            captureSelector.goto(captureRect, animate);
-            captureSelector.toggle(selection.length > 1);
+                if (cellRef == selection.primary)
+                {
+                    primarySelector = selectors[selectors.length - 1];
+                }
+            }
         }
         else
         {
-            primarySelector.hide();
-            captureSelector.hide();
+            if (selectors.length)
+            {
+                console.error('This should never be.');
+            }
+
+            primarySelector = null;
         }
+
+        this.primarySelector = primarySelector;
+        this.selectors = selectors;
+
+        this.alignSelectors(true);
+    }
+
+    private alignSelectors(animate:boolean):void
+    {
+        console.log('alignSelectors');
+
+        let { grid, primarySelector, selectors } = this;
+
+        for (let s of selectors)
+        {
+            let rect = grid.getCellViewRect(s.cellRef, true);
+            s.goto(rect, true);
+        }
+    }
+}
+
+class Selection
+{
+    public static empty:Selection = new Selection([]);
+
+    private lookup:any;
+
+    constructor(public items:string[])
+    {
+    }
+
+    public get length():number
+    {
+        return this.items.length;
+    }
+
+    public get primary():string
+    {
+        return this.items[0] || null;
+    }
+
+    public get(index:number):string
+    {
+        return this.items[index];
+    }
+
+    public contains(ref:string):boolean
+    {
+        if (!this.lookup)
+        {
+            this.lookup = {};
+            for (let tm of this.items)
+            {
+                this.lookup[tm] = true;
+            }
+        }
+
+        return !!this.lookup[ref];
     }
 }
 
 class Selector extends AbsWidgetBase<HTMLDivElement>
 {
-    public static create(container:HTMLElement, primary:boolean = false):Selector
+    public static create(cellRef:string, container:HTMLElement, primary:boolean = false):Selector
     {
         let root = document.createElement('div');
         root.className = 'grid-selector ' + (primary ? 'grid-selector-primary' : '');
@@ -407,6 +480,16 @@ class Selector extends AbsWidgetBase<HTMLDivElement>
             display: 'none',
         });
 
-        return new Selector(root);
+        return new Selector(cellRef, root);
+    }
+
+    constructor(public cellRef:string, root:HTMLDivElement)
+    {
+        super(root);
+    }
+
+    public destroy():void
+    {
+        this.root.parentNode.removeChild(this.root);
     }
 }

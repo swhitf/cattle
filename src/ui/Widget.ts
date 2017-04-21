@@ -70,17 +70,31 @@ export class AbsWidgetBase<T extends HTMLElement> implements Widget
      */
     public goto(viewRect:RectLike, autoShow:boolean = true):void
     {
+        let root = this.root;
+
         if (autoShow)
         {
-            Dom.show(this.root);
+            if (viewRect.width <= 0 || viewRect.height <= 0)
+            {
+                Dom.hide(root);
+            }
+            else
+            {
+                Dom.show(root);
+            }
+        }
+
+        if (root.clientWidth != (viewRect.width + 1) || root.clientHeight != (viewRect.height + 1))
+        {
+            Dom.css(this.root, {
+                width: `${viewRect.width + 1}px`,
+                height: `${viewRect.height + 1}px`,
+                overflow: `hidden`,
+            });
         }
 
         Dom.css(this.root, {
-            left: `${viewRect.left - 1}px`,
-            top: `${viewRect.top - 1}px`,
-            width: `${viewRect.width + 1}px`,
-            height: `${viewRect.height + 1}px`,
-            overflow: `hidden`,
+            transform: `translate(${viewRect.left - 1}px, ${viewRect.top - 1}px)`,
         });
     }
 

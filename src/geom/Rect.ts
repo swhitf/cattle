@@ -168,12 +168,29 @@ export class Rect
         );
     }
 
-    public intersects(rect:RectLike):boolean
+    public intersect(another:RectLike):Rect
     {
-        return rect.left + rect.width > this.left
-            && rect.top + rect.height > this.top
-            && rect.left < this.left + this.width
-            && rect.top < this.top + this.height;
+        if (!this.intersects(another)) 
+        { 
+            return Rect.empty;
+        } 
+        else
+        {
+            let left = Math.max(this.left, another.left);
+            let top = Math.max(this.top, another.top); 
+            let right = Math.min(this.right, (another.left + another.width)); 
+            let bottom = Math.min(this.bottom, (another.top + another.height));
+
+            return Rect.fromEdges(left, top, right, bottom);
+        }
+    }    
+
+    public intersects(another:RectLike):boolean
+    {
+        return another.left + another.width > this.left
+            && another.top + another.height > this.top
+            && another.left < this.left + this.width
+            && another.top < this.top + this.height;
     }
 
     public normalize():Rect

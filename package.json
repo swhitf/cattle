@@ -6,7 +6,7 @@
   "typings": "dist/lib/index.d.ts",
   "scripts": {
     "build": "node scripts\\build.es6",
-    "dev": "parallelshell \"scripts\\build.es6\" \"lite-server\"",
+    "dev": "concurrently -k \"node scripts\\build.es6\" \"lite-server\"",
     "export:browser": "node scripts\\export-browser.es6"
   },
   "author": "Stephen Whitfield",

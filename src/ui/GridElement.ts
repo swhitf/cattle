@@ -295,17 +295,29 @@ export class GridElement extends EventEmitterBase
 
     /**
      * Gets the rectangle, relative to the viewport, that the cell with the cell with the specified 
-     * id occupies.  This method takes into account freezeMargin when computing the rectangle.
+     * id occupies.  This method takes into account freezeMargin when computing the rectangle.  If
+     * clip is specified, only the visible area is returned.
      * @param ref 
      */
-    public getCellViewRect(ref:string):Rect
+    public getCellViewRect(ref:string, clip:boolean = false):Rect
     {
         let gridRect = this.getCellGridRect(ref);
         if (gridRect)
         {
-            let viewPt = this.convertGridPointToViewPoint(gridRect.topLeft());
-            return new Rect(viewPt.x, viewPt.y, gridRect.width, gridRect.height);
+            let view = this.getViewForGridPoint(gridRect.topLeft());
+            let viewRelPt = this.convertGridPointToViewPoint(gridRect.topLeft(), view);
+            let viewRelRect = new Rect(viewRelPt.x, viewRelPt.y, gridRect.width, gridRect.height);
+
+            if (clip)
+            {
+                let viewRect = new Rect(view.offsetLeft, view.offsetTop, view.width, view.height);
+                viewRelRect = viewRect.intersect(viewRelRect);
+            }
+
+            return viewRelRect;
         }
+
+        return null;
     }
 
     public scrollToCell(ref:string):void
@@ -477,22 +489,9 @@ export class GridElement extends EventEmitterBase
         return new Rect(Math.floor(this.scrollLeft), Math.floor(this.scrollTop), this.canvas.width, this.canvas.height);
     }
 
-    private convertGridPointToViewPoint(pti:PointInput):Point
+    private convertGridPointToViewPoint(pti:PointInput, view:GridView):Point
     {
         let pt = Point.create(pti);
-        let view = this.views.filter(v => {
-            let area = new Rect(
-                v.offsetLeft, 
-                v.offsetTop,
-                (v.scrolling == 'x' || v.scrolling == 'xy') 
-                    ? this.virtualWidth - v.offsetLeft 
-                    : this.width - v.offsetLeft,
-                (v.scrolling == 'y' || v.scrolling == 'xy') 
-                    ? this.virtualHeight - v.offsetTop 
-                    : this.height - v.offsetTop,
-            );
-            return area.contains(pt);
-        })[0];
 
         switch (view.scrolling) {
             case 'x':
@@ -529,6 +528,32 @@ export class GridElement extends EventEmitterBase
             default:
                 return Point.create(pt);
         }
+    }
+
+    private getViewForGridPoint(pti:PointInput):GridView
+    {
+        let pt = Point.create(pti);
+
+        let view = this.views.filter(v => {
+            let area = new Rect(
+                v.offsetLeft, 
+                v.offsetTop,
+                (v.scrolling == 'x' || v.scrolling == 'xy') 
+                    ? this.virtualWidth - v.offsetLeft 
+                    : this.width - v.offsetLeft,
+                (v.scrolling == 'y' || v.scrolling == 'xy') 
+                    ? this.virtualHeight - v.offsetTop 
+                    : this.height - v.offsetTop,
+            );
+            return area.contains(pt);
+        });
+
+        if (!view.length) 
+        {
+            throw 'Unexpected fatal error: no main view fragment.';
+        }
+
+        return view[0];
     }
 
     private updateVisuals():void

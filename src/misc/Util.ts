@@ -51,6 +51,20 @@ export function flatten<T>(aa:any):T[]
     return a as T[];
 }
 
+export function lookup<T>(arr:T[], indexer:(tm:T) => number):{ [index:number]:boolean };
+export function lookup<T>(arr:T[], indexer:(tm:T) => string):{ [index:string]:boolean };
+export function lookup<T>(arr:T[], indexer:(tm:T) => number|string):any
+{
+    let obj = {};
+
+    for (let tm of arr)
+    {
+        obj[indexer(tm)] = true;
+    }
+
+    return obj;
+}
+
 export function keys<T>(ix:ObjectIndex<T>|ObjectMap<T>):string[]
 {
     return Object.keys(ix);
