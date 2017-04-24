@@ -342,25 +342,35 @@ export class GridElement extends EventEmitterBase
             return this.scrollToGridPoint([rl.left, rl.top]);
         }
 
-        let rect = Rect.fromLike(rl);
-        let viewport = this.computeViewport();
         let newScroll = this.scroll.clone() as PointLike;
+        let gridRect = Rect.fromLike(rl);
+        let view = this.getViewForGridPoint(gridRect.topLeft());
+        let viewRect = Rect.fromLike(view);
 
-        if (rect.left < viewport.left)
+        if (gridRect.left < viewRect.left)
         {
-            newScroll.x = rect.left;
+            newScroll.x -= (viewRect.left - gridRect.left);
         }
-        if (rect.right > viewport.right)
+        if (gridRect.right > viewRect.right)
         {
-            newScroll.x = rect.right - this.width;
+            newScroll.x -= (viewRect.right - gridRect.right);
         }
-        if (rect.top < viewport.top)
+        if (gridRect.top < viewRect.top)
         {
-            newScroll.y = rect.top;
+            newScroll.y -= (viewRect.top - gridRect.top);
         }
-        if (rect.bottom > viewport.bottom)
+        if (gridRect.bottom > viewRect.bottom)
         {
-            newScroll.y = rect.bottom - this.height;
+            newScroll.y -= (viewRect.bottom - gridRect.bottom);
+        }
+
+        if (view.scrolling == 'none' || view.scrolling == 'x')
+        {
+            newScroll.y = 0;
+        }
+        if (view.scrolling == 'none' || view.scrolling == 'y')
+        {
+            newScroll.x = 0;
         }
 
         if (!this.scroll.equals(newScroll))
