@@ -408,7 +408,13 @@ export class SelectorExtension
         this.primarySelector = primarySelector;
         this.selectors = selectors;
 
+        this.decorateSelectors();
         this.alignSelectors(true);
+    }
+
+    private decorateSelectors():void
+    {
+
     }
 
     private alignSelectors(animate:boolean):void
@@ -467,10 +473,10 @@ class Selection
 
 class Selector extends AbsWidgetBase<HTMLDivElement>
 {
-    public static create(cellRef:string, container:HTMLElement, primary:boolean = false):Selector
+    public static create(cellRef:string, container:HTMLElement):Selector
     {
         let root = document.createElement('div');
-        root.className = 'grid-selector ' + (primary ? 'grid-selector-primary' : '');
+        root.className = 'grid-selector';
         container.appendChild(root);
 
         Dom.css(root, {
@@ -491,5 +497,14 @@ class Selector extends AbsWidgetBase<HTMLDivElement>
     public destroy():void
     {
         this.root.parentNode.removeChild(this.root);
+    }
+
+    public setStyle(primary:boolean, left:boolean, top:boolean, right:boolean, bottom:boolean):void
+    {
+        this.root.classList.toggle('grid-selector-primary', primary);
+        this.root.classList.toggle('grid-selector-left', left);
+        this.root.classList.toggle('grid-selector-top', top);
+        this.root.classList.toggle('grid-selector-right', right);
+        this.root.classList.toggle('grid-selector-bottom', bottom);
     }
 }
