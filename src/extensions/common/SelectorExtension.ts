@@ -107,7 +107,7 @@ export class SelectorExtension
         ;
 
         grid.on('invalidate', () => this.reselect(false));
-        grid.on('scroll', () => this.alignSelectors(false));
+        grid.on('scroll', () => this.alignSelectors());
 
         kernel.variables.define('isSelecting', {
             get: () => !!this.selectGesture
@@ -207,7 +207,7 @@ export class SelectorExtension
         if (ref)
         {
             let startCell = grid.model.findCell(ref);
-            let currCell = grid.model.findCellNeighbor(startCell.ref, vector);
+            let currCell = grid.model.walkOnce(startCell.ref, vector);
             let resultCell = <GridCell>null;
 
             if (!currCell)
@@ -216,7 +216,7 @@ export class SelectorExtension
             while (true)
             {
                 let a = currCell;
-                let b = grid.model.findCellNeighbor(a.ref, vector);
+                let b = grid.model.walkOnce(a.ref, vector);
 
                 if (!a || !b)
                 {
@@ -270,7 +270,7 @@ export class SelectorExtension
         let ref = this.selection.primary || null;
         if (ref)
         {
-            let cell = grid.model.findCellNeighbor(ref, vector);
+            let cell = grid.model.walkOnce(ref, vector);
             if (cell)
             {
                 this.select([cell.ref], autoScroll);
@@ -387,7 +387,7 @@ export class SelectorExtension
                 if (!!represented[cellRef])
                     continue;
 
-                selectors.push(Selector.create(cellRef, this.layer, cellRef == selection.primary));
+                selectors.push(Selector.create(cellRef, this.layer));
 
                 if (cellRef == selection.primary)
                 {
@@ -409,18 +409,30 @@ export class SelectorExtension
         this.selectors = selectors;
 
         this.decorateSelectors();
-        this.alignSelectors(true);
+        this.alignSelectors();
     }
 
     private decorateSelectors():void
     {
+        let { grid, primarySelector, selectors, selection } = this;
+        let model = grid.model;
+        
+        for (let s of selectors)
+        {
+            let cell = model.findCell(s.cellRef);
 
+            s.setStyle(
+                selection.primary === cell.ref,
+                !selection.contains(model.walkOnce(cell.ref, 'w')),
+                !selection.contains(model.walkOnce(cell.ref, 'n')),
+                !selection.contains(model.walkOnce(cell.ref, 'e')),
+                !selection.contains(model.walkOnce(cell.ref, 's')),
+            );
+        }
     }
 
-    private alignSelectors(animate:boolean):void
+    private alignSelectors():void
     {
-        console.log('alignSelectors');
-
         let { grid, primarySelector, selectors } = this;
 
         for (let s of selectors)
@@ -456,8 +468,14 @@ class Selection
         return this.items[index];
     }
 
-    public contains(ref:string):boolean
+    public contains(cellOrRef:GridCell|string):boolean
     {
+        if (!cellOrRef) 
+            return false;
+
+        if (typeof(cellOrRef) !== 'string')
+            cellOrRef = cellOrRef.ref;
+
         if (!this.lookup)
         {
             this.lookup = {};
@@ -467,7 +485,7 @@ class Selection
             }
         }
 
-        return !!this.lookup[ref];
+        return !!this.lookup[cellOrRef];
     }
 }
 
@@ -501,10 +519,15 @@ class Selector extends AbsWidgetBase<HTMLDivElement>
 
     public setStyle(primary:boolean, left:boolean, top:boolean, right:boolean, bottom:boolean):void
     {
-        this.root.classList.toggle('grid-selector-primary', primary);
-        this.root.classList.toggle('grid-selector-left', left);
-        this.root.classList.toggle('grid-selector-top', top);
-        this.root.classList.toggle('grid-selector-right', right);
-        this.root.classList.toggle('grid-selector-bottom', bottom);
+        let toggle = (c:string, v:boolean) => {
+            if (v) this.root.classList.add(c);
+            else this.root.classList.remove(c);
+        };
+
+        toggle('grid-selector-primary', primary);
+        toggle('grid-selector-left', left);
+        toggle('grid-selector-top', top);
+        toggle('grid-selector-right', right);
+        toggle('grid-selector-bottom', bottom);
     }
 }

@@ -1,11 +1,22 @@
-import { GridModel } from '../GridModel';
+import { GridModel, Vector } from '../GridModel';
 import { GridColumn } from '../GridColumn';
 import { GridRow } from '../GridRow';
 import { GridCell } from '../GridCell';
-import { Point } from '../../geom/Point';
-import * as _ from '../../misc/Util'
+import { Point, PointInput } from '../../geom/Point';
+import * as _ from '../../misc/Util';
 import { DefaultGridCell } from './DefaultGridCell';
 
+
+const Vectors = {
+    nw: new Point(-1, -1),
+    n: new Point(0, -1),
+    ne: new Point(1, -1),
+    e: new Point(1, 0),
+    se: new Point(1, 1),
+    s: new Point(0, 1),
+    sw: new Point(-1, 1),
+    w: new Point(-1, 0),
+};
 
 /**
  * Provides a by-the-book implementation of GridModel.  All inspection methods use O(1) implementations.
@@ -92,21 +103,6 @@ export class DefaultGridModel implements GridModel
     }
 
     /**
-     * Given a cell ref, returns the GridCell object that represents the neighboring cell as per the specified
-     * vector (direction) object, or null if no neighbor could be found.
-     * @param ref
-     * @param vector
-     */
-    public findCellNeighbor(ref:string, vector:Point):GridCell
-    {
-        let cell = this.findCell(ref);
-        let col = cell.colRef + vector.x;
-        let row = cell.rowRef + vector.y;
-
-        return this.locateCell(col, row);
-    }
-
-    /**
      * Given a cell column ref and row ref, returns the GridCell object that represents the cell at the location,
      * or null if no cell could be found.
      * @param colRef
@@ -115,6 +111,48 @@ export class DefaultGridModel implements GridModel
     public locateCell(col:number, row:number):GridCell
     {
         return (this.coords[col] || {})[row] || null;
+    }
+    
+    /**
+     * From a given cell ref, walk once along the model in the specified vector.  Returns null if the model edge is
+     * met.
+     */
+    public walkOnce(ref:string, vector:PointInput|Vector):GridCell
+    {
+        let step = typeof(vector) === 'string' ? Vectors[vector] : Point.create(vector);
+
+        let start = this.findCell(ref);
+        let col = start.colRef + step.x;
+        let row = start.rowRef + step.y;
+
+        return this.locateCell(col, row);
+    }
+
+    /**
+     * From a given cell ref, walk along the model at the specified step vector until a cell is reached that matches
+     * the specified predicate.  Returns null if the model edge is met before an acceptable cell is found.
+     */
+    public walkUntil(ref:string, vector:PointInput|Vector, predicate:(cell:GridCell) => boolean):GridCell
+    {
+        let step = typeof(vector) === 'string' ? Vectors[vector] : Point.create(vector);
+
+        let start = this.findCell(ref);
+        let pt = new Point(start.colRef, start.rowRef);
+
+        while (true) {
+
+            pt = pt.add(step);
+            
+            let current = this.locateCell(pt.x, pt.y);
+            if (current) {
+                if (predicate(current)) {
+                    return current;
+                }
+            }
+            else {
+                return null;
+            }
+        }
     }
 
     /**
