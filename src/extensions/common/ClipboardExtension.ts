@@ -138,7 +138,6 @@ export class ClipboardExtension implements GridExtension
         if (!selection.length)
             return;
 
-
         let focusedCell = grid.model.findCell(selection[0]);
 
         let parsed = Papa.parse(text, {
