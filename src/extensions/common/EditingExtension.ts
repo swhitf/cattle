@@ -251,10 +251,12 @@ export class EditingExtension
     @routine()
     private erase():void
     {
-        let { selection } = this;
+        let { grid, selection } = this;
 
         if (this.isEditing)
             return;
+
+        selection = selection.filter(x => !is_readonly(grid.model.findCell(x)));
 
         this.commitUniform(selection, '');
     }
