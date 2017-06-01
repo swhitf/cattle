@@ -1,6 +1,7 @@
 import { GridChangeSet } from './EditingExtension';
 import { GridExtension, GridElement } from '../../ui/GridElement';
 import { GridRange } from '../../model/GridRange';
+import { GridCell } from '../../model/GridCell';
 import { KeyInput } from '../../input/KeyInput';
 import { Rect } from '../../geom/Rect';
 import { Point } from '../../geom/Point';
@@ -132,8 +133,11 @@ export class ClipboardExtension implements GridExtension
     {
         let { grid, selection } = this;
 
+        selection = selection.filter(x => !is_readonly(grid.model.findCell(x)));
+
         if (!selection.length)
             return;
+
 
         let focusedCell = grid.model.findCell(selection[0]);
 
@@ -220,4 +224,9 @@ export class CopyNet extends AbsWidgetBase<HTMLDivElement>
 
         return new CopyNet(root);
     }
+}
+
+function is_readonly(cell:GridCell):boolean
+{
+    return cell['readonly'] === true || cell['mutable'] === false;
 }
