@@ -133,8 +133,6 @@ export class ClipboardExtension implements GridExtension
     {
         let { grid, selection } = this;
 
-        selection = selection.filter(x => !is_readonly(grid.model.findCell(x)));
-
         if (!selection.length)
             return;
 
@@ -158,6 +156,9 @@ export class ClipboardExtension implements GridExtension
         let changes = new GridChangeSet();
         for (let cell of pasteRange.ltr)
         {
+            if (is_readonly(cell))
+                continue;
+
             let xy = new Point(cell.colRef, cell.rowRef).subtract(startVector);
             let value = data[xy.y][xy.x] || '';
 

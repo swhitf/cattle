@@ -20,7 +20,9 @@
     "clipboard-js": "^0.3.3",
     "es6-promise": "^4.0.5",
     "papaparse": "^4.1.2",
-    "tether": "1.4.0"
+    "resize-observer-polyfill": "^1.4.2",
+    "tether": "1.4.0",
+    "typescript-collections": "^1.2.3"
   },
   "devDependencies": {
     "@types/jquery": "^2.0.34",
