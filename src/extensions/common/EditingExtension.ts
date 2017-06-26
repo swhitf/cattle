@@ -135,6 +135,8 @@ export class EditingExtension
             .on('DBLCLICK:PRIMARY', () => this.beginEdit(null))
         ;
 
+        this.input.root.addEventListener('blur', () => { this.endEdit(true) });
+
         grid.on('keypress', (e:GridKeyboardEvent) => this.beginEdit(String.fromCharCode(e.charCode)));
 
         kernel.routines.hook('before:doSelect', () => this.endEdit(true));
