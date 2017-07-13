@@ -5,30 +5,39 @@
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
   "scripts": {
-    "pretest": "tsc -p tsconfig-test.json",
-    "test": "mocha test/build/**/*.js"
+    "build": "node scripts/build.js",
+    "dev": "concurrently -k \"node scripts/build.js -w -s\" \"http-server ./dist/dev -c-1\"",
+    "export:browser": "node scripts\\export-browser.js",
+    "export:tsd": "node scripts\\export-tsd.js"
   },
   "author": "Stephen Whitfield",
   "license": "MIT",
   "dependencies": {
     "@types/papaparse": "^4.1.28",
+    "@types/reflect-metadata": "0.0.5",
     "@types/tether": "^1.4.0",
     "bases": "^0.2.1",
-    "clipboard-js": "^0.3.2",
+    "clipboard-js": "^0.3.3",
     "es6-promise": "^4.0.5",
     "papaparse": "^4.1.2",
     "tether": "1.4.0"
   },
   "devDependencies": {
     "@types/jquery": "^2.0.34",
-    "browserify": "^13.1.1",
+    "reflect-metadata":"^0.1.10",
+    "concurrently":"^3.5.0",
+    "http-server":"^0.10.0",
+    "browserify": "^13.3.0",
+    "fs-extra": "^2.1.2",
     "glob": "^7.1.1",
     "gulp": "^3.9.1",
     "gulp-connect": "^5.0.0",
     "merge-stream": "^1.0.1",
+    "parallelshell": "^2.0.0",
     "tsify": "^3.0.0",
     "typescript": "^2.1.4",
     "vinyl-source-stream": "^1.1.0",
+    "watch": "^1.0.2",
     "watchify": "^3.8.0"
   }
 }

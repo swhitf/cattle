@@ -94,24 +94,20 @@ var ClipboardExtension = (function () {
     };
     ClipboardExtension.prototype.doCopy = function (cells, delimiter) {
         if (delimiter === void 0) { delimiter = '\t'; }
-        var grid = this.grid;
         this.copyList = cells;
         var range = this.copyRange = GridRange_1.GridRange.create(this.grid.model, cells);
         var text = '';
         if (!cells.length)
             return;
-        var rowRef = range.ltr[0].rowRef;
+        var rr = range.ltr[0].rowRef;
         for (var i = 0; i < range.ltr.length; i++) {
-            var cell = range.ltr[i];
-            //If row or column has zero size, do not copy
-            if (grid.getColumnRect(cell.colRef).width == 0 || grid.getRowRect(cell.rowRef).height == 0)
-                continue;
-            if (rowRef !== cell.rowRef) {
+            var c = range.ltr[i];
+            if (rr !== c.rowRef) {
                 text += NewLine;
-                rowRef = cell.rowRef;
+                rr = c.rowRef;
             }
-            text += cell.value;
-            if (i < (range.ltr.length - 1) && range.ltr[i + 1].rowRef === rowRef) {
+            text += c.value;
+            if (i < (range.ltr.length - 1) && range.ltr[i + 1].rowRef === rr) {
                 text += delimiter;
             }
         }

@@ -96,6 +96,7 @@ var EditingExtension = (function () {
             .on('!BACKSPACE', function () { return _this.beginEdit(''); });
         MouseInput_1.MouseInput.for(this.grid.root)
             .on('DBLCLICK:PRIMARY', function () { return _this.beginEdit(null); });
+        this.input.root.addEventListener('blur', function () { _this.endEdit(true); });
         grid.on('keypress', function (e) { return _this.beginEdit(String.fromCharCode(e.charCode)); });
         kernel.routines.hook('before:doSelect', function () { return _this.endEdit(true); });
     };

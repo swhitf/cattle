@@ -32,10 +32,8 @@ export declare class DefaultGridModel implements GridModel {
      * The grid row definitions.  The order is arbitrary.
      */
     readonly rows: GridRow[];
-    private cellRefLookup;
-    private cellCoordLookup;
-    private colRefLookup;
-    private rowRefLookup;
+    private refs;
+    private coords;
     /**
      * Initializes a new instance of DefaultGridModel.
      *
@@ -57,18 +55,6 @@ export declare class DefaultGridModel implements GridModel {
      * @param vector
      */
     findCellNeighbor(ref: string, vector: Point): GridCell;
-    /**
-     * Given a column ref, returns the GridColumn object that represents the column, or null if the column did not exist
-     * within the model.
-     * @param ref
-     */
-    findColumn(ref: number): GridColumn;
-    /**
-     * Given a row ref, returns the GridRow object that represents the row, or null if the row did not exist
-     * within the model.
-     * @param ref
-     */
-    findRow(ref: number): GridRow;
     /**
      * Given a cell column ref and row ref, returns the GridCell object that represents the cell at the location,
      * or null if no cell could be found.

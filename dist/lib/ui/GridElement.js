@@ -154,12 +154,6 @@ var GridElement = (function (_super) {
     GridElement.prototype.focus = function () {
         this.root.focus();
     };
-    GridElement.prototype.getColumnRect = function (ref) {
-        return this.layout.queryColumn(ref);
-    };
-    GridElement.prototype.getRowRect = function (ref) {
-        return this.layout.queryRow(ref);
-    };
     GridElement.prototype.getCellAtGridPoint = function (pt) {
         var refs = this.layout.captureCells(new Rect_1.Rect(pt.x, pt.y, 1, 1));
         if (refs.length) {

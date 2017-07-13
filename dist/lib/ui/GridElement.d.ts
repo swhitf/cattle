@@ -55,8 +55,6 @@ export declare class GridElement extends EventEmitterBase {
     set(variable: string, value: any): void;
     mergeInterface(): GridElement;
     focus(): void;
-    getColumnRect(ref: number): RectLike;
-    getRowRect(ref: number): RectLike;
     getCellAtGridPoint(pt: PointLike): GridCell;
     getCellAtViewPoint(pt: PointLike): GridCell;
     getCellsInGridRect(rect: RectLike): GridCell[];

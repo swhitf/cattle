@@ -1,3 +1,4 @@
+import { ie_safe_create_mouse_event } from '../../misc/Polyfill';
 import { GridCell } from '../../model/GridCell';
 import { GridKernel } from '../../ui/GridKernel'
 import { GridElement, GridExtension, GridMouseEvent } from '../../ui/GridElement'
@@ -189,7 +190,7 @@ export class ClickZoneExtension implements GridExtension
 
 function create_event(type:string, czs:ClickZoneSelection, source:MouseEvent):ClickZoneMouseEvent
 {
-    let event = <any>(new MouseEvent(type, source));
+    let event = ie_safe_create_mouse_event(type, source) as any;
     // event.gridX = source.gridX;
     // event.gridY = source.gridY;
     event.cell = czs.cell;
