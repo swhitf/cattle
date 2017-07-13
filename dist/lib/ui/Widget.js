@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Rect_1 = require("../geom/Rect");
 var Dom = require("../misc/Dom");
 /**

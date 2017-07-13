@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Polyfill_1 = require("../../misc/Polyfill");
 var Rect_1 = require("../../geom/Rect");
 var Point_1 = require("../../geom/Point");
 var Dom = require("../../misc/Dom");
@@ -111,7 +113,7 @@ var ClickZoneExtension = (function () {
 }());
 exports.ClickZoneExtension = ClickZoneExtension;
 function create_event(type, czs, source) {
-    var event = (new MouseEvent(type, source));
+    var event = Polyfill_1.ie_safe_create_mouse_event(type, source);
     // event.gridX = source.gridX;
     // event.gridY = source.gridY;
     event.cell = czs.cell;

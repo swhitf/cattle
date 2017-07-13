@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var bases = require("bases");
 var Alpha26 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 var Base26 = (function () {

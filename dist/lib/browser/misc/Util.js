@@ -1,5 +1,6 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     function coalesce() {
         var inputs = [];
         for (var _i = 0; _i < arguments.length; _i++) {

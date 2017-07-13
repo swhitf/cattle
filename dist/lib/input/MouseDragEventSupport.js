@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var Polyfill_1 = require("../misc/Polyfill");
 var Point_1 = require("../geom/Point");
 var MouseDragEventSupport = (function () {
     function MouseDragEventSupport(elmt) {
@@ -61,7 +63,7 @@ var MouseDragEventSupport = (function () {
         }
     };
     MouseDragEventSupport.prototype.createEvent = function (type, source, dist) {
-        var event = (new MouseEvent(type, source));
+        var event = (Polyfill_1.ie_safe_create_mouse_event(type, source));
         event.startX = this.startPoint.x;
         event.startY = this.startPoint.y;
         if (dist) {

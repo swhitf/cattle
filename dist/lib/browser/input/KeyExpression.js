@@ -1,5 +1,6 @@
 define(["require", "exports", "./Keys"], function (require, exports, Keys_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var KeyExpression = (function () {
         function KeyExpression(keys, exclusive) {
             this.exclusive = exclusive;

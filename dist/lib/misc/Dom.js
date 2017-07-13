@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function parse(html) {
     var frag = document.createDocumentFragment();
     var body = document.createElement('body');

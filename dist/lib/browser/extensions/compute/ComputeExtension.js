@@ -1,5 +1,6 @@
 define(["require", "exports", "./JavaScriptComputeEngine", "../common/EditingExtension"], function (require, exports, JavaScriptComputeEngine_1, EditingExtension_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var ComputeExtension = (function () {
         function ComputeExtension(engine) {
             this.noCapture = false;

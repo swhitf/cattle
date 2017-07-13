@@ -55,6 +55,8 @@ export declare class GridElement extends EventEmitterBase {
     set(variable: string, value: any): void;
     mergeInterface(): GridElement;
     focus(): void;
+    getColumnRect(ref: number): RectLike;
+    getRowRect(ref: number): RectLike;
     getCellAtGridPoint(pt: PointLike): GridCell;
     getCellAtViewPoint(pt: PointLike): GridCell;
     getCellsInGridRect(rect: RectLike): GridCell[];
@@ -65,13 +67,11 @@ export declare class GridElement extends EventEmitterBase {
     bash(): void;
     invalidate(query?: string): void;
     redraw(forceImmediate?: boolean): void;
-    private draw();
+    private draw(forced);
     private computeViewFragments();
     private computeViewport();
     private updateVisuals();
-    private updateVisuals2();
     private drawVisuals();
-    private drawVisuals2();
     private createBuffer(width, height);
     private createVisual(cell, region);
     private forwardMouseEvent(event);

@@ -1,5 +1,6 @@
 define(["require", "exports", "../misc/Util"], function (require, exports, Util_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Padding = (function () {
         function Padding(top, right, bottom, left) {
             this.top = Util_1.coalesce(top, 0);

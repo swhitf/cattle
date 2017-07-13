@@ -1,5 +1,6 @@
-define(["require", "exports", "../geom/Point"], function (require, exports, Point_1) {
+define(["require", "exports", "../misc/Polyfill", "../geom/Point"], function (require, exports, Polyfill_1, Point_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var MouseDragEventSupport = (function () {
         function MouseDragEventSupport(elmt) {
             this.elmt = elmt;
@@ -61,7 +62,7 @@ define(["require", "exports", "../geom/Point"], function (require, exports, Poin
             }
         };
         MouseDragEventSupport.prototype.createEvent = function (type, source, dist) {
-            var event = (new MouseEvent(type, source));
+            var event = (Polyfill_1.ie_safe_create_mouse_event(type, source));
             event.startX = this.startPoint.x;
             event.startY = this.startPoint.y;
             if (dist) {

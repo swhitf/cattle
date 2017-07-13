@@ -1,3 +1,4 @@
+import "reflect-metadata";
 /**
  * Do not use directly.
  */

@@ -1,5 +1,6 @@
 define(["require", "exports", "./EventTargetEventEmitterAdapter", "./MouseExpression", "./KeyCheck"], function (require, exports, EventTargetEventEmitterAdapter_1, MouseExpression_1, KeyCheck_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var MouseInput = (function () {
         function MouseInput(emitters) {
             this.emitters = emitters;

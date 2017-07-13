@@ -1,5 +1,6 @@
 define(["require", "exports", "./Point"], function (require, exports, Point_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Rect = (function () {
         function Rect(left, top, width, height) {
             this.left = 0;

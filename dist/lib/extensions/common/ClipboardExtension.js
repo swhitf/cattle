@@ -1,9 +1,14 @@
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -13,6 +18,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 var EditingExtension_1 = require("./EditingExtension");
 var GridRange_1 = require("../../model/GridRange");
 var KeyInput_1 = require("../../input/KeyInput");
@@ -20,13 +26,14 @@ var Rect_1 = require("../../geom/Rect");
 var Point_1 = require("../../geom/Point");
 var Widget_1 = require("../../ui/Widget");
 var Extensibility_1 = require("../../ui/Extensibility");
-var clipboard_1 = require("../../vendor/clipboard");
 var _ = require("../../misc/Util");
 var Dom = require("../../misc/Dom");
 var Papa = require("papaparse");
 var Tether = require("tether");
+var clipboard = require("clipboard-js");
 //I know... :(
-var NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+//const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+var NewLine = '\r\n';
 var ClipboardExtension = (function () {
     function ClipboardExtension() {
         this.copyList = [];
@@ -87,27 +94,32 @@ var ClipboardExtension = (function () {
     };
     ClipboardExtension.prototype.doCopy = function (cells, delimiter) {
         if (delimiter === void 0) { delimiter = '\t'; }
+        var grid = this.grid;
         this.copyList = cells;
         var range = this.copyRange = GridRange_1.GridRange.create(this.grid.model, cells);
         var text = '';
         if (!cells.length)
             return;
-        var rr = range.ltr[0].rowRef;
+        var rowRef = range.ltr[0].rowRef;
         for (var i = 0; i < range.ltr.length; i++) {
-            var c = range.ltr[i];
-            if (rr !== c.rowRef) {
+            var cell = range.ltr[i];
+            //If row or column has zero size, do not copy
+            if (grid.getColumnRect(cell.colRef).width == 0 || grid.getRowRect(cell.rowRef).height == 0)
+                continue;
+            if (rowRef !== cell.rowRef) {
                 text += NewLine;
-                rr = c.rowRef;
+                rowRef = cell.rowRef;
             }
-            text += c.value;
-            if (i < (range.ltr.length - 1) && range.ltr[i + 1].rowRef === rr) {
+            text += cell.value;
+            if (i < (range.ltr.length - 1) && range.ltr[i + 1].rowRef === rowRef) {
                 text += delimiter;
             }
         }
-        clipboard_1.Clipboard.copy(text);
+        clipboard.copy(text);
     };
     ClipboardExtension.prototype.doPaste = function (text) {
         var _a = this, grid = _a.grid, selection = _a.selection;
+        selection = selection.filter(function (x) { return !is_readonly(grid.model.findCell(x)); });
         if (!selection.length)
             return;
         var focusedCell = grid.model.findCell(selection[0]);
@@ -208,4 +220,7 @@ var CopyNet = (function (_super) {
     return CopyNet;
 }(Widget_1.AbsWidgetBase));
 exports.CopyNet = CopyNet;
+function is_readonly(cell) {
+    return cell['readonly'] === true || cell['mutable'] === false;
+}
 //# sourceMappingURL=ClipboardExtension.js.map

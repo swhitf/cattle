@@ -1,5 +1,6 @@
 define(["require", "exports", "bases"], function (require, exports, bases) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var Alpha26 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     var Base26 = (function () {
         function Base26(num, str) {

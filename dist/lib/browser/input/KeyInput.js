@@ -1,5 +1,6 @@
 define(["require", "exports", "./KeyExpression", "./EventTargetEventEmitterAdapter"], function (require, exports, KeyExpression_1, EventTargetEventEmitterAdapter_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var KeyInput = (function () {
         function KeyInput(emitters) {
             this.emitters = emitters;

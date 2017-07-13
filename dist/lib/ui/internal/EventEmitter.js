@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var EventEmitterBase = (function () {
     function EventEmitterBase() {
         this.buckets = {};

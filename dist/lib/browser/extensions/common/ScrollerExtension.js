@@ -1,5 +1,6 @@
 define(["require", "exports", "../../misc/Util", "../../geom/Padding", "../../geom/Point", "../../misc/Dom"], function (require, exports, Util_1, Padding_1, Point_1, Dom) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var ScrollerExtension = (function () {
         function ScrollerExtension(scrollerWidth) {
             this.scrollerWidth = scrollerWidth;

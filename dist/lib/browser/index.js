@@ -3,6 +3,7 @@ define(["require", "exports", "./extensions/common/SelectorExtension", "./extens
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
     }
+    Object.defineProperty(exports, "__esModule", { value: true });
     __export(SelectorExtension_1);
     __export(EditingExtension_1);
     __export(ClipboardExtension_1);

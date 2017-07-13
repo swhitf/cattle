@@ -1,5 +1,6 @@
 define(["require", "exports", "../misc/Base26", "../geom/Point", "../geom/Rect", "../misc/Util"], function (require, exports, Base26_1, Point_1, Rect_1, _) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     /**
      * Describes a resolveExpr of grid cells.
      */

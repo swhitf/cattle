@@ -18,6 +18,7 @@ export declare class GridRange {
      * Captures a range of cells from the specified model based on the specified vectors.  The vectors should be
      * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
      * Any cells falling into the rectangle created from these two points will be included in the selected resolveExpr.
+     * Any columns or rows that are zero size will not be included in the capture.
      *
      * @param model
      * @param from

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Util_1 = require("../../misc/Util");
 var EditingExtension_1 = require("../common/EditingExtension");
 var GridRange_1 = require("../../model/GridRange");

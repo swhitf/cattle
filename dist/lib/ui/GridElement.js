@@ -1,9 +1,14 @@
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -13,6 +18,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+var Polyfill_1 = require("../misc/Polyfill");
 var Padding_1 = require("../geom/Padding");
 var DefaultGridModel_1 = require("../model/default/DefaultGridModel");
 var EventEmitter_1 = require("./internal/EventEmitter");
@@ -147,6 +154,12 @@ var GridElement = (function (_super) {
     GridElement.prototype.focus = function () {
         this.root.focus();
     };
+    GridElement.prototype.getColumnRect = function (ref) {
+        return this.layout.queryColumn(ref);
+    };
+    GridElement.prototype.getRowRect = function (ref) {
+        return this.layout.queryRow(ref);
+    };
     GridElement.prototype.getCellAtGridPoint = function (pt) {
         var refs = this.layout.captureCells(new Rect_1.Rect(pt.x, pt.y, 1, 1));
         if (refs.length) {
@@ -238,22 +251,22 @@ var GridElement = (function (_super) {
         if (forceImmediate === void 0) { forceImmediate = false; }
         if (!this.dirty) {
             this.dirty = true;
-            console.time('GridElement.redraw');
+            console.time("GridElement.redraw(force=" + forceImmediate + ")");
             if (forceImmediate) {
-                this.draw();
+                this.draw(forceImmediate);
             }
             else {
-                requestAnimationFrame(this.draw.bind(this));
+                requestAnimationFrame(this.draw.bind(this, forceImmediate));
             }
         }
     };
-    GridElement.prototype.draw = function () {
+    GridElement.prototype.draw = function (forced) {
         if (!this.dirty)
             return;
         this.updateVisuals();
         this.drawVisuals();
         this.dirty = false;
-        console.timeEnd('GridElement.redraw');
+        console.timeEnd("GridElement.redraw(force=" + forced + ")");
         this.emit('draw');
     };
     GridElement.prototype.computeViewFragments = function () {
@@ -289,10 +302,9 @@ var GridElement = (function (_super) {
         return new Rect_1.Rect(Math.floor(this.scrollLeft), Math.floor(this.scrollTop), this.canvas.width, this.canvas.height);
     };
     GridElement.prototype.updateVisuals = function () {
-        console.time('GridElement.drawVisuals');
+        console.time('GridElement.updateVisuals');
         var _a = this, model = _a.model, layout = _a.layout;
         var fragments = this.computeViewFragments();
-        console.log(fragments);
         var prevFrame = this.frame;
         var nextFrame = [];
         //If the fragments have changed, nerf the prevFrame since we don't want to recycle anything.
@@ -324,88 +336,6 @@ var GridElement = (function (_super) {
             nextFrame.push(aspect);
         }
         this.frame = nextFrame;
-        // setTimeout(() =>
-        // {
-        //     let gfx = this.canvas.getContext('2d', { alpha: true }) as CanvasRenderingContext2D;
-        //     gfx.save();
-        //     for (let f of fragments) 
-        //     {
-        //         //gfx.translate(f.left * -1, f.top * -1);
-        //         gfx.strokeStyle = 'red';
-        //         gfx.strokeRect(f.offsetLeft, f.offsetTop, f.width, f.height);            
-        //     }
-        //     gfx.restore();
-        // }, 50);
-    };
-    GridElement.prototype.updateVisuals2 = function () {
-        var _this = this;
-        console.time('GridElement.updateVisuals');
-        var _a = this, model = _a.model, layout = _a.layout;
-        var viewport = this.computeViewport();
-        var visibleCells = layout.captureCells(viewport)
-            .map(function (ref) { return model.findCell(ref); });
-        var prevFrame = this.visuals;
-        var nextFrame = {};
-        for (var _i = 0, visibleCells_1 = visibleCells; _i < visibleCells_1.length; _i++) {
-            var cell = visibleCells_1[_i];
-            var region = layout.queryCell(cell.ref);
-            var visual = prevFrame[cell.ref];
-            // If we didn't have a previous visual or if the cell was dirty, create new visual
-            if (!visual || cell.value !== visual.value || cell['__dirty'] !== false) {
-                nextFrame[cell.ref] = this.createVisual(cell, region);
-                delete this.buffers[cell.ref];
-                cell['__dirty'] = false;
-            }
-            else {
-                nextFrame[cell.ref] = visual;
-            }
-        }
-        //let frozenCells = layout.captureCells(viewport.inflate)
-        var fm = this.freezeMargin;
-        var fragments = [];
-        fragments.push(viewport);
-        fragments.push(new Rect_1.Rect(0, 0, layout.queryColumnRange(0, fm.x).width, layout.queryRowRange(0, fm.y).height));
-        fragments.push(new Rect_1.Rect(0, viewport.top + fragments[1].height, fragments[1].width, (viewport.height - fragments[1].height)));
-        fragments.push(new Rect_1.Rect(viewport.left + fragments[1].width, 0, viewport.width - fragments[1].width, fragments[1].height));
-        setTimeout(function () {
-            var gfx = _this.canvas.getContext('2d', { alpha: true });
-            gfx.save();
-            gfx.translate(viewport.left * -1, viewport.top * -1);
-            for (var _i = 0, fragments_1 = fragments; _i < fragments_1.length; _i++) {
-                var f = fragments_1[_i];
-                gfx.strokeStyle = 'red';
-                gfx.strokeRect(f.left, f.top, f.width, f.height);
-            }
-            gfx.restore();
-        }, 50);
-        fragments.splice(0, 1);
-        fragments[0]['m'] = function (r, v) { v.left = r.left + viewport.left; v.top = r.top + viewport.top; };
-        fragments[1]['m'] = function (r, v) { return v.left = r.left + viewport.left; };
-        fragments[2]['m'] = function (r, v) { return v.top = r.top + viewport.top; };
-        nextFrame = {};
-        for (var _b = 0, _c = fragments.reverse(); _b < _c.length; _b++) {
-            var f = _c[_b];
-            var fragmentCells = layout.captureCells(f)
-                .map(function (ref) { return model.findCell(ref); });
-            var prevFrame_1 = this.visuals;
-            for (var _d = 0, fragmentCells_1 = fragmentCells; _d < fragmentCells_1.length; _d++) {
-                var cell = fragmentCells_1[_d];
-                var region = layout.queryCell(cell.ref);
-                var visual = prevFrame_1[cell.ref] || nextFrame[cell.ref];
-                // If we didn't have a previous visual or if the cell was dirty, create new visual
-                if (!visual || cell.value !== visual.value || cell['__dirty'] !== false) {
-                    nextFrame[cell.ref] = visual = this.createVisual(cell, region);
-                    delete this.buffers[cell.ref];
-                    cell['__dirty'] = false;
-                }
-                else {
-                    nextFrame[cell.ref] = visual;
-                }
-                f['m'](region, visual);
-            }
-        }
-        console.log(fragments);
-        this.visuals = nextFrame;
         console.timeEnd('GridElement.updateVisuals');
     };
     GridElement.prototype.drawVisuals = function () {
@@ -439,34 +369,6 @@ var GridElement = (function (_super) {
             }
             gfx.restore();
         }
-        console.timeEnd('GridElement.drawVisuals');
-    };
-    GridElement.prototype.drawVisuals2 = function () {
-        console.time('GridElement.drawVisuals');
-        var viewport = this.computeViewport();
-        var gfx = this.canvas.getContext('2d', { alpha: true });
-        gfx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        gfx.save();
-        gfx.translate(viewport.left * -1, viewport.top * -1);
-        for (var cr in this.visuals) {
-            var cell = this.model.findCell(cr);
-            var visual = this.visuals[cr];
-            if (visual.width == 0 || visual.height == 0) {
-                continue;
-            }
-            if (!viewport.intersects(visual)) {
-                continue;
-            }
-            var buffer = this.buffers[cell.ref];
-            if (!buffer) {
-                buffer = this.buffers[cell.ref] = this.createBuffer(visual.width, visual.height);
-                //noinspection TypeScriptUnresolvedFunction
-                var renderer = Reflect.getMetadata('custom:renderer', cell.constructor);
-                renderer(buffer.gfx, visual, cell);
-            }
-            gfx.drawImage(buffer.canvas, visual.left - buffer.inflation, visual.top - buffer.inflation);
-        }
-        gfx.restore();
         console.timeEnd('GridElement.drawVisuals');
     };
     GridElement.prototype.createBuffer = function (width, height) {
@@ -523,7 +425,7 @@ var GridElement = (function (_super) {
         });
     };
     GridElement.prototype.createGridMouseEvent = function (type, source) {
-        var event = (new MouseEvent(type, source));
+        var event = (Polyfill_1.ie_safe_create_mouse_event(type, source));
         event.cell = source.cell;
         event.gridX = source.gridX;
         event.gridY = source.gridY;

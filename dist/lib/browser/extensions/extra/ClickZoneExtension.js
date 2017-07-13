@@ -1,5 +1,6 @@
 define(["require", "exports", "../../geom/Rect", "../../geom/Point", "../../misc/Dom", "tether"], function (require, exports, Rect_1, Point_1, Dom, Tether) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var ClickZoneExtension = (function () {
         function ClickZoneExtension() {
         }

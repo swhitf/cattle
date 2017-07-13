@@ -9,6 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 define(["require", "exports", "./HistoryManager", "../../misc/Util", "../common/EditingExtension", "../../input/KeyInput", "../../ui/Extensibility"], function (require, exports, HistoryManager_1, Util_1, EditingExtension_1, KeyInput_1, Extensibility_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var HistoryExtension = (function () {
         function HistoryExtension(manager) {
             this.noCapture = false;

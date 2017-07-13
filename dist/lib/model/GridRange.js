@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Base26_1 = require("../misc/Base26");
 var Point_1 = require("../geom/Point");
 var Rect_1 = require("../geom/Rect");
@@ -52,6 +53,7 @@ var GridRange = (function () {
      * Captures a range of cells from the specified model based on the specified vectors.  The vectors should be
      * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
      * Any cells falling into the rectangle created from these two points will be included in the selected resolveExpr.
+     * Any columns or rows that are zero size will not be included in the capture.
      *
      * @param model
      * @param from
@@ -69,9 +71,17 @@ var GridRange = (function () {
         }
         var dims = Rect_1.Rect.fromPoints(tl, br);
         var results = [];
-        for (var r = dims.top; r < dims.bottom; r++) {
-            for (var c = dims.left; c < dims.right; c++) {
-                var cell = model.locateCell(c, r);
+        for (var rowRef = dims.top; rowRef < dims.bottom; rowRef++) {
+            var row = model.findRow(rowRef);
+            if (!row || row.height == 0) {
+                continue;
+            }
+            for (var colRef = dims.left; colRef < dims.right; colRef++) {
+                var col = model.findColumn(colRef);
+                if (!col || col.width == 0) {
+                    continue;
+                }
+                var cell = model.locateCell(colRef, rowRef);
                 if (cell) {
                     results.push(cell);
                 }

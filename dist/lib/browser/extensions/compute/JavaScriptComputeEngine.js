@@ -1,5 +1,6 @@
 define(["require", "exports", "../../misc/Util", "../common/EditingExtension", "../../model/GridRange", "./WatchManager"], function (require, exports, Util_1, EditingExtension_1, GridRange_1, WatchManager_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var RefExtract = /(?!.*['"`])[A-Za-z]+[0-9]+:?([A-Za-z]+[0-9]+)?/g;
     var SupportFunctions = {
         //Math:

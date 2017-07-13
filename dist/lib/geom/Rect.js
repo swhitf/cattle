@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Point_1 = require("./Point");
 var Rect = (function () {
     function Rect(left, top, width, height) {

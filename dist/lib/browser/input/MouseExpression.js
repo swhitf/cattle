@@ -1,5 +1,6 @@
 define(["require", "exports", "./Keys", "../misc/Util", "./KeyCheck"], function (require, exports, Keys_1, _, KeyCheck_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     function parse_event(value) {
         value = (value || '').trim().toLowerCase();
         switch (value) {

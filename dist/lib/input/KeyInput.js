@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var KeyExpression_1 = require("./KeyExpression");
 var EventTargetEventEmitterAdapter_1 = require("./EventTargetEventEmitterAdapter");
 var KeyInput = (function () {

@@ -1,5 +1,6 @@
 define(["require", "exports", "../../model/default/DefaultGridColumn", "../../model/default/DefaultGridRow", "../../geom/Rect", "../../misc/Util"], function (require, exports, DefaultGridColumn_1, DefaultGridRow_1, Rect_1, _) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var GridLayout = (function () {
         function GridLayout(width, height, columns, rows, cells, cellLookup) {
             this.width = width;
@@ -33,6 +34,7 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
             var colRegs = [];
             var rowRegs = [];
             var cellRegs = [];
+            var loadTracker = {};
             var accLeft = padding.left;
             for (var ci = 0; ci <= maxCol; ci++) {
                 var col = colLookup[ci];
@@ -57,13 +59,24 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
                     }
                     if (cellLookup[ci] !== undefined && cellLookup[ci][ri] !== undefined) {
                         var cell = cellLookup[ci][ri];
-                        cellRegs.push({
-                            ref: cell.ref,
-                            left: accLeft,
-                            top: accTop,
-                            width: col.width,
-                            height: row.height,
-                        });
+                        if (cell && !loadTracker[cell.ref]) {
+                            var width_1 = 0, height_1 = 0;
+                            //Take colSpan and rowSpan into account
+                            for (var cix = ci; cix <= maxCol && cix < (ci + cell.colSpan); cix++) {
+                                width_1 += colLookup[cix].width;
+                            }
+                            for (var rix = ri; rix <= maxRow && rix < (ri + cell.rowSpan); rix++) {
+                                height_1 += rowLookup[rix].height;
+                            }
+                            cellRegs.push({
+                                ref: cell.ref,
+                                left: accLeft,
+                                top: accTop,
+                                width: width_1,
+                                height: height_1,
+                            });
+                            loadTracker[cell.ref] = true;
+                        }
                     }
                     accTop += row.height;
                 }
@@ -105,17 +118,19 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
                 .map(function (x) { return x.ref; });
         };
         GridLayout.prototype.captureCells = function (region) {
+            var lookup = this.cellLookup;
             var cols = this.captureColumns(region);
             var rows = this.captureRows(region);
             var cells = new Array();
             for (var _i = 0, cols_1 = cols; _i < cols_1.length; _i++) {
                 var c = cols_1[_i];
+                if (!lookup[c])
+                    continue;
                 for (var _a = 0, rows_1 = rows; _a < rows_1.length; _a++) {
                     var r = rows_1[_a];
-                    var cell = this.cellLookup[c][r];
-                    if (!!cell) {
-                        cells.push(cell.ref);
-                    }
+                    if (!lookup[c][r])
+                        continue;
+                    cells.push(lookup[c][r].ref);
                 }
             }
             return cells;
@@ -126,9 +141,18 @@ define(["require", "exports", "../../model/default/DefaultGridColumn", "../../mo
     function buildCellLookup(cells) {
         var ix = {};
         for (var _i = 0, cells_1 = cells; _i < cells_1.length; _i++) {
-            var c = cells_1[_i];
-            var cix = ix[c.colRef] || (ix[c.colRef] = {});
-            cix[c.rowRef] = c;
+            var cell = cells_1[_i];
+            for (var co = 0; co < cell.colSpan; co++) {
+                for (var ro = 0; ro < cell.rowSpan; ro++) {
+                    var c = cell.colRef + co;
+                    var r = cell.rowRef + ro;
+                    var cix = ix[c] || (ix[c] = {});
+                    if (cix[r]) {
+                        console.warn('Two cells appear to occupy', c, 'x', r);
+                    }
+                    cix[r] = cell;
+                }
+            }
         }
         return ix;
     }

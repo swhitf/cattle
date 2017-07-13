@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Keys_1 = require("./Keys");
 var KeyExpression = (function () {
     function KeyExpression(keys, exclusive) {

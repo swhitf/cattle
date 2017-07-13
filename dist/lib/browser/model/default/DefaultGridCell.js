@@ -9,6 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 define(["require", "exports", "../../misc/RefGen", "../../misc/Util", "../../ui/Extensibility"], function (require, exports, RefGen_1, _, Extensibility_1) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     /**
      * Provides a by-the-book implementation of GridCell.
      */

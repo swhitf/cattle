@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("../../misc/Util");
 var DefaultGridCell_1 = require("./DefaultGridCell");
 /**
@@ -16,13 +17,7 @@ var DefaultGridModel = (function () {
         this.cells = cells;
         this.columns = columns;
         this.rows = rows;
-        this.refs = _.index(cells, function (x) { return x.ref; });
-        this.coords = {};
-        for (var _i = 0, cells_1 = cells; _i < cells_1.length; _i++) {
-            var c = cells_1[_i];
-            var x = this.coords[c.colRef] || (this.coords[c.colRef] = {});
-            x[c.rowRef] = c;
-        }
+        this.refresh();
     }
     /**
      * Creates an grid model with the specified number of columns and rows populated with default cells.
@@ -57,7 +52,7 @@ var DefaultGridModel = (function () {
      * @param ref
      */
     DefaultGridModel.prototype.findCell = function (ref) {
-        return this.refs[ref] || null;
+        return this.cellRefLookup[ref] || null;
     };
     /**
      * Given a cell ref, returns the GridCell object that represents the neighboring cell as per the specified
@@ -72,13 +67,53 @@ var DefaultGridModel = (function () {
         return this.locateCell(col, row);
     };
     /**
+     * Given a column ref, returns the GridColumn object that represents the column, or null if the column did not exist
+     * within the model.
+     * @param ref
+     */
+    DefaultGridModel.prototype.findColumn = function (ref) {
+        return this.colRefLookup[ref] || null;
+    };
+    /**
+     * Given a row ref, returns the GridRow object that represents the row, or null if the row did not exist
+     * within the model.
+     * @param ref
+     */
+    DefaultGridModel.prototype.findRow = function (ref) {
+        return this.rowRefLookup[ref] || null;
+    };
+    /**
      * Given a cell column ref and row ref, returns the GridCell object that represents the cell at the location,
      * or null if no cell could be found.
      * @param colRef
      * @param rowRef
      */
     DefaultGridModel.prototype.locateCell = function (col, row) {
-        return (this.coords[col] || {})[row] || null;
+        return (this.cellCoordLookup[col] || {})[row] || null;
+    };
+    /**
+     * Refreshes internal caches used to optimize lookups and should be invoked after the model has been changed (structurally).
+     */
+    DefaultGridModel.prototype.refresh = function () {
+        var _a = this, cells = _a.cells, columns = _a.columns, rows = _a.rows;
+        this.cellRefLookup = _.index(cells, function (x) { return x.ref; });
+        this.cellCoordLookup = {};
+        for (var _i = 0, cells_1 = cells; _i < cells_1.length; _i++) {
+            var cell = cells_1[_i];
+            for (var co = 0; co < cell.colSpan; co++) {
+                for (var ro = 0; ro < cell.rowSpan; ro++) {
+                    var c = cell.colRef + co;
+                    var r = cell.rowRef + ro;
+                    var cix = this.cellCoordLookup[c] || (this.cellCoordLookup[c] = {});
+                    if (cix[r]) {
+                        console.warn('Two cells appear to occupy', c, 'x', r);
+                    }
+                    cix[r] = cell;
+                }
+            }
+        }
+        this.colRefLookup = _.index(columns, function (x) { return x.ref; });
+        this.rowRefLookup = _.index(rows, function (x) { return x.ref; });
     };
     return DefaultGridModel;
 }());

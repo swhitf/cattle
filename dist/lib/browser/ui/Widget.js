@@ -1,5 +1,6 @@
 define(["require", "exports", "../geom/Rect", "../misc/Dom"], function (require, exports, Rect_1, Dom) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     /**
      * Provides an abstract base class for Widget implementations that are expected to represent Widgets with
      * absolutely positioned root elements.

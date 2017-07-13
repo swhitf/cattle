@@ -1,8 +1,13 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -12,10 +17,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-define(["require", "exports", "./EditingExtension", "../../model/GridRange", "../../input/KeyInput", "../../geom/Rect", "../../geom/Point", "../../ui/Widget", "../../ui/Extensibility", "../../vendor/clipboard", "../../misc/Util", "../../misc/Dom", "papaparse", "tether"], function (require, exports, EditingExtension_1, GridRange_1, KeyInput_1, Rect_1, Point_1, Widget_1, Extensibility_1, clipboard_1, _, Dom, Papa, Tether) {
+define(["require", "exports", "./EditingExtension", "../../model/GridRange", "../../input/KeyInput", "../../geom/Rect", "../../geom/Point", "../../ui/Widget", "../../ui/Extensibility", "../../misc/Util", "../../misc/Dom", "papaparse", "tether", "clipboard-js"], function (require, exports, EditingExtension_1, GridRange_1, KeyInput_1, Rect_1, Point_1, Widget_1, Extensibility_1, _, Dom, Papa, Tether, clipboard) {
     "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     //I know... :(
-    var NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+    //const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+    var NewLine = '\r\n';
     var ClipboardExtension = (function () {
         function ClipboardExtension() {
             this.copyList = [];
@@ -93,7 +100,7 @@ define(["require", "exports", "./EditingExtension", "../../model/GridRange", "..
                     text += delimiter;
                 }
             }
-            clipboard_1.Clipboard.copy(text);
+            clipboard.copy(text);
         };
         ClipboardExtension.prototype.doPaste = function (text) {
             var _a = this, grid = _a.grid, selection = _a.selection;

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var start = new Date().getTime().toString();
 var count = 0;
 var RefGen = (function () {

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Util_1 = require("../misc/Util");
 var Padding = (function () {
     function Padding(top, right, bottom, left) {

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function property(defaultValue, filter) {
     return function (ctor, propName) {
         Object.defineProperty(ctor, propName, {

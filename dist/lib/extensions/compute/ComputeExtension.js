@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var JavaScriptComputeEngine_1 = require("./JavaScriptComputeEngine");
 var EditingExtension_1 = require("../common/EditingExtension");
 var ComputeExtension = (function () {
