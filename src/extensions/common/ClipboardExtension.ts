@@ -1,21 +1,23 @@
 import { GridChangeSet } from './EditingExtension';
 import { GridExtension, GridElement } from '../../ui/GridElement';
 import { GridRange } from '../../model/GridRange';
+import { GridCell } from '../../model/GridCell';
 import { KeyInput } from '../../input/KeyInput';
 import { Rect } from '../../geom/Rect';
 import { Point } from '../../geom/Point';
 import { SelectorWidget } from './SelectorExtension';
 import { AbsWidgetBase } from '../../ui/Widget';
 import { variable, command, routine } from '../../ui/Extensibility';
-import { Clipboard } from '../../vendor/clipboard';
 import * as _ from '../../misc/Util';
 import * as Dom from '../../misc/Dom';
 import * as Papa from 'papaparse';
 import * as Tether from 'tether';
+import * as clipboard from 'clipboard-js';
 
 
 //I know... :(
-const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+//const NewLine = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
+const NewLine = '\r\n';
 
 export class ClipboardExtension implements GridExtension
 {
@@ -122,14 +124,16 @@ export class ClipboardExtension implements GridExtension
                 text += delimiter;
             }
         }
-
-        Clipboard.copy(text);
+        
+        clipboard.copy(text);
     }
 
     @routine()
     private doPaste(text:string):void
     {
         let { grid, selection } = this;
+
+        selection = selection.filter(x => !is_readonly(grid.model.findCell(x)));
 
         if (!selection.length)
             return;
@@ -219,4 +223,9 @@ export class CopyNet extends AbsWidgetBase<HTMLDivElement>
 
         return new CopyNet(root);
     }
+}
+
+function is_readonly(cell:GridCell):boolean
+{
+    return cell['readonly'] === true || cell['mutable'] === false;
 }

@@ -1,6 +1,7 @@
 import { GridKernel } from './GridKernel';
 import { Rect } from '../geom/Rect';
 import { isBoolean } from 'util';
+import "reflect-metadata";
 
 
 /**
