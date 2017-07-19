@@ -5,6 +5,6 @@ export declare class MouseExpression {
     readonly button: number;
     readonly keys: number[];
     readonly exclusive: boolean;
-    private constructor(cfg);
+    private constructor();
     matches(mouseData: MouseEvent): boolean;
 }

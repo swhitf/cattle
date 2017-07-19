@@ -1,8 +1,8 @@
 import { GridKernel } from './GridKernel';
 import { Rect } from '../geom/Rect';
 import { isBoolean } from 'util';
-import "reflect-metadata";
 
+declare var Reflect;
 
 /**
  * Do not use directly.
@@ -27,7 +27,7 @@ export interface Renderer
  * @param name The optional command name
  * @returns decorator
  */
-export function command(name?:string):MethodDecorator
+export function command(name?:string):any
 {
     return function(ctor:Object, key:string, descriptor:TypedPropertyDescriptor<Function>):void
     {
@@ -55,7 +55,7 @@ export function command(name?:string):MethodDecorator
  * @param func
  * A decorator that marks a method
  */
-export function renderer(func:Renderer):ClassDecorator
+export function renderer(func:Renderer):any
 {
     return function(ctor:any):void
     {
@@ -71,7 +71,7 @@ export function renderer(func:Renderer):ClassDecorator
  * @param name The optional routine name
  * @returns decorator
  */
-export function routine(name?:string):MethodDecorator
+export function routine(name?:string):any
 {
     return function(ctor:Object, key:string, descriptor:TypedPropertyDescriptor<Function>):any
     {
@@ -93,9 +93,9 @@ export function routine(name?:string):MethodDecorator
  * @param name The optional variable name
  * @returns decorator
  */
-export function variable(mutable:boolean):PropertyDecorator;
-export function variable(name?:string, mutable?:boolean);
-export function variable(name:string|boolean, mutable?:boolean):PropertyDecorator
+export function variable(mutable:boolean):any;
+export function variable(name?:string, mutable?:boolean):any;
+export function variable(name:string|boolean, mutable?:boolean):any
 {
     if (typeof(name) === 'boolean')
     {
@@ -137,9 +137,9 @@ export function variable(name:string|boolean, mutable?:boolean):PropertyDecorato
  *
  * @returns decorator
  */
-export function visualize():PropertyDecorator
+export function visualize():any
 {
-    return function(ctor:Object, key:string):PropertyDescriptor
+    return function(ctor:Object, key:string):any
     {
         const mdk = 'grid:visualize';
 

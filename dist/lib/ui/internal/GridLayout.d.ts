@@ -15,7 +15,7 @@ export declare class GridLayout {
     private columnIndex;
     private rowIndex;
     private cellIndex;
-    private constructor(width, height, columns, rows, cells, cellLookup);
+    private constructor();
     queryColumn(ref: number): RectLike;
     queryColumnRange(fromRef: number, toRefEx: number): RectLike;
     queryRow(ref: number): RectLike;

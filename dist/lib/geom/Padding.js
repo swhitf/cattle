@@ -25,8 +25,8 @@ var Padding = (function () {
     Padding.prototype.inflate = function (by) {
         return new Padding(this.top + by, this.right + by, this.bottom + by, this.left + by);
     };
+    Padding.empty = new Padding(0, 0, 0, 0);
     return Padding;
 }());
-Padding.empty = new Padding(0, 0, 0, 0);
 exports.Padding = Padding;
 //# sourceMappingURL=Padding.js.map

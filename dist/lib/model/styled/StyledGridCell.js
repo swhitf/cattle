@@ -38,20 +38,20 @@ var StyledGridCell = (function (_super) {
         _this.style = params.style || Style_1.BaseStyle;
         return _this;
     }
+    __decorate([
+        Extensibility_1.visualize(),
+        __metadata("design:type", Style_1.Style)
+    ], StyledGridCell.prototype, "style", void 0);
+    __decorate([
+        Extensibility_1.visualize(),
+        __metadata("design:type", String)
+    ], StyledGridCell.prototype, "placeholder", void 0);
+    StyledGridCell = __decorate([
+        Extensibility_1.renderer(draw),
+        __metadata("design:paramtypes", [Object])
+    ], StyledGridCell);
     return StyledGridCell;
 }(DefaultGridCell_1.DefaultGridCell));
-__decorate([
-    Extensibility_1.visualize(),
-    __metadata("design:type", Style_1.Style)
-], StyledGridCell.prototype, "style", void 0);
-__decorate([
-    Extensibility_1.visualize(),
-    __metadata("design:type", String)
-], StyledGridCell.prototype, "placeholder", void 0);
-StyledGridCell = __decorate([
-    Extensibility_1.renderer(draw),
-    __metadata("design:paramtypes", [Object])
-], StyledGridCell);
 exports.StyledGridCell = StyledGridCell;
 function draw(gfx, visual) {
     var style = visual.style;

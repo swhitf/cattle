@@ -139,14 +139,14 @@ var Point = (function () {
     Point.prototype.toString = function () {
         return "[" + this.x + ", " + this.y + "]";
     };
+    Point.rad2deg = 360 / (Math.PI * 2);
+    Point.deg2rad = (Math.PI * 2) / 360;
+    Point.empty = new Point(0, 0);
+    Point.max = new Point(2147483647, 2147483647);
+    Point.min = new Point(-2147483647, -2147483647);
+    Point.up = new Point(0, -1);
     return Point;
 }());
-Point.rad2deg = 360 / (Math.PI * 2);
-Point.deg2rad = (Math.PI * 2) / 360;
-Point.empty = new Point(0, 0);
-Point.max = new Point(2147483647, 2147483647);
-Point.min = new Point(-2147483647, -2147483647);
-Point.up = new Point(0, -1);
 exports.Point = Point;
 function ptArg(val) {
     if (val !== null || val !== undefined) {

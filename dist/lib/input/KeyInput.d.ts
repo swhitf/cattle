@@ -7,7 +7,7 @@ export declare class KeyInput {
     private emitters;
     static for(...elmts: KeyMappable[]): KeyInput;
     private subs;
-    private constructor(emitters);
+    private constructor();
     on(exprs: string | string[], callback: KeyMapCallback): KeyInput;
     private createListener(ee, ke, callback);
 }

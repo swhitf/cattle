@@ -124,8 +124,8 @@ var Rect = (function () {
     Rect.prototype.toString = function () {
         return "[" + this.left + ", " + this.top + ", " + this.width + ", " + this.height + "]";
     };
+    Rect.empty = new Rect(0, 0, 0, 0);
     return Rect;
 }());
-Rect.empty = new Rect(0, 0, 0, 0);
 exports.Rect = Rect;
 //# sourceMappingURL=Rect.js.map

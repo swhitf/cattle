@@ -100,38 +100,38 @@ var HistoryExtension = (function () {
         var refs = compiled.filter(function (x) { return !x.cascaded; }).map(function (x) { return x.cell.ref; });
         grid.exec('select', refs);
     };
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "undo", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "redo", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object]),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "push", null);
+    __decorate([
+        Extensibility_1.command('clearHistory'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "clear", null);
+    __decorate([
+        Extensibility_1.command('suspendHistory'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Boolean]),
+        __metadata("design:returntype", void 0)
+    ], HistoryExtension.prototype, "suspend", null);
     return HistoryExtension;
 }());
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], HistoryExtension.prototype, "undo", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], HistoryExtension.prototype, "redo", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], HistoryExtension.prototype, "push", null);
-__decorate([
-    Extensibility_1.command('clearHistory'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], HistoryExtension.prototype, "clear", null);
-__decorate([
-    Extensibility_1.command('suspendHistory'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Boolean]),
-    __metadata("design:returntype", void 0)
-], HistoryExtension.prototype, "suspend", null);
 exports.HistoryExtension = HistoryExtension;
 function create_changes(snapshots, valSelector) {
     var changeSet = new EditingExtension_1.GridChangeSet();

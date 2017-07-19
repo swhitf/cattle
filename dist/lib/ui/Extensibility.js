@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-require("reflect-metadata");
 /**
  * A decorator that marks a method as a _command_; an externally callable logic block that performs some task.  A name
  * for the command can be optionally specified, otherwise the name of the method being exported as the command will be

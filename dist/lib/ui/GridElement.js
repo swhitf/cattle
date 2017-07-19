@@ -425,24 +425,24 @@ var GridElement = (function (_super) {
         event.gridY = source.gridY;
         return event;
     };
+    __decorate([
+        Property_1.property(DefaultGridModel_1.DefaultGridModel.empty(), function (t) { t.emit('load', t.model); t.invalidate(); }),
+        __metadata("design:type", Object)
+    ], GridElement.prototype, "model", void 0);
+    __decorate([
+        Property_1.property(new Point_1.Point(0, 0), function (t) { return t.invalidate(); }),
+        __metadata("design:type", Point_1.Point)
+    ], GridElement.prototype, "freezeMargin", void 0);
+    __decorate([
+        Property_1.property(Padding_1.Padding.empty, function (t) { return t.invalidate(); }),
+        __metadata("design:type", Padding_1.Padding)
+    ], GridElement.prototype, "padding", void 0);
+    __decorate([
+        Property_1.property(Point_1.Point.empty, function (t) { t.redraw(); t.emit('scroll'); }),
+        __metadata("design:type", Point_1.Point)
+    ], GridElement.prototype, "scroll", void 0);
     return GridElement;
 }(EventEmitter_1.EventEmitterBase));
-__decorate([
-    Property_1.property(DefaultGridModel_1.DefaultGridModel.empty(), function (t) { t.emit('load', t.model); t.invalidate(); }),
-    __metadata("design:type", Object)
-], GridElement.prototype, "model", void 0);
-__decorate([
-    Property_1.property(new Point_1.Point(0, 0), function (t) { return t.invalidate(); }),
-    __metadata("design:type", Point_1.Point)
-], GridElement.prototype, "freezeMargin", void 0);
-__decorate([
-    Property_1.property(Padding_1.Padding.empty, function (t) { return t.invalidate(); }),
-    __metadata("design:type", Padding_1.Padding)
-], GridElement.prototype, "padding", void 0);
-__decorate([
-    Property_1.property(Point_1.Point.empty, function (t) { t.redraw(); t.emit('scroll'); }),
-    __metadata("design:type", Point_1.Point)
-], GridElement.prototype, "scroll", void 0);
 exports.GridElement = GridElement;
 function clone(x) {
     if (Array.isArray(x)) {

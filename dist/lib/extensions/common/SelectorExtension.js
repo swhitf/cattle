@@ -259,66 +259,66 @@ var SelectorExtension = (function () {
             captureSelector.hide();
         }
     };
+    __decorate([
+        Extensibility_1.variable(),
+        __metadata("design:type", Boolean)
+    ], SelectorExtension.prototype, "canSelect", void 0);
+    __decorate([
+        Extensibility_1.variable(false),
+        __metadata("design:type", Array)
+    ], SelectorExtension.prototype, "selection", void 0);
+    __decorate([
+        Extensibility_1.variable(false),
+        __metadata("design:type", Selector)
+    ], SelectorExtension.prototype, "primarySelector", void 0);
+    __decorate([
+        Extensibility_1.variable(false),
+        __metadata("design:type", Selector)
+    ], SelectorExtension.prototype, "captureSelector", void 0);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Array, Object]),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "select", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "selectAll", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Point_1.Point, Object]),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "selectBorder", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Point_1.Point, Object]),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "selectEdge", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Point_1.Point, Object]),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "selectLine", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Point_1.Point, Object]),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "selectNeighbor", null);
+    __decorate([
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Array, Boolean]),
+        __metadata("design:returntype", void 0)
+    ], SelectorExtension.prototype, "doSelect", null);
     return SelectorExtension;
 }());
-__decorate([
-    Extensibility_1.variable(),
-    __metadata("design:type", Boolean)
-], SelectorExtension.prototype, "canSelect", void 0);
-__decorate([
-    Extensibility_1.variable(false),
-    __metadata("design:type", Array)
-], SelectorExtension.prototype, "selection", void 0);
-__decorate([
-    Extensibility_1.variable(false),
-    __metadata("design:type", Selector)
-], SelectorExtension.prototype, "primarySelector", void 0);
-__decorate([
-    Extensibility_1.variable(false),
-    __metadata("design:type", Selector)
-], SelectorExtension.prototype, "captureSelector", void 0);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Array, Object]),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "select", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "selectAll", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Point_1.Point, Object]),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "selectBorder", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Point_1.Point, Object]),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "selectEdge", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Point_1.Point, Object]),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "selectLine", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Point_1.Point, Object]),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "selectNeighbor", null);
-__decorate([
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Array, Boolean]),
-    __metadata("design:returntype", void 0)
-], SelectorExtension.prototype, "doSelect", null);
 exports.SelectorExtension = SelectorExtension;
 var Selector = (function (_super) {
     __extends(Selector, _super);

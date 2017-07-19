@@ -50,69 +50,69 @@ var Style = (function (_super) {
     function Style() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], Style.prototype, "borderColor", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], Style.prototype, "fillColor", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", Function)
+    ], Style.prototype, "formatter", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", TextStyle)
+    ], Style.prototype, "text", void 0);
     return Style;
 }(Cascading));
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], Style.prototype, "borderColor", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], Style.prototype, "fillColor", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", Function)
-], Style.prototype, "formatter", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", TextStyle)
-], Style.prototype, "text", void 0);
 exports.Style = Style;
 var TextStyle = (function (_super) {
     __extends(TextStyle, _super);
     function TextStyle() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
+    TextStyle.Default = new TextStyle(null, {
+        alignment: 'left',
+        color: 'black',
+        font: 'Segoe UI',
+        size: 13,
+        style: 'normal',
+        variant: 'normal',
+        weight: 'normal',
+    });
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], TextStyle.prototype, "alignment", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], TextStyle.prototype, "color", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], TextStyle.prototype, "font", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", Number)
+    ], TextStyle.prototype, "size", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], TextStyle.prototype, "style", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], TextStyle.prototype, "variant", void 0);
+    __decorate([
+        cascade(),
+        __metadata("design:type", String)
+    ], TextStyle.prototype, "weight", void 0);
     return TextStyle;
 }(Cascading));
-TextStyle.Default = new TextStyle(null, {
-    alignment: 'left',
-    color: 'black',
-    font: 'Segoe UI',
-    size: 13,
-    style: 'normal',
-    variant: 'normal',
-    weight: 'normal',
-});
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], TextStyle.prototype, "alignment", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], TextStyle.prototype, "color", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], TextStyle.prototype, "font", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", Number)
-], TextStyle.prototype, "size", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], TextStyle.prototype, "style", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], TextStyle.prototype, "variant", void 0);
-__decorate([
-    cascade(),
-    __metadata("design:type", String)
-], TextStyle.prototype, "weight", void 0);
 exports.TextStyle = TextStyle;
 exports.BaseStyle = new Style(null, {
     borderColor: 'lightgray',

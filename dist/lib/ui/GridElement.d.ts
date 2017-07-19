@@ -40,7 +40,7 @@ export declare class GridElement extends EventEmitterBase {
     private buffers;
     private visuals;
     private frame;
-    private constructor(canvas);
+    private constructor();
     readonly width: number;
     readonly height: number;
     readonly modelWidth: number;

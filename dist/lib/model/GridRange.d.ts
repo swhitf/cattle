@@ -68,7 +68,7 @@ export declare class GridRange {
      */
     readonly length: number;
     private index;
-    private constructor(values);
+    private constructor();
     /**
      * Indicates whether or not a cell is included in the range.
      */

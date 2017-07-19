@@ -165,36 +165,36 @@ var ClipboardExtension = (function () {
             this.doPaste(text);
         }
     };
+    __decorate([
+        Extensibility_1.variable(),
+        __metadata("design:type", CopyNet)
+    ], ClipboardExtension.prototype, "copyNet", void 0);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], ClipboardExtension.prototype, "copySelection", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], ClipboardExtension.prototype, "resetCopy", null);
+    __decorate([
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Array, String]),
+        __metadata("design:returntype", void 0)
+    ], ClipboardExtension.prototype, "doCopy", null);
+    __decorate([
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [String]),
+        __metadata("design:returntype", void 0)
+    ], ClipboardExtension.prototype, "doPaste", null);
     return ClipboardExtension;
 }());
-__decorate([
-    Extensibility_1.variable(),
-    __metadata("design:type", CopyNet)
-], ClipboardExtension.prototype, "copyNet", void 0);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ClipboardExtension.prototype, "copySelection", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ClipboardExtension.prototype, "resetCopy", null);
-__decorate([
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Array, String]),
-    __metadata("design:returntype", void 0)
-], ClipboardExtension.prototype, "doCopy", null);
-__decorate([
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], ClipboardExtension.prototype, "doPaste", null);
 exports.ClipboardExtension = ClipboardExtension;
 var CopyNet = (function (_super) {
     __extends(CopyNet, _super);

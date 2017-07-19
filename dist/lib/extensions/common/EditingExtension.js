@@ -201,46 +201,46 @@ var EditingExtension = (function () {
             grid.emit('input', { changes: compiled });
         }
     };
+    __decorate([
+        Extensibility_1.variable(),
+        __metadata("design:type", Input)
+    ], EditingExtension.prototype, "input", void 0);
+    __decorate([
+        Extensibility_1.command(),
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [String]),
+        __metadata("design:returntype", Boolean)
+    ], EditingExtension.prototype, "beginEdit", null);
+    __decorate([
+        Extensibility_1.command(),
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Boolean]),
+        __metadata("design:returntype", Boolean)
+    ], EditingExtension.prototype, "endEdit", null);
+    __decorate([
+        Extensibility_1.command(),
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], EditingExtension.prototype, "erase", null);
+    __decorate([
+        Extensibility_1.command(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Array, Object]),
+        __metadata("design:returntype", void 0)
+    ], EditingExtension.prototype, "commitUniform", null);
+    __decorate([
+        Extensibility_1.command(),
+        Extensibility_1.routine(),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [GridChangeSet]),
+        __metadata("design:returntype", void 0)
+    ], EditingExtension.prototype, "commit", null);
     return EditingExtension;
 }());
-__decorate([
-    Extensibility_1.variable(),
-    __metadata("design:type", Input)
-], EditingExtension.prototype, "input", void 0);
-__decorate([
-    Extensibility_1.command(),
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Boolean)
-], EditingExtension.prototype, "beginEdit", null);
-__decorate([
-    Extensibility_1.command(),
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Boolean]),
-    __metadata("design:returntype", Boolean)
-], EditingExtension.prototype, "endEdit", null);
-__decorate([
-    Extensibility_1.command(),
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], EditingExtension.prototype, "erase", null);
-__decorate([
-    Extensibility_1.command(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Array, Object]),
-    __metadata("design:returntype", void 0)
-], EditingExtension.prototype, "commitUniform", null);
-__decorate([
-    Extensibility_1.command(),
-    Extensibility_1.routine(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [GridChangeSet]),
-    __metadata("design:returntype", void 0)
-], EditingExtension.prototype, "commit", null);
 exports.EditingExtension = EditingExtension;
 var Input = (function (_super) {
     __extends(Input, _super);

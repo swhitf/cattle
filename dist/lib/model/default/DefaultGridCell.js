@@ -28,12 +28,12 @@ var DefaultGridCell = (function () {
         params.value = (params.value === undefined || params.value === null) ? '' : params.value;
         _.extend(this, params);
     }
+    DefaultGridCell = __decorate([
+        Extensibility_1.renderer(draw),
+        __metadata("design:paramtypes", [Object])
+    ], DefaultGridCell);
     return DefaultGridCell;
 }());
-DefaultGridCell = __decorate([
-    Extensibility_1.renderer(draw),
-    __metadata("design:paramtypes", [Object])
-], DefaultGridCell);
 exports.DefaultGridCell = DefaultGridCell;
 function draw(gfx, visual) {
     gfx.lineWidth = 1;

@@ -7,7 +7,7 @@ export declare class MouseInput {
     private emitters;
     static for(...elmts: Mappable[]): MouseInput;
     private subs;
-    private constructor(emitters);
+    private constructor();
     on(expr: string, callback: MouseCallback): MouseInput;
     private createListener(target, expr, callback);
 }

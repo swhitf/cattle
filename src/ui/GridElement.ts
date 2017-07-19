@@ -16,6 +16,8 @@ import { property } from '../misc/Property';
 import { variable } from './Extensibility';
 import * as _ from '../misc/Util';
 
+declare var Reflect;
+
 
 export interface GridExtension
 {
