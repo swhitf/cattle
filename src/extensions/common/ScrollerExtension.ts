@@ -85,8 +85,8 @@ export class ScrollerExtension
     {
         let grid = this.grid;
         let maxScroll = new Point(
-            grid.virtualWidth - grid.width,
-            grid.virtualHeight - grid.height,
+            Math.max(0, grid.virtualWidth - grid.width),
+            Math.max(0, grid.virtualHeight - grid.height)
         );
 
         grid.scroll = new Point(grid.container.scrollLeft, grid.container.scrollTop)
