@@ -1,36 +1,104 @@
+import { ObjectIndex, ObjectMap } from '../common';
 import { GridColumn } from './GridColumn';
 import { GridCell } from './GridCell';
 import { GridRow } from './GridRow';
 import { Point } from '../geom/Point';
+import * as u from '../misc/Util';
 
 
 /**
- * Defines the interface of an object that represents the logical composition of a data grid.  It hosts the
- * collections of the various entity model objects as well as methods for access and inspection.
+ * Represents the logical composition of a grid.  It hosts the collections of the various entity model 
+ * objects as well as methods for access and inspection.  All inspection methods use O(1) implementations.
  */
-export interface GridModel
+export class GridModel
 {
+    /**
+     * Creates an grid model with the specified number of columns and rows populated with default cells.
+     *
+     * @param cols
+     * @param rows
+     */
+    public static dim(width:number, height:number):GridModel
+    {
+        let cells = [] as GridCell[];
+        let columns = [] as GridColumn[];
+        let rows = [] as GridRow[];
+
+        for (let c = 0; c < width; c++)
+        {
+            columns.push(new GridColumn(c));
+
+            for (let r = 0; r < height; r++)
+            {
+                if (r == 0)
+                {
+                    rows.push(new GridRow(r));
+                }
+
+                cells.push(new GridCell({
+                    colRef: c,
+                    rowRef: r,
+                    value: '',
+                }));
+            }
+        }
+
+        return new GridModel(cells, columns, rows);
+    }
+
+    /**
+     * Creates an empty grid model.
+     *
+     * @returns {GridModel}
+     */
+    public static empty():GridModel
+    {
+        return new GridModel([], [], []);
+    }
+
     /**
      * The grid cell definitions.  The order is arbitrary.
      */
-    readonly cells:GridCell[];
+    public readonly cells:GridCell[];
 
     /**
      * The grid column definitions.  The order is arbitrary.
      */
-    readonly columns:GridColumn[];
+    public readonly columns:GridColumn[];
 
     /**
      * The grid row definitions.  The order is arbitrary.
      */
-    readonly rows:GridRow[];
+    public readonly rows:GridRow[];
+
+    private byId:ObjectMap<GridCell>;
+    private byCoord:ObjectIndex<ObjectIndex<GridCell>>;
+
+    /**
+     * Initializes a new instance of GridModel.
+     *
+     * @param cells
+     * @param columns
+     * @param rows
+     */
+    constructor(cells:GridCell[], columns:GridColumn[], rows:GridRow[])
+    {
+        this.cells = cells;
+        this.columns = columns;
+        this.rows = rows;
+
+        this.refresh();
+    }
 
     /**
      * Given a cell ref, returns the GridCell object that represents the cell, or null if the cell did not exist
      * within the model.
      * @param ref
      */
-    findCell(ref:string):GridCell;
+    public findCell(ref:string):GridCell
+    {
+        return this.byId[ref] || null;
+    }
 
     /**
      * Given a cell ref, returns the GridCell object that represents the neighboring cell as per the specified
@@ -38,7 +106,14 @@ export interface GridModel
      * @param ref
      * @param vector
      */
-    findCellNeighbor(ref:string, vector:Point):GridCell;
+    public findCellNeighbor(ref:string, vector:Point):GridCell
+    {
+        let cell = this.findCell(ref);
+        let col = cell.colRef + vector.x;
+        let row = cell.rowRef + vector.y;
+
+        return this.locateCell(col, row);
+    }
 
     /**
      * Given a cell column ref and row ref, returns the GridCell object that represents the cell at the location,
@@ -46,5 +121,39 @@ export interface GridModel
      * @param colRef
      * @param rowRef
      */
-    locateCell(colRef:number, rowRef:number):GridCell;
+    public locateCell(col:number, row:number):GridCell
+    {
+        return (this.byCoord[col] || {})[row] || null;
+    }
+
+    /**
+     * Refreshes internal caches used to optimize lookups and should be invoked after the model has been changed (structurally).
+     */
+    public refresh():void
+    {
+        let { cells } = this;
+
+        this.byId = u.index(cells, x => x.id);
+        this.byCoord = {};
+
+        for (let cell of cells)
+        {
+            for (let co = 0; co < cell.colSpan; co++) 
+            {
+                for (let ro = 0; ro < cell.rowSpan; ro++)
+                {
+                    let c = cell.colRef + co;
+                    let r = cell.rowRef + ro;
+
+                    let cix = this.byCoord[c] || (this.byCoord[c] = {});
+                    if (cix[r])
+                    {
+                        console.warn('Two cells appear to occupy', c, 'x', r);
+                    }
+                    
+                    cix[r] = cell;
+                }
+            }        
+        }
+    }
 }

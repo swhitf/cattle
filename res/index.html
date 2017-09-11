@@ -6,7 +6,8 @@
 
             body {
                 position: relative;
-                padding: 50px 50px 0;
+                padding: 80px 50px 0;
+                margin: 0;
                 font-family: 'Segoe UI';
                 line-height: 1.2em;
                 background: whitesmoke;
@@ -48,10 +49,11 @@
         </style>
     </head>
     <body>
-        <div style="width: 800px; height: 600px;">
-            <div id="x"></div>
+        <div id="x" style="width: 800px; height: 600px;">
         </div>
     </body>
+    <script type="text/javascript" src="stats.js"></script>
+    <script type="text/javascript">window.fps = new FPSMeter();</script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/reflect-metadata/0.1.10/Reflect.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.35.2/es6-shim.js"></script>
     <script type="text/javascript" src="app.js"></script>
