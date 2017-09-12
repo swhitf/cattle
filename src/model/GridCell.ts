@@ -1,3 +1,4 @@
+import { Base26 } from '../misc/Base26';
 import { GridCellStyle } from './GridCellStyle';
 import { Observable } from '../eventing/Observable';
 import { GridObject } from './GridObject';
@@ -15,7 +16,6 @@ export interface GridCellParams
     value:string;
     style?:string[];
     type?:string;
-    id?:string;
     colSpan?:number;
     rowSpan?:number;
 }
@@ -26,9 +26,9 @@ export interface GridCellParams
 export class GridCell extends GridObject
 {
     /**
-     * The cell id, must be unique per GridModel instance.
+     * The cell ref, an excel-like reference to the location of the cell.
      */
-    public readonly id:string;
+    public readonly ref:string;
 
     /**
      * User specified cell that specifies the cell type; this is an arbitrary string that intended
@@ -77,13 +77,13 @@ export class GridCell extends GridObject
     {
         super();
 
-        params.type = params.type || 'default';
-        params.id = params.id || Ident.next();
-        params.colSpan = params.colSpan || 1;
-        params.rowSpan = params.rowSpan || 1;        
-        params.value = (params.value === undefined || params.value === null) ? '' : params.value;
-
-        u.extend(this, params);
+        this.ref = Base26.num(params.colRef).str + params.rowRef.toString();
+        this.type = params.type || 'default';
+        this.colRef = params.colRef;
+        this.colSpan = params.colSpan || 1;
+        this.rowRef = params.rowRef;
+        this.rowSpan = params.rowSpan || 1;
         this.style = GridCellStyle.get(...(params.style || []));
+        this.value = (params.value === undefined || params.value === null) ? '' : params.value;
     }
 }

@@ -1,3 +1,4 @@
+import { Base26 } from '../misc/Base26';
 import { select } from '../vom/VisualQuery';
 import { debug_events } from '../eventing/EventEmitter';
 import { Theme } from '../vom/styling/Theme';
