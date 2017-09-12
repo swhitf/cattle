@@ -4,11 +4,11 @@
 // import { GridModel } from './GridModel';
 // import { Point } from '../geom/Point';
 // import { Rect } from '../geom/Rect';
-// import * as _ from '../misc/Util';
+// import * as u from '../misc/Util';
 
 
 // /**
-//  * Describes a GridRange of grid cells.
+//  * Provides a method of selecting and representing a range of cells from a `GridModel`.
 //  */
 // export class GridRange
 // {
@@ -22,7 +22,7 @@
 //      */
 //     public static create(model:GridModel, cellRefs:string[]):GridRange
 //     {
-//         let lookup = _.index(cellRefs, x => x);
+//         let lookup = u.index(cellRefs, x => x);
 
 //         let cells = [] as GridCell[];
 //         let lc = Number.MAX_VALUE, lr = Number.MAX_VALUE;
@@ -217,7 +217,7 @@
 
 //     private constructor(values:any)
 //     {
-//         _.extend(this, values);
+//         u.extend(this, values);
 //     }
 
 //     /**
@@ -227,7 +227,7 @@
 //     {
 //         if (!this.index)
 //         {
-//             this.index = _.index(this.ltr, x => x.ref);
+//             this.index = u.index(this.ltr, x => x.ref);
 //         }
 
 //         return !!this.index[cellRef];

@@ -1,18 +1,17 @@
-import { routine } from './Extensibility';
-import { Visual } from '../vom/Visual';
-import { GridView, GridViewlet } from './GridView';
-import { CellVisual } from './CellVisual';
-import { GridCell } from '../model/GridCell';
 import { ObjectMap } from '../common';
 import { Observable } from '../eventing/Observable';
 import { SimpleEventEmitter } from '../eventing/SimpleEventEmitter';
 import { Padding } from '../geom/Padding';
-import { Point, PointLike } from '../geom/Point';
+import { Point } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
+import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
 import { Surface } from '../vom/Surface';
+import { CellVisual } from './CellVisual';
+import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
+import { GridView } from './GridView';
 
 
 export class GridElement extends SimpleEventEmitter
@@ -25,7 +24,7 @@ export class GridElement extends SimpleEventEmitter
         surface: null as Surface,
         kernel: null as GridKernel,
         view: null as GridView,
-    }
+    } 
 
     public static create(container:HTMLElement, initialModel?:GridModel):GridElement
     {
@@ -80,13 +79,38 @@ export class GridElement extends SimpleEventEmitter
         return this.internal.kernel;
     }
 
-    /*
-    public extend(ext:GridExtension|GridExtender):GridElement
+    public extend(ext:GridExtension):GridElement
+    {
+        this.kernel.install(ext);
+
+        if (ext.init)
+        {
+            ext.init(this, this.kernel);
+        }
+
+        return this;
+    }
+
     public exec(command:string, ...args:any[]):void
+    {
+        this.kernel.commands.exec(command, ...args);
+    }
+
     public get(variable:string):any
+    {
+        this.kernel.variables.get(variable);
+    }
+
     public set(variable:string, value:any):void
+    {
+        this.kernel.variables.set(variable, value);
+    }
+
     public mergeInterface():GridElement
-    */
+    {
+        this.kernel.exportInterface(this);
+        return this;
+    }
 
     private updateSurface():void
     {
@@ -193,7 +217,7 @@ export class GridElement extends SimpleEventEmitter
         }
     }
 
-    @routine()
+    @Routine()
     private doCreateVisual(cell:GridCell, rect:RectLike):CellVisual
     {   
         let visual = new CellVisual();
@@ -205,7 +229,7 @@ export class GridElement extends SimpleEventEmitter
         return visual;
     }
 
-    @routine()
+    @Routine()
     private doUpdateVisual(visual:CellVisual, cell:GridCell, rect:RectLike):void
     {
         visual.topLeft = new Point(rect.left, rect.top);
@@ -214,7 +238,7 @@ export class GridElement extends SimpleEventEmitter
         visual.update(cell);
     }
 
-    @routine()
+    @Routine()
     private doDestroyVisual(visual:CellVisual):void
     {
         visual.unmountSelf();
