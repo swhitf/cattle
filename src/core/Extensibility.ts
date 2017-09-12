@@ -7,7 +7,7 @@ declare var Reflect:any;
 
 export interface GridExtension
 {
-    init?(grid:GridElement, kernel:GridKernel):void;
+    init(grid:GridElement, kernel:GridKernel):void;
 }
 
 /**
