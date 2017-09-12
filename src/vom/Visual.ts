@@ -3,7 +3,6 @@ import { toggle } from '../misc/Dom';
 import { Animate, AnimationBuilder } from './styling/Animate';
 import { SimpleEventEmitter } from '../eventing/SimpleEventEmitter';
 import { Rect } from '../geom/Rect';
-import { property } from '../misc/Property';
 import { ChangeEvent } from './events/ChangeEvent';
 import { ComposeEvent } from './events/ComposeEvent';
 import { VisualEvent } from './events/VisualEvent';

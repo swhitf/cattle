@@ -2,7 +2,6 @@ import { Base26 } from '../misc/Base26';
 import { GridCellStyle } from './GridCellStyle';
 import { Observable } from '../eventing/Observable';
 import { GridObject } from './GridObject';
-import { Ident } from '../misc/Ident';
 import * as u from '../misc/Util';
 
 
@@ -77,7 +76,7 @@ export class GridCell extends GridObject
     {
         super();
 
-        this.ref = Base26.num(params.colRef).str + params.rowRef.toString();
+        this.ref = Base26.num(params.colRef).str + (params.rowRef + 1).toString();
         this.type = params.type || 'default';
         this.colRef = params.colRef;
         this.colSpan = params.colSpan || 1;

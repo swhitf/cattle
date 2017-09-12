@@ -14,6 +14,9 @@ export class CellVisual extends Visual
     public readonly canHost:boolean = true;
     public readonly type:string = 'cell';
 
+    @Observable()
+    public ref:string;
+
     @Styleable('#fff')
     public background:string;
 
@@ -34,6 +37,7 @@ export class CellVisual extends Visual
 
     public update(cell:GridCell):void
     {
+        this.ref = cell.ref;
         this.text = cell.value;
         
         for (let cs of this.cellStyles)
