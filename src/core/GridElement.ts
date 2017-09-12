@@ -135,18 +135,18 @@ export class GridElement extends SimpleEventEmitter
         for (let i = 0; i < cells.length; i++)
         {
             let cell = cells[i];
-            let entry = buffer.index[cell.id];
+            let entry = buffer.index[cell.ref];
 
             if (!entry)
             {
-                let rect = layout.measureCell(cell.id);
+                let rect = layout.measureCell(cell.ref);
                 let visual = this.doCreateVisual(cell, rect);
-                entry = buffer.index[cell.id] = new ViewBufferEntry(cell.id, visual);
+                entry = buffer.index[cell.ref] = new ViewBufferEntry(cell.ref, visual);
             }
 
             if (entry.nonce != cell.nonce)
             {
-                let rect = layout.measureCell(cell.id);
+                let rect = layout.measureCell(cell.ref);
                 this.doUpdateVisual(entry.visual, cell, rect);
                 entry.nonce = cell.nonce;
             }

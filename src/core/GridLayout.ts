@@ -80,7 +80,7 @@ export class GridLayout
                 if (cellLookup[ci] !== undefined && cellLookup[ci][ri] !== undefined)
                 {
                     let cell = cellLookup[ci][ri];
-                    if (cell && !loadTracker[cell.id])
+                    if (cell && !loadTracker[cell.ref])
                     {
                         let width = 0, height = 0;
 
@@ -102,7 +102,7 @@ export class GridLayout
                             height: height,
                         });
                         
-                        loadTracker[cell.id] = true;
+                        loadTracker[cell.ref] = true;
                     }
                 }
 
@@ -143,7 +143,7 @@ export class GridLayout
         this.cellLookup = cellLookup;
         this.columnIndex = u.index(columns, x => x.object.ref);
         this.rowIndex = u.index(rows, x => x.object.ref);
-        this.cellIndex = u.index(cells, x => x.object.id);
+        this.cellIndex = u.index(cells, x => x.object.ref);
     }
 
     public captureColumns(region:RectLike):GridColumn[]

@@ -133,7 +133,7 @@ export class GridModel
     {
         let { cells } = this;
 
-        this.byId = u.index(cells, x => x.id);
+        this.byId = u.index(cells, x => x.ref);
         this.byCoord = {};
 
         for (let cell of cells)
