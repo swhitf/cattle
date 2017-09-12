@@ -1,9 +1,13 @@
-import { coalesce } from '../misc/Util';
 
 
 export class Padding 
 {
     public static empty = new Padding(0, 0, 0, 0);
+
+    public static hv(h:number, v:number):Padding
+    {
+        return new Padding(v, h, v, h);
+    }
 
     public readonly top:number;
     public readonly right:number;
@@ -12,10 +16,10 @@ export class Padding
 
     constructor(top?:number, right?:number, bottom?:number, left?:number) 
     {
-        this.top = coalesce(top, 0);
-        this.right = coalesce(right, this.top);
-        this.bottom = coalesce(bottom, this.top);
-        this.left = coalesce(left, this.right);
+        this.top = top || 0;
+        this.right = right || 0;
+        this.bottom = bottom || 0;
+        this.left = left || 0;
     }
 
     public get horizontal():number 
@@ -28,13 +32,15 @@ export class Padding
         return this.top + this.bottom;
     }
 
-    public inflate(by:number):Padding
+    public copy(changes:Partial<Padding>):Padding
     {
+        let c = (a, b) => a !== undefined ? a : b;
+
         return new Padding(
-            this.top + by,
-            this.right + by,
-            this.bottom + by,
-            this.left + by,
+            c(changes.top, this.top),
+            c(changes.right, this.right),
+            c(changes.bottom, this.bottom),
+            c(changes.left, this.left),
         );
     }
 }

@@ -20,6 +20,7 @@
     "clipboard-js": "^0.3.3",
     "es6-promise": "^4.0.5",
     "papaparse": "^4.1.2",
+    "parse-color": "^1.0.0",
     "tether": "1.4.0"
   },
   "devDependencies": {
@@ -33,6 +34,8 @@
     "http-server": "^0.10.0",
     "merge-stream": "^1.0.1",
     "parallelshell": "^2.0.0",
+    "parse-color": "^1.0.0",
+    "reflect-metadata": "^0.1.10",
     "tsify": "^3.0.0",
     "typescript": "^2.1.4",
     "vinyl-source-stream": "^1.1.0",

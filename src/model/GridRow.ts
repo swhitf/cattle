@@ -1,16 +1,35 @@
+import { GridObject } from './GridObject';
+import { Observable } from '../eventing/Observable';
+
+
 /**
- * Defines the interface of an object that describes a GridRow.
+ * Represents a grid row.
  */
-export interface GridRow
+export class GridRow extends GridObject
 {
     /**
      * The row reference, must be unique per GridModel instance.  Used to indicate the position of the
      * row within the grid based on a zero-index.
      */
-    readonly ref:number;
+    public readonly ref:number;
 
     /**
      * The height of the column.
      */
-    height:number;
+    @Observable()
+    public height:number;
+
+    /**
+     * Initializes a new instance of DefaultGridRow.
+     *
+     * @param ref
+     * @param height
+     */
+    constructor(ref:number, height:number = 21)
+    {
+        super();
+
+        this.ref = ref;
+        this.height = height;
+    }
 }
