@@ -15,9 +15,5 @@ export class DefaultTheme extends Theme
 function default_rules():any
 {
     return {
-        // 'cell': {
-        //     color: 'red',
-        //     border: new Border(1, 'blue', [5, 2]),
-        // },
     };
 }

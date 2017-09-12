@@ -59,7 +59,7 @@ export class Surface extends SimpleEventEmitter
     @Observable()
     public height:number;
 
-    @Observable(0)
+    @Observable(new DefaultTheme())
     public theme:Theme;
 
     private readonly sequence:VisualSequence;
