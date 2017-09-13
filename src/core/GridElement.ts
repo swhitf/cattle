@@ -98,7 +98,7 @@ export class GridElement extends SimpleEventEmitter
 
     public get(variable:string):any
     {
-        this.kernel.variables.get(variable);
+        return this.kernel.variables.get(variable);
     }
 
     public set(variable:string, value:any):void

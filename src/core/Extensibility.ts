@@ -104,14 +104,17 @@ export function Variable(name:string|boolean, mutable?:boolean):any
             mutable: mutable,
         });
 
-        let valStoreKey = !!name ? key : `__${key}`;
-        let useAltValueStore = !name;
+        let valStoreKey = `__${name || key}`;
         
         Object.defineProperty(ctor, name || key, {
-           configurable: false,
-           enumerable: true,
-           get: function() { return this[valStoreKey]; },
-           set: function(newVal) { this[valStoreKey] = newVal; }
+            configurable: false,
+            enumerable: true,
+            get: function() { 
+                return this[valStoreKey]; 
+            },
+            set: function(newVal) { 
+                this[valStoreKey] = newVal; 
+            }
         });
     };
 }

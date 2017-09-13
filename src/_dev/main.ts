@@ -1,3 +1,4 @@
+import { NetManager } from '../extensions/nets/NetManager';
 import { NetExtension } from '../extensions/nets/NetExtension';
 import { NetHandle } from '../extensions/nets/NetHandle';
 import { Border } from '../vom/styling/Border';
@@ -30,3 +31,6 @@ grid.model.cells[0].value = 'Test';
 let theme = new Theme('Test');
 
 grid.surface.theme = theme;
+
+let nets = grid.get('nets') as NetManager;
+nets.create('test', 'default', 'B2', 'E4');
