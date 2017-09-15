@@ -7,7 +7,7 @@ import { GridExtension, Variable } from '../../core/Extensibility';
 
 export class NetExtension implements GridExtension
 {
-    @Variable('nets', false)
+    @Variable(false)
     public nets:NetManager;
 
     public init(grid:GridElement, kernel:GridKernel):void 
