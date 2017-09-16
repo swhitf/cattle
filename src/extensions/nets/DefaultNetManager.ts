@@ -4,7 +4,7 @@ import { Surface } from '../../vom/Surface';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { ObjectMap } from '../../common';
 import { Rect, RectLike } from '../../geom/Rect';
-import { Observable } from '../../eventing/Observable';
+import { Observable } from '../../base/Observable';
 import { NetHandle } from './NetHandle';
 import { NetManager } from './NetManager';
 

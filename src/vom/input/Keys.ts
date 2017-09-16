@@ -103,7 +103,7 @@ export class Keys
     public static SINGLE_QUOTE = 222;
     public static GRADE_QUOTE = 223;
 
-    public static parse(input:string):number
+    public static parse(input:string, thrownOnFail:boolean = true):number
     {
         switch (input.trim())
         {
@@ -242,7 +242,11 @@ export class Keys
             case 'BACK_SLASH': return Keys.BACK_SLASH;
             case 'CLOSE_BRACKET': return Keys.CLOSE_BRACKET;
             case 'SINGLE_QUOTE': return Keys.SINGLE_QUOTE;
-            default: throw 'Invalid key: ' + input;
+            default:
+            if (thrownOnFail)
+                throw 'Invalid key: ' + input;
+            else
+                return null;
         }
     }
 

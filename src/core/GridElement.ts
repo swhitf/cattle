@@ -1,6 +1,6 @@
 import { ObjectMap } from '../common';
-import { Observable } from '../eventing/Observable';
-import { SimpleEventEmitter } from '../eventing/SimpleEventEmitter';
+import { Observable } from '../base/Observable';
+import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Padding } from '../geom/Padding';
 import { Point } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';

@@ -1,16 +1,14 @@
-import { index, values } from '../misc/Util';
-import { toggle } from '../misc/Dom';
-import { Animate, AnimationBuilder } from './styling/Animate';
-import { SimpleEventEmitter } from '../eventing/SimpleEventEmitter';
+import { VisualChangeEvent } from './events/VisualChangeEvent';
+import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
+import { Matrix } from '../geom/Matrix';
+import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
-import { ChangeEvent } from './events/ChangeEvent';
-import { ComposeEvent } from './events/ComposeEvent';
+import { toggle } from '../misc/Dom';
+import { index, values } from '../misc/Util';
 import { VisualEvent } from './events/VisualEvent';
+import { Animate, AnimationBuilder } from './styling/Animate';
 import { Styleable } from './styling/Styleable';
 import { Surface } from './Surface';
-import * as u from '../misc/Util';
-import { Point } from "../geom/Point";
-import { Matrix } from "../geom/Matrix";
 
 
 var IdSeed:number = Math.floor(Math.random() * (new Date().getTime() / 1000));
@@ -335,12 +333,12 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
             this.parentVisual.notifyCompose();
         }
 
-        this.notify(new ChangeEvent(this, property));
+        this.notify(new VisualChangeEvent(this, property));
     }
 
     protected notifyCompose():void
     {
-        this.notify(new ComposeEvent(this));
+        this.notify(new VisualEvent('compose', this));
     }
 }
 

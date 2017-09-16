@@ -1,5 +1,5 @@
 import { GridObject } from './GridObject';
-import { Observable } from '../eventing/Observable';
+import { Observable } from '../base/Observable';
 
 
 /**

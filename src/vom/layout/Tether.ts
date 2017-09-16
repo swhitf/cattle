@@ -1,6 +1,6 @@
-import { EventSubscription } from '../../eventing/EventEmitter';
+import { EventSubscription } from '../../base/EventEmitter';
 import { Point } from '../../geom/Point';
-import { ChangeEvent } from '../events/ChangeEvent';
+import { VisualChangeEvent } from '../events/VisualChangeEvent';
 import { Visual } from '../Visual';
 
 
@@ -56,7 +56,7 @@ class AnchorTether implements TetherHandle
         this.evtSub.cancel();
     }
 
-    private onTargetChange(e:ChangeEvent):void
+    private onTargetChange(e:VisualChangeEvent):void
     {
         if (this.parent != this.subject.parent)
         {

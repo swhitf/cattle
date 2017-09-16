@@ -5,7 +5,7 @@ import { Border } from '../vom/styling/Border';
 import { DefaultNetManager } from '../extensions/nets/DefaultNetManager';
 import { Base26 } from '../misc/Base26';
 import { select } from '../vom/VisualQuery';
-import { debug_events } from '../eventing/EventEmitter';
+import { debug_events } from '../base/EventEmitter';
 import { Theme } from '../vom/styling/Theme';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridElement } from '../core/GridElement';

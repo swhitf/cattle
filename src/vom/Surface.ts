@@ -1,14 +1,13 @@
-import { SurfaceEvent } from './events/SurfaceEvent';
-import { Event } from '../eventing/Event';
-import { Observable } from '../eventing/Observable';
-import { SimpleEventEmitter } from '../eventing/SimpleEventEmitter';
+import { Event } from '../base/Event';
+import { Observable } from '../base/Observable';
+import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
 import { Point, PointInput } from '../geom/Point';
-import { ChangeEvent } from './events/ChangeEvent';
-import { ComposeEvent } from './events/ComposeEvent';
-import { KeyInputEvent, KeyInputEventTypes } from './events/KeyInputEvent';
-import { KeyTracker } from './events/KeyTracker';
-import { MouseInputEvent, MouseInputEventTypes } from './events/MouseInputEvent';
+import { KeyTracker } from './input/KeyTracker';
+import { VisualChangeEvent } from './events/VisualChangeEvent';
+import { VisualEvent } from './events/VisualEvent';
+import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
+import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
 import { RefreshLoop } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
 import { DefaultTheme } from './styling/DefaultTheme';
@@ -113,7 +112,7 @@ export class Surface extends SimpleEventEmitter
 
         if (didRender)
         {
-            this.propagateEvent(new SurfaceEvent('render'), []);
+            this.propagateEvent(new Event('render'), []);
         }
     }
 
@@ -267,12 +266,12 @@ export class Surface extends SimpleEventEmitter
                 this.view.width = this.width;
                 this.view.height = this.height;
                 this.dirtyRender = true;
-                this.propagateEvent(new SurfaceEvent('resize'), []);
+                this.propagateEvent(new Event('resize'), []);
             case 'scrollLeft':
             case 'scrollTop':
                 this.viewTransform = Matrix.identity.translate(this.scrollLeft, this.scrollTop).inverse();
                 this.dirtyRender = true;
-                this.propagateEvent(new SurfaceEvent('scroll'), []);
+                this.propagateEvent(new Event('scroll'), []);
                 break;
             case 'theme':
                 this.applyTheme(this.theme);
@@ -281,7 +280,7 @@ export class Surface extends SimpleEventEmitter
         }
     }
 
-    private onViewMouseEvent(type:MouseInputEventTypes, keyTracker:KeyTracker, me:MouseEvent):void
+    private onViewMouseEvent(type:VisualMouseEventTypes, keyTracker:KeyTracker, me:MouseEvent):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
         let surfacePt = this.toSurfacePoint(viewPt);
@@ -293,7 +292,7 @@ export class Surface extends SimpleEventEmitter
         {
             if (hoverVisual)
             {
-                let evt = new MouseInputEvent('mouseleave', hoverVisual, me.button, viewPt, surfacePt, keys);    
+                let evt = new VisualMouseEvent('mouseleave', hoverVisual, me.button, viewPt, surfacePt, keys);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
 
@@ -301,16 +300,16 @@ export class Surface extends SimpleEventEmitter
 
             if (hoverVisual)
             {
-                let evt = new MouseInputEvent('mouseenter', hoverVisual, me.button, viewPt, surfacePt, keys);    
+                let evt = new VisualMouseEvent('mouseenter', hoverVisual, me.button, viewPt, surfacePt, keys);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
         }
 
-        let evt = new MouseInputEvent(type, stack[0] || null, me.button, viewPt, surfacePt, keys);
+        let evt = new VisualMouseEvent(type, stack[0] || null, me.button, viewPt, surfacePt, keys);
         this.propagateEvent(evt, stack);
     }
 
-    private onViewKeyEvent(type:KeyInputEventTypes, keyTracker:KeyTracker, ke:KeyboardEvent):void
+    private onViewKeyEvent(type:VisualKeyboardEventTypes, keyTracker:KeyTracker, ke:KeyboardEvent):void
     {
         let key = ke.keyCode;
         let keys = keyTracker.capture();
@@ -324,11 +323,11 @@ export class Surface extends SimpleEventEmitter
             x = x.parent;
         }
 
-        let evt = new KeyInputEvent(type, hoverVisual || null, key, keys);
+        let evt = new VisualKeyboardEvent(type, hoverVisual || null, key, keys);
         this.propagateEvent(evt, stack);
     }
 
-    private onVisualCompose(e:ComposeEvent)
+    private onVisualCompose(e:VisualEvent)
     {
         this.dirtyRender = true;
         this.dirtySequence = true;
@@ -338,7 +337,7 @@ export class Surface extends SimpleEventEmitter
         this.applyTheme(this.theme, visuals);
     }
 
-    private onVisualChange(e:ChangeEvent)
+    private onVisualChange(e:VisualChangeEvent)
     {
         this.dirtyRender = true;
 

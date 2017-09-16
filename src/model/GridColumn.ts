@@ -1,4 +1,4 @@
-import { Observable } from '../eventing/Observable';
+import { Observable } from '../base/Observable';
 import { GridObject } from './GridObject';
 
 
