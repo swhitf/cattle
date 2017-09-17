@@ -1,4 +1,4 @@
-import { Observable } from '../eventing/Observable';
+import { Observable } from '../base/Observable';
 import { GridCell } from '../model/GridCell';
 import { Padding } from '../geom/Padding';
 import { Border } from '../vom/styling/Border';

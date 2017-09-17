@@ -6,6 +6,7 @@ export class KeyTracker implements KeySet
     private lookup:{ [key:string]:boolean };
     private downHandle:any;
     private upHandle:any;
+    private count:number = 0;
 
     constructor(private source:EventTarget)
     {
@@ -13,22 +14,36 @@ export class KeyTracker implements KeySet
 
         this.downHandle = (ke:KeyboardEvent) =>
         {
-            this.lookup[ke.keyCode] = true;
+            if (!this.lookup[ke.keyCode])
+            {
+                this.count++;
+                this.lookup[ke.keyCode] = true;
+            }
         };
 
         this.upHandle = (ke:KeyboardEvent) =>
         {
-            delete this.lookup[ke.keyCode];
+            if (this.lookup[ke.keyCode])
+            {
+                this.count--;
+                delete this.lookup[ke.keyCode];
+            }
         };
 
         this.source.addEventListener('keydown', this.downHandle);
         this.source.addEventListener('keyup', this.upHandle);
+    }
+    
+    public get length():number
+    { 
+        return this.count;
     }
 
     public capture():KeySet
     {
         let snapshot =
         {
+            length: this.length,
             lookup: {} as { [key:string]:boolean },
             contains: function(key:number):boolean 
             {

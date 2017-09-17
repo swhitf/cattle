@@ -1,6 +1,6 @@
 import { Base26 } from '../misc/Base26';
 import { GridCellStyle } from './GridCellStyle';
-import { Observable } from '../eventing/Observable';
+import { Observable } from '../base/Observable';
 import { GridObject } from './GridObject';
 import * as u from '../misc/Util';
 
