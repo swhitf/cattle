@@ -221,6 +221,8 @@ export class Surface extends SimpleEventEmitter
         view.addEventListener('mousedown', this.onViewMouseEvent.bind(this, 'mousedown', keys));
         view.addEventListener('mousemove', this.onViewMouseEvent.bind(this, 'mousemove', keys));
         view.addEventListener('mouseup', this.onViewMouseEvent.bind(this, 'mouseup', keys));
+        view.addEventListener('click', this.onViewMouseEvent.bind(this, 'click', keys));
+        view.addEventListener('dblclick', this.onViewMouseEvent.bind(this, 'dblclick', keys));
         view.addEventListener('keydown', this.onViewKeyEvent.bind(this, 'keydown', keys));
         view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup', keys));
 
