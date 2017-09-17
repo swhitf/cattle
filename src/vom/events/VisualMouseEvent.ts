@@ -7,7 +7,7 @@ import { VisualEvent } from './VisualEvent';
 /**
  * Specifies the possible VisualMouseEventTypes values.
  */
-export type VisualMouseEventTypes = 'mousedown'|'mousemove'|'mouseup'|'mouseenter'|'mouseleave';
+export type VisualMouseEventTypes = 'mousedown'|'mousemove'|'mouseup'|'mouseenter'|'mouseleave'|'click'|'dblclick';
 
 /**
  * Represents an event raised from a Visual object when a mouse action is performed on the visual.

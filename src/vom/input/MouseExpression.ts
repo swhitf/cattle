@@ -20,20 +20,9 @@ export class MouseExpression
 
         let [left, right] = divide_expression(input);
 
+        cfg.button = parse_button(left);
         cfg.event = parse_event(left);
-
-        for (let x of right.split(/[\s\-\+]+/))
-        {
-            let key = Keys.parse(x, false);
-            if (key !== null)
-            {
-                cfg.keys.push(key);
-            }
-            else
-            {
-                cfg.button = parse_button(x);
-            }
-        }
+        cfg.keys = !!right ? Keys.parseExpression(right) : [];
 
         return new MouseExpression(cfg);
     }
@@ -56,6 +45,9 @@ export class MouseExpression
         if (this.button !== null && this.button !== mouseData.button)
             return false;
 
+        if (this.keys.length != mouseData.keys.length)
+            return false;
+
         for (let k of this.keys)
         {
             if (!mouseData.keys.contains(k))
@@ -70,7 +62,8 @@ export class MouseExpression
 
 function parse_event(value:string):VisualMouseEventTypes
 {
-    value = (value || '').trim().toLowerCase();
+    value = ((value || '').trim().toLowerCase()).split('.')[1] || 'down';
+
     switch (value)
     {
         case 'down':
@@ -97,7 +90,8 @@ function parse_event(value:string):VisualMouseEventTypes
 
 function parse_button(value:string):number
 {
-    value = (value || '').trim().toLowerCase();
+    value = ((value || '').trim().toLowerCase()).split('.')[0];
+
     switch (value)
     {
         case 'left':
@@ -118,12 +112,14 @@ function parse_button(value:string):number
 
 function divide_expression(value:string):string[]
 {
-    let parts = value.split(':');
+    let parts = value.split('+');
 
-    if (parts.length == 1)
+    if (parts.length > 1)
     {
-        parts.splice(0, 0, 'down');
+        parts = [ parts[0], parts.slice(1).join('+') ];
     }
 
-    return parts.slice(0, 2);
+    return parts;
 }
+
+window['de'] = divide_expression;
