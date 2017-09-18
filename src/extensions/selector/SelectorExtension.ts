@@ -1,13 +1,10 @@
+import { select } from '../../vom/VisualQuery';
+import { GridElement } from '../../core/GridElement';
+import { Variable } from '../../core/Extensibility';
+import { GridKernel, GridVariable } from '../../core/GridKernel';
 import { GridCell } from '../../model/GridCell';
-import { GridKernel } from '.././../ui/GridKernel';
-import { GridElement, GridMouseEvent, GridMouseDragEvent } from '.././../ui/GridElement';
-import { KeyInput } from '../../input/KeyInput';
 import { Point, PointLike } from '../../geom/Point';
 import { RectLike, Rect } from '../../geom/Rect';
-import { MouseInput } from '../../input/MouseInput';
-import { MouseDragEventSupport } from '../../input/MouseDragEventSupport';
-import { Widget, AbsWidgetBase } from '../../ui/Widget';
-import { command, routine, variable } from '../../ui/Extensibility';
 import * as Tether from 'tether';
 import * as Dom from '../../misc/Dom';
 
@@ -23,26 +20,13 @@ const Vectors = {
     w: new Point(-1, 0),
 };
 
-interface SelectGesture
-{
-    start:string;
-    end:string;
-}
-
-export interface SelectorWidget extends Widget
-{
-
-}
-
 export interface SelectorExtensionExports
 {
     canSelect:boolean;
 
-    readonly selection:string[]
+    readonly selections:string[][];
 
-    readonly primarySelector:SelectorWidget;
-
-    readonly captureSelector:SelectorWidget;
+    readonly primarySelection:string[]
 
     select(cells:string[], autoScroll?:boolean):void;
 
@@ -57,29 +41,30 @@ export interface SelectorExtensionExports
     selectNeighbor(vector:Point, autoScroll?:boolean):void;
 }
 
+export interface Selection
+{
+    readonly from:string;
+
+    readonly to:string;
+
+    cancel():void;
+}
+
 export class SelectorExtension
 {
     private grid:GridElement;
-    private layer:HTMLElement;
-    private selectGesture:SelectGesture;
 
-    @variable()
+    @Variable(false)
     private canSelect:boolean = true;
 
-    @variable(false)
-    private selection:string[] = [];
-
-    @variable(false)
-    private primarySelector:Selector;
-
-    @variable(false)
-    private captureSelector:Selector;
+    @Variable(false)
+    private selections:string[] = [];
 
     public init(grid:GridElement, kernel:GridKernel)
     {
         this.grid = grid;
-        this.createElements(grid.root);
 
+        /*
         KeyInput.for(grid)
             .on('!TAB', () => this.selectNeighbor(Vectors.e))
             .on('!SHIFT+TAB', () => this.selectNeighbor(Vectors.w))
@@ -98,308 +83,308 @@ export class SelectorExtension
             .on('!CTRL+END', () => this.selectBorder(Vectors.se))
         ;
 
-        MouseDragEventSupport.enable(grid.root);
         MouseInput.for(grid)
             .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
             .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
             .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
-            .on('UP:PRIMARY', (e:GridMouseDragEvent) => this.endSelectGesture(/*e.gridX, e.gridY*/))
+            .on('UP:PRIMARY', (e:GridMouseDragEvent) => this.endSelectGesture(e.gridX, e.gridY))
         ;
+        */
 
-        grid.on('invalidate', () => this.reselect(false));
-        grid.on('scroll', () => this.alignSelectors(false));
+        // grid.on('invalidate', () => this.reselect(false));
+        // grid.on('scroll', () => this.alignSelectors(false));
 
-        kernel.variables.define('isSelecting', {
-            get: () => !!this.selectGesture
-        });
+        // kernel.variables.define('isSelecting', {
+        //     get: () => !!this.selectGesture
+        // });
     }
 
-    private createElements(target:HTMLElement):void
-    {
-        let layer = document.createElement('div');
-        layer.className = 'grid-layer';
-        Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
-        target.parentElement.insertBefore(layer, target);
+    // private createElements(target:HTMLElement):void
+    // {
+    //     let layer = document.createElement('div');
+    //     layer.className = 'grid-layer';
+    //     Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
+    //     target.parentElement.insertBefore(layer, target);
 
-        let t = new Tether({
-            element: layer,
-            target: target,
-            attachment: 'middle center',
-            targetAttachment: 'middle center',
-        });
+    //     let t = new Tether({
+    //         element: layer,
+    //         target: target,
+    //         attachment: 'middle center',
+    //         targetAttachment: 'middle center',
+    //     });
 
-        let onBash = () => {
-            Dom.fit(layer, target);
-            t.position();
-        };
+    //     let onBash = () => {
+    //         Dom.fit(layer, target);
+    //         t.position();
+    //     };
 
-        this.grid.on('bash', onBash);
-        onBash();
+    //     this.grid.on('bash', onBash);
+    //     onBash();
 
-        this.layer = layer;
+    //     this.layer = layer;
 
-        this.primarySelector = Selector.create(layer, true);
-        this.captureSelector = Selector.create(layer, false);
-    }
+    //     this.primarySelector = Selector.create(layer, true);
+    //     this.captureSelector = Selector.create(layer, false);
+    // }
 
-    @command()
-    private select(cells:string[], autoScroll = true):void
-    {
-        this.doSelect(cells, autoScroll);
-        this.alignSelectors(true);
-    }
+    // @command()
+    // private select(cells:string[], autoScroll = true):void
+    // {
+    //     this.doSelect(cells, autoScroll);
+    //     this.alignSelectors(true);
+    // }
 
-    @command()
-    private selectAll():void
-    {
-        this.select(this.grid.model.cells.map(x => x.ref));
-    }
+    // @command()
+    // private selectAll():void
+    // {
+    //     this.select(this.grid.model.cells.map(x => x.ref));
+    // }
 
-    @command()
-    private selectBorder(vector:Point, autoScroll = true):void
-    {
-        let { grid } = this;
+    // @command()
+    // private selectBorder(vector:Point, autoScroll = true):void
+    // {
+    //     let { grid } = this;
 
-        let ref = this.selection[0] || null;
-        if (ref)
-        {
-            vector = vector.normalize();
+    //     let ref = this.selection[0] || null;
+    //     if (ref)
+    //     {
+    //         vector = vector.normalize();
 
-            let startCell = grid.model.findCell(ref);
-            let xy = { x: startCell.colRef, y: startCell.rowRef } as PointLike;
+    //         let startCell = grid.model.findCell(ref);
+    //         let xy = { x: startCell.colRef, y: startCell.rowRef } as PointLike;
 
-            if (vector.x < 0)
-            {
-                xy.x = 0;
-            }
-            if (vector.x > 0)
-            {
-                xy.x = grid.modelWidth - 1;
-            }
-            if (vector.y < 0)
-            {
-                xy.y = 0;
-            }
-            if (vector.y > 0)
-            {
-                xy.y = grid.modelHeight - 1;
-            }
+    //         if (vector.x < 0)
+    //         {
+    //             xy.x = 0;
+    //         }
+    //         if (vector.x > 0)
+    //         {
+    //             xy.x = grid.modelWidth - 1;
+    //         }
+    //         if (vector.y < 0)
+    //         {
+    //             xy.y = 0;
+    //         }
+    //         if (vector.y > 0)
+    //         {
+    //             xy.y = grid.modelHeight - 1;
+    //         }
 
-            let resultCell = grid.model.locateCell(xy.x, xy.y);
-            if (resultCell)
-            {
-                this.select([resultCell.ref], autoScroll);
-            }
-        }
-    }
+    //         let resultCell = grid.model.locateCell(xy.x, xy.y);
+    //         if (resultCell)
+    //         {
+    //             this.select([resultCell.ref], autoScroll);
+    //         }
+    //     }
+    // }
 
-    @command()
-    private selectEdge(vector:Point, autoScroll = true):void
-    {
-        let { grid } = this;
+    // @command()
+    // private selectEdge(vector:Point, autoScroll = true):void
+    // {
+    //     let { grid } = this;
 
-        vector = vector.normalize();
+    //     vector = vector.normalize();
 
-        let empty = (cell:GridCell) => <any>(cell.value === ''  || cell.value === '0' || cell.value === undefined || cell.value === null);
+    //     let empty = (cell:GridCell) => <any>(cell.value === ''  || cell.value === '0' || cell.value === undefined || cell.value === null);
 
-        let ref = this.selection[0] || null;
-        if (ref)
-        {
-            let startCell = grid.model.findCell(ref);
-            let currCell = grid.model.findCellNeighbor(startCell.ref, vector);
-            let resultCell = <GridCell>null;
+    //     let ref = this.selection[0] || null;
+    //     if (ref)
+    //     {
+    //         let startCell = grid.model.findCell(ref);
+    //         let currCell = grid.model.findCellNeighbor(startCell.ref, vector);
+    //         let resultCell = <GridCell>null;
 
-            if (!currCell)
-                return;
+    //         if (!currCell)
+    //             return;
 
-            while (true)
-            {
-                let a = currCell;
-                let b = grid.model.findCellNeighbor(a.ref, vector);
+    //         while (true)
+    //         {
+    //             let a = currCell;
+    //             let b = grid.model.findCellNeighbor(a.ref, vector);
 
-                if (!a || !b)
-                {
-                    resultCell = !!a ? a : null;
-                    break;
-                }
+    //             if (!a || !b)
+    //             {
+    //                 resultCell = !!a ? a : null;
+    //                 break;
+    //             }
 
-                if (empty(a) + empty(b) == 1)
-                {
-                    resultCell = empty(a) ? b : a;
-                    break;
-                }
+    //             if (empty(a) + empty(b) == 1)
+    //             {
+    //                 resultCell = empty(a) ? b : a;
+    //                 break;
+    //             }
 
-                currCell = b;
-            }
+    //             currCell = b;
+    //         }
 
-            if (resultCell)
-            {
-                this.select([resultCell.ref], autoScroll);
-            }
-        }
-    }
+    //         if (resultCell)
+    //         {
+    //             this.select([resultCell.ref], autoScroll);
+    //         }
+    //     }
+    // }
 
-    @command()
-    private selectLine(gridPt:Point, autoScroll = true):void
-    {
-        let { grid } = this;
+    // @command()
+    // private selectLine(gridPt:Point, autoScroll = true):void
+    // {
+    //     let { grid } = this;
 
-        let ref = this.selection[0] || null;
-        if (!ref)
-            return;
+    //     let ref = this.selection[0] || null;
+    //     if (!ref)
+    //         return;
 
 
-        let startPt = grid.getCellGridRect(ref).topLeft();
-        let lineRect = Rect.fromPoints(startPt, gridPt);
+    //     let startPt = grid.getCellGridRect(ref).topLeft();
+    //     let lineRect = Rect.fromPoints(startPt, gridPt);
 
-        let cellRefs = grid.getCellsInGridRect(lineRect).map(x => x.ref);
-        cellRefs.splice(cellRefs.indexOf(ref), 1);
-        cellRefs.splice(0, 0, ref);
+    //     let cellRefs = grid.getCellsInGridRect(lineRect).map(x => x.ref);
+    //     cellRefs.splice(cellRefs.indexOf(ref), 1);
+    //     cellRefs.splice(0, 0, ref);
 
-        this.select(cellRefs, autoScroll);
-    }
+    //     this.select(cellRefs, autoScroll);
+    // }
 
-    @command()
-    private selectNeighbor(vector:Point, autoScroll = true):void
-    {
-        let { grid } = this;
+    // @command()
+    // private selectNeighbor(vector:Point, autoScroll = true):void
+    // {
+    //     let { grid } = this;
 
-        vector = vector.normalize();
+    //     vector = vector.normalize();
 
-        let ref = this.selection[0] || null;
-        if (ref)
-        {
-            let cell = grid.model.findCellNeighbor(ref, vector);
-            if (cell)
-            {
-                this.select([cell.ref], autoScroll);
-            }
-        }
-    }
+    //     let ref = this.selection[0] || null;
+    //     if (ref)
+    //     {
+    //         let cell = grid.model.findCellNeighbor(ref, vector);
+    //         if (cell)
+    //         {
+    //             this.select([cell.ref], autoScroll);
+    //         }
+    //     }
+    // }
 
-    private reselect(autoScroll:boolean = true):void
-    {
-        let { grid, selection } = this;
+    // private reselect(autoScroll:boolean = true):void
+    // {
+    //     let { grid, selection } = this;
 
-        let remaining = selection.filter(x => !!grid.model.findCell(x));
-        if (remaining.length != selection.length)
-        {
-            this.select(remaining, autoScroll);
-        }
-    }
+    //     let remaining = selection.filter(x => !!grid.model.findCell(x));
+    //     if (remaining.length != selection.length)
+    //     {
+    //         this.select(remaining, autoScroll);
+    //     }
+    // }
 
-    private beginSelectGesture(gridX:number, gridY:number):void
-    {
-        let pt = new Point(gridX, gridY);
-        let cell = this.grid.getCellAtViewPoint(pt);
+    // private beginSelectGesture(gridX:number, gridY:number):void
+    // {
+    //     let pt = new Point(gridX, gridY);
+    //     let cell = this.grid.getCellAtViewPoint(pt);
 
-        if (!cell)
-            return;
+    //     if (!cell)
+    //         return;
 
-        this.selectGesture = {
-            start: cell.ref,
-            end: cell.ref,
-        };
+    //     this.selectGesture = {
+    //         start: cell.ref,
+    //         end: cell.ref,
+    //     };
 
-        this.select([ cell.ref ]);
-    }
+    //     this.select([ cell.ref ]);
+    // }
 
-    private updateSelectGesture(gridX:number, gridY:number):void
-    {
-        let { grid, selectGesture } = this;
+    // private updateSelectGesture(gridX:number, gridY:number):void
+    // {
+    //     let { grid, selectGesture } = this;
 
-        let pt = new Point(gridX, gridY);
-        let cell = grid.getCellAtViewPoint(pt);
+    //     let pt = new Point(gridX, gridY);
+    //     let cell = grid.getCellAtViewPoint(pt);
 
-        if (!cell || selectGesture.end === cell.ref)
-            return;
+    //     if (!cell || selectGesture.end === cell.ref)
+    //         return;
 
-        selectGesture.end = cell.ref;
+    //     selectGesture.end = cell.ref;
 
-        let region = Rect.fromMany([
-            grid.getCellGridRect(selectGesture.start),
-            grid.getCellGridRect(selectGesture.end)
-        ]);
+    //     let region = Rect.fromMany([
+    //         grid.getCellGridRect(selectGesture.start),
+    //         grid.getCellGridRect(selectGesture.end)
+    //     ]);
 
-        let cellRefs = grid.getCellsInGridRect(region)
-            .map(x =>x.ref);
+    //     let cellRefs = grid.getCellsInGridRect(region)
+    //         .map(x =>x.ref);
 
-        if (cellRefs.length > 1)
-        {
-            cellRefs.splice(cellRefs.indexOf(selectGesture.start), 1);
-            cellRefs.splice(0, 0, selectGesture.start);
-        }
+    //     if (cellRefs.length > 1)
+    //     {
+    //         cellRefs.splice(cellRefs.indexOf(selectGesture.start), 1);
+    //         cellRefs.splice(0, 0, selectGesture.start);
+    //     }
 
-        this.select(cellRefs, cellRefs.length == 1);
-    }
+    //     this.select(cellRefs, cellRefs.length == 1);
+    // }
 
-    private endSelectGesture():void 
-    {
-        this.selectGesture = null;
-    }
+    // private endSelectGesture():void 
+    // {
+    //     this.selectGesture = null;
+    // }
 
-    @routine()
-    private doSelect(cells:string[] = [], autoScroll:boolean = true):void
-    {
-        let { grid } = this;
+    // @routine()
+    // private doSelect(cells:string[] = [], autoScroll:boolean = true):void
+    // {
+    //     let { grid } = this;
 
-        if (!this.canSelect)
-            return;
+    //     if (!this.canSelect)
+    //         return;
 
-        if (cells.length)
-        {
-            this.selection = cells;
+    //     if (cells.length)
+    //     {
+    //         this.selection = cells;
 
-            if (autoScroll)
-            {
-                let primaryRect = grid.getCellViewRect(cells[0]);
-                grid.scrollTo(primaryRect);
-            }
-        }
-        else
-        {
-            this.selection = [];
-            this.selectGesture = null;
-        }
-    }
+    //         if (autoScroll)
+    //         {
+    //             let primaryRect = grid.getCellViewRect(cells[0]);
+    //             grid.scrollTo(primaryRect);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         this.selection = [];
+    //         this.selectGesture = null;
+    //     }
+    // }
 
-    private alignSelectors(animate:boolean):void
-    {
-        let { grid, selection, primarySelector, captureSelector } = this;
+    // private alignSelectors(animate:boolean):void
+    // {
+    //     let { grid, selection, primarySelector, captureSelector } = this;
 
-        if (selection.length)
-        {
-            let primaryRect = grid.getCellViewRect(selection[0]);
-            primarySelector.goto(primaryRect, animate);
+    //     if (selection.length)
+    //     {
+    //         let primaryRect = grid.getCellViewRect(selection[0]);
+    //         primarySelector.goto(primaryRect, animate);
 
-            //TODO: Improve the shit out of this:
-            let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
-            captureSelector.goto(captureRect, animate);
-            captureSelector.toggle(selection.length > 1);
-        }
-        else
-        {
-            primarySelector.hide();
-            captureSelector.hide();
-        }
-    }
+    //         //TODO: Improve the shit out of this:
+    //         let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
+    //         captureSelector.goto(captureRect, animate);
+    //         captureSelector.toggle(selection.length > 1);
+    //     }
+    //     else
+    //     {
+    //         primarySelector.hide();
+    //         captureSelector.hide();
+    //     }
+    // }
 }
 
-class Selector extends AbsWidgetBase<HTMLDivElement>
-{
-    public static create(container:HTMLElement, primary:boolean = false):Selector
-    {
-        let root = document.createElement('div');
-        root.className = 'grid-selector ' + (primary ? 'grid-selector-primary' : '');
-        container.appendChild(root);
+// class Selector extends AbsWidgetBase<HTMLDivElement>
+// {
+//     public static create(container:HTMLElement, primary:boolean = false):Selector
+//     {
+//         let root = document.createElement('div');
+//         root.className = 'grid-selector ' + (primary ? 'grid-selector-primary' : '');
+//         container.appendChild(root);
 
-        Dom.css(root, {
-            position: 'absolute',
-            left: '0px',
-            top: '0px',
-            display: 'none',
-        });
+//         Dom.css(root, {
+//             position: 'absolute',
+//             left: '0px',
+//             top: '0px',
+//             display: 'none',
+//         });
 
-        return new Selector(root);
-    }
-}
+//         return new Selector(root);
+//     }
+// }
