@@ -19,11 +19,60 @@ export interface GridCellParams
     rowSpan?:number;
 }
 
+export interface GridCellRefParts
+{
+    readonly col:number;
+    readonly row:number;
+}
+
+
+
+
+
 /**
  * Represents a cell within a grid.
  */
 export class GridCell extends GridObject
 {
+    /**
+     * Creates a cell reference string from the specified column and row references.
+     * 
+     * @param col 
+     * @param row 
+     */
+    public static makeRef(col:number, row:number):string
+    {
+        return Base26.num(col).str + (row + 1).toString()
+    }
+
+    /**
+     * Reads a cell reference string and returns the column and row reference values.
+     * 
+     * @param col 
+     * @param row 
+     */
+    public static unmakeRef(cellRef:string):GridCellRefParts
+    {
+        let b26cr = '';
+        let b10rr = '';
+
+        for (let i = 0; i < cellRef.length; i++)
+        {
+            let c = cellRef.charAt(i);
+            
+            if (isNaN(+c))
+            {
+                b26cr += c;
+            }
+            else
+            {
+                b10rr = cellRef.substr(i);
+            }
+        }
+
+        return { col: Base26.str(b26cr).num, row: parseInt(b10rr), };
+    }
+
     /**
      * The cell ref, an excel-like reference to the location of the cell.
      */
@@ -76,7 +125,7 @@ export class GridCell extends GridObject
     {
         super();
 
-        this.ref = Base26.num(params.colRef).str + (params.rowRef + 1).toString();
+        this.ref = GridCell.makeRef(params.colRef, params.rowRef + 1);
         this.type = params.type || 'default';
         this.colRef = params.colRef;
         this.colSpan = params.colSpan || 1;

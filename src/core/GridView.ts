@@ -6,11 +6,6 @@ import { GridRow } from '../model/GridRow';
 import { GridLayout } from './GridLayout';
 
 
-// private computeViewport():Rect
-// {
-//     return new Rect(Math.floor(this.scrollLeft), Math.floor(this.scrollTop), this.canvas.width, this.canvas.height);
-// }
-
 export interface GridViewlet
 {
     readonly key:string;
@@ -83,6 +78,31 @@ export class GridView
     }
 
     public captureCells(region:RectLike):GridCell[]
+    {
+        throw 'Not implemented';
+    }
+    
+    public measureColumn(ref:number):RectLike
+    {
+        throw 'Not implemented';
+    }
+
+    public measureColumnRange(fromRef:number, toRefEx:number):RectLike
+    {
+        throw 'Not implemented';
+    }
+
+    public measureRow(ref:number):RectLike
+    {
+        throw 'Not implemented';
+    }
+
+    public measureRowRange(fromRef:number, toRefEx:number):RectLike
+    {
+        throw 'Not implemented';
+    }
+
+    public measureCell(ref:string):RectLike
     {
         throw 'Not implemented';
     }

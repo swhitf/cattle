@@ -63,6 +63,11 @@ export class GridElement extends SimpleEventEmitter
     {
         return this.internal.container;
     }
+    
+    public get kernel():GridKernel
+    {
+        return this.internal.kernel;
+    }
 
     public get layout():GridLayout
     {
@@ -73,10 +78,10 @@ export class GridElement extends SimpleEventEmitter
     {
         return this.internal.surface;
     }
-
-    public get kernel():GridKernel
+    
+    public get view():GridView
     {
-        return this.internal.kernel;
+        return this.internal.view;
     }
 
     public extend(ext:GridExtension):GridElement

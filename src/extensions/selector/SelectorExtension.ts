@@ -1,6 +1,9 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
+import { GridRange, GridRangeLike } from '../../model/GridRange';
+import { Destroyable } from '../../base/Destroyable';
 import { select } from '../../vom/VisualQuery';
 import { GridElement } from '../../core/GridElement';
-import { Variable } from '../../core/Extensibility';
+import { Command, Routine, Variable } from '../../core/Extensibility';
 import { GridKernel, GridVariable } from '../../core/GridKernel';
 import { GridCell } from '../../model/GridCell';
 import { Point, PointLike } from '../../geom/Point';
@@ -41,13 +44,17 @@ export interface SelectorExtensionExports
     selectNeighbor(vector:Point, autoScroll?:boolean):void;
 }
 
-export interface Selection
+export interface Selection extends Destroyable
 {
     readonly from:string;
 
     readonly to:string;
+}
 
-    cancel():void;
+export enum SelectHints
+{
+    AutoScroll,
+    Append,
 }
 
 export class SelectorExtension
@@ -58,7 +65,7 @@ export class SelectorExtension
     private canSelect:boolean = true;
 
     @Variable(false)
-    private selections:string[] = [];
+    private selections:Selection[] = [];
 
     public init(grid:GridElement, kernel:GridKernel)
     {
@@ -94,9 +101,14 @@ export class SelectorExtension
         // grid.on('invalidate', () => this.reselect(false));
         // grid.on('scroll', () => this.alignSelectors(false));
 
-        // kernel.variables.define('isSelecting', {
-        //     get: () => !!this.selectGesture
-        // });
+        kernel.variables.define('primarySelection', {
+            get: () => this.primarySelection
+        });
+    }
+
+    private get primarySelection():Selection
+    {
+        return !!this.selections.length ? this.selections[this.selections.length - 1] : null;
     }
 
     // private createElements(target:HTMLElement):void
@@ -127,12 +139,12 @@ export class SelectorExtension
     //     this.captureSelector = Selector.create(layer, false);
     // }
 
-    // @command()
-    // private select(cells:string[], autoScroll = true):void
-    // {
-    //     this.doSelect(cells, autoScroll);
-    //     this.alignSelectors(true);
-    // }
+    @Command()
+    private select(from:string, to:string, ...hints:SelectHints[]):void
+    {
+        this.doSelect(from, to, hints);
+        //this.alignSelectors(true);
+    }
 
     // @command()
     // private selectAll():void
@@ -323,30 +335,48 @@ export class SelectorExtension
     //     this.selectGesture = null;
     // }
 
-    // @routine()
-    // private doSelect(cells:string[] = [], autoScroll:boolean = true):void
-    // {
-    //     let { grid } = this;
+    private doSelect(from:string, to:string, ...hints:SelectHints[]):void;
+    private doSelect(cell:string, ...hints:SelectHints[]):void;
 
-    //     if (!this.canSelect)
-    //         return;
+    @Routine()
+    private doSelect(...args:any[]):void
+    {
+        if (!this.canSelect)
+            return;
 
-    //     if (cells.length)
-    //     {
-    //         this.selection = cells;
+        const from = args[0] || null;
+        const to = typeof(args[1]) === 'string' ? args[1] : from;
+        const hints = args.slice(typeof(args[1]) === 'string' ? 2 : 1);
 
-    //         if (autoScroll)
-    //         {
-    //             let primaryRect = grid.getCellViewRect(cells[0]);
-    //             grid.scrollTo(primaryRect);
-    //         }
-    //     }
-    //     else
-    //     {
-    //         this.selection = [];
-    //         this.selectGesture = null;
-    //     }
-    // }
+        const { model, view } = this.grid;
+
+        if (from)
+        {
+            const range = GridRange.expand(model, cellRefs);
+            const selection = new SelectionImpl(range);
+
+            if (!!~hints.indexOf(SelectHints.AutoScroll))
+            {
+                //NO I NEED THE FUCKING START -> END
+
+                //view.measure
+            }
+
+            if (autoScroll)
+            {
+                grid.layout
+
+                let primaryRect = grid.getCellViewRect(cellRefs[0]);
+                grid.scrollTo(primaryRect);
+            }
+        }
+        else
+        {
+            alert('Deselect');
+            // this.selection = [];
+            // this.selectGesture = null;
+        }
+    }
 
     // private alignSelectors(animate:boolean):void
     // {
@@ -367,6 +397,29 @@ export class SelectorExtension
     //         primarySelector.hide();
     //         captureSelector.hide();
     //     }
+
+        // let { grid, selection, primarySelector, captureSelector } = this;
+        
+        // if (selection.length)
+        // {
+        //     let primaryRect = grid.getCellViewRect(selection[0]);
+        //     primarySelector.goto(primaryRect, animate);
+
+        //     //TODO: Improve the shit out of this:
+        //     let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
+        //     captureSelector.goto(captureRect, animate);
+        //     captureSelector.toggle(selection.length > 1);
+        // }
+        // else
+        // {
+        //     primarySelector.hide();
+        //     captureSelector.hide();
+        // }
+
+
+
+
+
     // }
 }
 
@@ -388,3 +441,36 @@ export class SelectorExtension
 //         return new Selector(root);
 //     }
 // }
+
+class SelectionImpl extends AbstractDestroyable implements Selection
+{
+    constructor(private range:GridRange)
+    {
+        super();
+    }
+
+    public get ltr():GridCell[]
+    {
+        return this.range.ltr;
+    }
+    
+    public get ttb():GridCell[]
+    {
+        return this.range.ttb;
+    }
+
+    public get width():number
+    {
+        return this.range.width;
+    }
+
+    public get height():number
+    {
+        return this.range.height;
+    }
+
+    public get length():number
+    {
+        return this.range.length;
+    }
+}
