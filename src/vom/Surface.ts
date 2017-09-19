@@ -1,20 +1,18 @@
-import { BufferManager } from './BufferManager';
-import { DefaultCamera } from './DefaultCamera';
-import { CollectionBase } from '../base/Collection';
-import { Rect } from '../geom/Rect';
-import { Camera } from './Camera';
-import { CameraSet } from './CameraSet';
 import { Event } from '../base/Event';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
 import { Point, PointInput } from '../geom/Point';
-import { KeyTracker } from './input/KeyTracker';
+import { Rect } from '../geom/Rect';
+import { BufferManager } from './BufferManager';
+import { CameraManager } from './CameraManager';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
-import { RefreshLoop } from './RefreshLoop';
+import { KeyTracker } from './input/KeyTracker';
+import { InternalCameraManager } from './InternalCameraManager';
+import { RefreshLoop, RefreshTicker } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
 import { DefaultTheme } from './styling/DefaultTheme';
 import { Theme } from './styling/Theme';
@@ -43,7 +41,7 @@ import * as vq from './VisualQuery';
 
 export class Surface extends SimpleEventEmitter
 {
-    public readonly cameras:CameraSet;
+    public readonly cameras:CameraManager;
     public readonly root:Visual;
     public readonly ticker:RefreshLoop;
     public readonly view:HTMLCanvasElement;
@@ -78,19 +76,10 @@ export class Surface extends SimpleEventEmitter
         this.width = width;
         this.height = height;
 
-        this.cameras = this.createCameras();
         this.root = this.createRoot();
         this.view = this.createView();
-        
-        this.buffers = new BufferManager()
-            .configure('visual', {
-                identify: v => v.id,
-                measure: v => v.size.add(10),
-            })
-            .configure('camera', {
-                identify: c => c.id,
-                measure: c => new Point(c.width, c.height),
-            });
+        this.cameras = this.createCameraManager();        
+        this.buffers = this.createBufferManager();
 
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
@@ -207,53 +196,34 @@ export class Surface extends SimpleEventEmitter
             let cam = cameras.item(i);
             let camBuf = buffers.getFor('camera', cam);
             
-            set_transform(viewGfx, Matrix.identity.translate(cam.offsetLeft, cam.offsetTop));
+            set_transform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
             viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
         }
 
         buffers.endRender();
-
-        // let { buffers, sequence, view, viewTransform } = this;
-        // let liveBuffers = {};
-
-        // let make = (v:Visual) => document.createElement('canvas');
-        // let map = (v:Visual, b:HTMLCanvasElement) =>
-        // {
-        //     if (b.width != v.width) b.width = v.width + 10;
-        //     if (b.height != v.height) b.height = v.height + 10;
-        //     return b;
-        // };
-
-        // let gfx = view.getContext('2d');
-        // set_transform(gfx, Matrix.identity);
-        // gfx.clearRect(0, 0, view.width, view.height);
-
-        // sequence.climb(v =>
-        // {
-        //     let vb = liveBuffers[v.id] = map(v, buffers[v.id] || make(v));
-        //     let vfx = vb.getContext('2d');
-        //     vfx.clearRect(0, 0, vb.width, vb.height);
-
-        //     set_transform(vfx, Matrix.identity.translate(5, 5));
-        //     v.render(vfx);
-
-        //     let t = v.transform.translate(-5, -5).multiply(viewTransform);
-        //     gfx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-        //     gfx.drawImage(vb, 0, 0, vb.width, vb.height, 0, 0, vb.width, vb.height);
-
-        //     return true;
-        // });
     }
 
-    private createCameras():CameraSetImpl
+    private createCameraManager():InternalCameraManager
     {
-        let cs = new CameraSetImpl();
-        cs.add('main', 1, new Point(0, 0), new Rect(0, 200, 400, 300));
-        cs.add('main2', 2, new Point(400, 0), new Rect(0, 0, 400, 300));
-        cs.add('main3', 3, new Point(0, 300), new Rect(0, 0, 400, 300));
-        cs.add('main4', 4, new Point(400, 300), new Rect(0, 0, 400, 300));
+        let cm = new InternalCameraManager();
+        cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
 
-        return cs;
+        return cm;
+    }
+    
+    private createBufferManager():BufferManager
+    {
+        let bm = new BufferManager();
+        bm.configure('visual', {
+            identify: v => v.id,
+            measure: v => v.size.add(10),
+        });
+        bm.configure('camera', {
+            identify: c => c.id,
+            measure: c => new Point(c.bounds.width, c.bounds.height),
+        });
+
+        return bm;
     }
 
     private createRoot():RootVisual
@@ -409,7 +379,7 @@ export class Surface extends SimpleEventEmitter
 
     private propagateEvent(se:Event, stack:Visual[]):void
     {
-        this.emit(se.type, se);
+        this.emit(se);
 
         for (let i = 0; i < stack.length; i++)
         {
@@ -418,42 +388,11 @@ export class Surface extends SimpleEventEmitter
 
             let visual = stack[i];
 
-            if (i == 0)
-            {
-                visual.emit('!' + se.type, se);
-            }
-
             if (se.canceled)
                 break;
 
-            visual.emit(se.type, se);
+            visual.emit( se);
         }
-    }
-}
-
-class CameraSetImpl extends CollectionBase<DefaultCamera> implements CameraSet
-{
-    public add(id:string, order:number, offset:Point, view:Rect):Camera
-    {
-        if (!!this.array.filter(x => x.id == id).length)
-        {
-            throw `Camera ${id} already exists.`
-        }
-
-        let camera = new DefaultCamera(id, order, offset, view);
-        this.addItem(camera);
-
-        return camera;    
-    }
-
-    public remove(tm:Camera):void 
-    {
-        if (tm.id == 'main')
-        {
-            throw 'Cannot remove camera \'main\'.';
-        }
-
-        this.removeItem(tm);
     }
 }
 
