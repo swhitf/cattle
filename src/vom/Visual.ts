@@ -13,6 +13,11 @@ import { Surface } from './Surface';
 
 var IdSeed:number = Math.floor(Math.random() * (new Date().getTime() / 1000));
 
+export interface VisualPredicate
+{
+    (v:Visual):boolean;
+}
+
 export interface VisualTagSet
 {
     readonly length:number;

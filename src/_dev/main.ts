@@ -40,7 +40,7 @@ nets.create('test', 'default', 'B2', 'E4');
 let test = [
     'LEFT.DOWN',
     'LEFT.DOWN+CTRL',
-    'LEFT.DOWN+SHIFT',
+    'LEFT.DOWN+SHIFT', 
     'RIGHT.UP',
 ]
 

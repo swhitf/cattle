@@ -1,3 +1,9 @@
+import { BufferManager } from './BufferManager';
+import { DefaultCamera } from './DefaultCamera';
+import { CollectionBase } from '../base/Collection';
+import { Rect } from '../geom/Rect';
+import { Camera } from './Camera';
+import { CameraSet } from './CameraSet';
 import { Event } from '../base/Event';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
@@ -12,7 +18,7 @@ import { RefreshLoop } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
 import { DefaultTheme } from './styling/DefaultTheme';
 import { Theme } from './styling/Theme';
-import { Visual } from './Visual';
+import { Visual, VisualPredicate } from './Visual';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
 import * as u from '../misc/Util';
@@ -35,16 +41,12 @@ import * as vq from './VisualQuery';
  * 
  */
 
-export interface VisualPredicate
-{
-    (v:Visual):boolean;
-}
-
 export class Surface extends SimpleEventEmitter
 {
+    public readonly cameras:CameraSet;
     public readonly root:Visual;
-    public readonly view:HTMLCanvasElement;
     public readonly ticker:RefreshLoop;
+    public readonly view:HTMLCanvasElement;
 
     @Observable(0)
     public scrollLeft:number;
@@ -62,7 +64,8 @@ export class Surface extends SimpleEventEmitter
     public theme:Theme;
 
     private readonly sequence:VisualSequence;
-    private buffers:{[key:number]:HTMLCanvasElement};
+    private readonly buffers:BufferManager;
+
     private dirtyRender:boolean;
     private dirtySequence:boolean;
     private tracker:VisualTracker;
@@ -71,16 +74,27 @@ export class Surface extends SimpleEventEmitter
     constructor(width:number = 800, height:number = 800)
     {
         super();
+        
+        this.width = width;
+        this.height = height;
 
+        this.cameras = this.createCameras();
         this.root = this.createRoot();
         this.view = this.createView();
-        this.buffers = {};
+        
+        this.buffers = new BufferManager()
+            .configure('visual', {
+                identify: v => v.id,
+                measure: v => v.size.add(10),
+            })
+            .configure('camera', {
+                identify: c => c.id,
+                measure: c => new Point(c.width, c.height),
+            });
+
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
         this.theme = new DefaultTheme();
-
-        this.width = width;
-        this.height = height;
  
         this.ticker = new RefreshLoop(60);
         this.ticker.add(() => this.render());
@@ -138,21 +152,6 @@ export class Surface extends SimpleEventEmitter
             }
 
             return true;
-
-            // let transform = visual.transform;
-
-            // let absBounds = visual.bounds.apply(transform);
-            // if (absBounds.contains(pt))
-            // {
-            //     // let absBorder = visual.border.offset(location);
-            //     // if (absBorder.contains(pt))
-            //     {
-            //         if (filter(visual))
-            //         {
-            //             collected.push(visual);
-            //         }
-            //     }
-            // }
         });
 
         return collected;
@@ -172,36 +171,89 @@ export class Surface extends SimpleEventEmitter
 
     private performRender()
     {
-        let { buffers, sequence, view, viewTransform } = this;
-        let liveBuffers = {};
+        let { buffers, cameras, sequence, view } = this;
 
-        let make = (v:Visual) => document.createElement('canvas');
-        let map = (v:Visual, b:HTMLCanvasElement) =>
+        buffers.beginRender();
+
+        sequence.climb(visual =>
         {
-            if (b.width != v.width) b.width = v.width + 10;
-            if (b.height != v.height) b.height = v.height + 10;
-            return b;
-        };
+            let visBuf = buffers.getFor('visual', visual);
+            let visGfx = visBuf.getContext('2d');
 
-        let gfx = view.getContext('2d');
-        set_transform(gfx, Matrix.identity);
-        gfx.clearRect(0, 0, view.width, view.height);
+            visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
+            set_transform(visGfx, Matrix.identity.translate(5, 5));
+            visual.render(visGfx);
 
-        sequence.climb(v =>
-        {
-            let vb = liveBuffers[v.id] = map(v, buffers[v.id] || make(v));
-            let vfx = vb.getContext('2d');
-            vfx.clearRect(0, 0, vb.width, vb.height);
+            for (let i = 0; i < cameras.count; i++) 
+            {
+                let cam = cameras.item(i);
+                let camBuf = buffers.getFor('camera', cam);
+                let camGfx = camBuf.getContext('2d');
+                let cvt = visual.transform.translate(-5, -5).multiply(cam.transform); //camera+visual transform
 
-            set_transform(vfx, Matrix.identity.translate(5, 5));
-            v.render(vfx);
-
-            let t = v.transform.translate(-5, -5).multiply(viewTransform);
-            gfx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-            gfx.drawImage(vb, 0, 0, vb.width, vb.height, 0, 0, vb.width, vb.height);
+                camGfx.setTransform(cvt.a, cvt.b, cvt.c, cvt.d, cvt.e, cvt.f);
+                camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
+            }
 
             return true;
         });
+
+        let viewGfx = view.getContext('2d');
+        set_transform(viewGfx, Matrix.identity);
+        viewGfx.clearRect(0, 0, view.width, view.height);
+
+        for (let i = 0; i < cameras.count; i++) 
+        {
+            let cam = cameras.item(i);
+            let camBuf = buffers.getFor('camera', cam);
+            
+            set_transform(viewGfx, Matrix.identity.translate(cam.offsetLeft, cam.offsetTop));
+            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+        }
+
+        buffers.endRender();
+
+        // let { buffers, sequence, view, viewTransform } = this;
+        // let liveBuffers = {};
+
+        // let make = (v:Visual) => document.createElement('canvas');
+        // let map = (v:Visual, b:HTMLCanvasElement) =>
+        // {
+        //     if (b.width != v.width) b.width = v.width + 10;
+        //     if (b.height != v.height) b.height = v.height + 10;
+        //     return b;
+        // };
+
+        // let gfx = view.getContext('2d');
+        // set_transform(gfx, Matrix.identity);
+        // gfx.clearRect(0, 0, view.width, view.height);
+
+        // sequence.climb(v =>
+        // {
+        //     let vb = liveBuffers[v.id] = map(v, buffers[v.id] || make(v));
+        //     let vfx = vb.getContext('2d');
+        //     vfx.clearRect(0, 0, vb.width, vb.height);
+
+        //     set_transform(vfx, Matrix.identity.translate(5, 5));
+        //     v.render(vfx);
+
+        //     let t = v.transform.translate(-5, -5).multiply(viewTransform);
+        //     gfx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
+        //     gfx.drawImage(vb, 0, 0, vb.width, vb.height, 0, 0, vb.width, vb.height);
+
+        //     return true;
+        // });
+    }
+
+    private createCameras():CameraSetImpl
+    {
+        let cs = new CameraSetImpl();
+        cs.add('main', 1, new Point(0, 0), new Rect(0, 200, 400, 300));
+        cs.add('main2', 2, new Point(400, 0), new Rect(0, 0, 400, 300));
+        cs.add('main3', 3, new Point(0, 300), new Rect(0, 0, 400, 300));
+        cs.add('main4', 4, new Point(400, 300), new Rect(0, 0, 400, 300));
+
+        return cs;
     }
 
     private createRoot():RootVisual
@@ -215,6 +267,8 @@ export class Surface extends SimpleEventEmitter
     private createView():HTMLCanvasElement
     {
         let view = document.createElement('canvas');
+        view.width = this.width;
+        view.height = this.height;
         view.tabIndex = -1;
         
         let keys = new KeyTracker(window);
@@ -265,10 +319,13 @@ export class Surface extends SimpleEventEmitter
         switch (property) {
             case 'width':
             case 'height':
-                this.view.width = this.width;
-                this.view.height = this.height;
-                this.dirtyRender = true;
-                this.propagateEvent(new Event('resize'), []);
+                if (this.view) 
+                {
+                    this.view.width = this.width;
+                    this.view.height = this.height;
+                    this.dirtyRender = true;
+                    this.propagateEvent(new Event('resize'), []);
+                }
             case 'scrollLeft':
             case 'scrollTop':
                 this.viewTransform = Matrix.identity.translate(this.scrollLeft, this.scrollTop).inverse();
@@ -371,6 +428,32 @@ export class Surface extends SimpleEventEmitter
 
             visual.emit(se.type, se);
         }
+    }
+}
+
+class CameraSetImpl extends CollectionBase<DefaultCamera> implements CameraSet
+{
+    public add(id:string, order:number, offset:Point, view:Rect):Camera
+    {
+        if (!!this.array.filter(x => x.id == id).length)
+        {
+            throw `Camera ${id} already exists.`
+        }
+
+        let camera = new DefaultCamera(id, order, offset, view);
+        this.addItem(camera);
+
+        return camera;    
+    }
+
+    public remove(tm:Camera):void 
+    {
+        if (tm.id == 'main')
+        {
+            throw 'Cannot remove camera \'main\'.';
+        }
+
+        this.removeItem(tm);
     }
 }
 
