@@ -27,6 +27,8 @@ let grid = window['grid'] = GridElement
    .mergeInterface()
 ;
 
+debug_events(grid.surface);
+
 grid.model.cells[0].style = GridCellStyle.get('test');
 grid.model.cells[0].value = 'Test';
 

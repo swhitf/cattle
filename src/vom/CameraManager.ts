@@ -1,3 +1,4 @@
+import { EventEmitter } from '../base/EventEmitter';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { Camera } from './Camera';
@@ -7,13 +8,13 @@ import { Camera } from './Camera';
  * Defines the interface of an object that manages the cameras for a surface.  A surface must
  * always have a `main` camera, but can have further user defined cameras.
  */
-export interface CameraManager
+export interface CameraManager extends EventEmitter
 {
     /**
      * The number of cameras that exist.
      */
     readonly count:number;
-    
+
     /**
      * Creates a new camera with the specified id and settings.
      */
@@ -28,4 +29,9 @@ export interface CameraManager
      * Retrieves, if existing, the camera at the specified index or with the specified id.
      */
     item(idOrIndex:string|number):Camera;
+
+    /**
+     * Given a specified view point, retrieves the top most camera at the specified point.
+     */
+    test(viewPt:Point):Camera;
 }

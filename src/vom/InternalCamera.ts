@@ -33,17 +33,37 @@ export class InternalCamera implements Camera
 
         this.transform = Matrix.identity.translate(vector.x, vector.y).inverse()
     }
-
-    public toSurfacePoint(viewPt:PointInput):Point
+    
+    public toCameraPoint(type:'surface'|'view', pt:PointInput):Point
     {
-        return this.transform
-            .inverse()
-            .apply(Point.create(viewPt));
+        let x = Point.create(pt);
+        
+        if (type === 'surface')
+        {
+            return x.add(this.vector);
+        }
+        else
+        {
+            return x.subtract([this.bounds.left, this.bounds.top]);
+        }
     }
-
-    public toViewPoint(surfacePt:PointInput):Point
+    
+    public toSurfacePoint(type:'view'|'camera', pt:PointInput):Point
     {
-        return this.transform.apply(Point.create(surfacePt));
+        let x = type === 'view'
+            ? this.toCameraPoint(type, pt)
+            : Point.create(pt);
+
+        return x.subtract(this.vector);
+    }
+    
+    public toViewPoint(type:'camera'|'surface', pt:PointInput):Point
+    {
+        let x = type === 'surface'
+            ? this.toCameraPoint(type, pt)
+            : Point.create(pt);
+
+        return x.add([this.bounds.left, this.bounds.top])
     }
 
     protected notifyChange(property:string):void

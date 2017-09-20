@@ -7,17 +7,19 @@ import { Rect } from '../geom/Rect';
 
 export interface Camera
 {
-    readonly id:string, 
+    readonly id:string; 
     
     readonly transform:Matrix;
     
-    order:number, 
+    order:number; 
 
-    bounds:Rect, 
+    bounds:Rect; 
     
-    vector:Point
+    vector:Point;
 
-    toSurfacePoint(viewPt:PointInput):Point;
+    toCameraPoint(type:'surface'|'view', pt:PointInput):Point;
 
-    toViewPoint(surfacePt:PointInput):Point;
+    toSurfacePoint(type:'view'|'camera', pt:PointInput):Point;
+
+    toViewPoint(type:'camera'|'surface', pt:PointInput):Point;
 }

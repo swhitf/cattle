@@ -146,18 +146,6 @@ export class Surface extends SimpleEventEmitter
         return collected;
     }
 
-    public toSurfacePoint(viewPt:PointInput):Point
-    {
-        return this.viewTransform
-            .inverse()
-            .apply(Point.create(viewPt));
-    }
-
-    public toViewPoint(surfacePt:PointInput):Point
-    {
-        return this.viewTransform.apply(Point.create(surfacePt));
-    }
-
     private performRender()
     {
         let { buffers, cameras, sequence, view } = this;
@@ -206,7 +194,12 @@ export class Surface extends SimpleEventEmitter
     private createCameraManager():InternalCameraManager
     {
         let cm = new InternalCameraManager();
-        cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
+        cm.create('main', 1, new Rect((this.width / 2) / 2, (this.height / 2) / 2, this.width / 2, this.height / 2), Point.empty);
+
+        let callacbk = () => this.dirtyRender = true;
+        cm.on('create', callacbk);
+        cm.on('destroy', callacbk);
+        cm.on('change', callacbk);
 
         return cm;
     }
@@ -312,7 +305,11 @@ export class Surface extends SimpleEventEmitter
     private onViewMouseEvent(type:VisualMouseEventTypes, keyTracker:KeyTracker, me:MouseEvent):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
-        let surfacePt = this.toSurfacePoint(viewPt);
+        
+        let camera = this.cameras.test(viewPt);
+        if (!camera) return;
+
+        let surfacePt = camera.toSurfacePoint('view', viewPt);        
         let keys = keyTracker.capture();
         let stack = this.test(surfacePt);
         let hoverVisual = this.tracker.get('hover');
@@ -321,7 +318,7 @@ export class Surface extends SimpleEventEmitter
         {
             if (hoverVisual)
             {
-                let evt = new VisualMouseEvent('mouseleave', hoverVisual, me.button, viewPt, surfacePt, keys);    
+                let evt = new VisualMouseEvent('mouseleave', hoverVisual, camera, surfacePt, me.button, keys);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
 
@@ -329,12 +326,12 @@ export class Surface extends SimpleEventEmitter
 
             if (hoverVisual)
             {
-                let evt = new VisualMouseEvent('mouseenter', hoverVisual, me.button, viewPt, surfacePt, keys);    
+                let evt = new VisualMouseEvent('mouseenter', hoverVisual, camera, surfacePt, me.button, keys);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
         }
 
-        let evt = new VisualMouseEvent(type, stack[0] || null, me.button, viewPt, surfacePt, keys);
+        let evt = new VisualMouseEvent(type, stack[0] || null, camera, surfacePt, me.button, keys);
         this.propagateEvent(evt, stack);
     }
 

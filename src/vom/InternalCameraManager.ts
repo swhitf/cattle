@@ -27,6 +27,8 @@ export class InternalCameraManager extends SimpleEventEmitter implements CameraM
         let camera = new InternalCamera(id, order, bounds, vector, this);
         
         this.array.push(camera);
+        this.array.sort((a, b) => a.order - b.order);
+
         this.emit(new CameraEvent('create', camera));
 
         return camera;
@@ -54,6 +56,21 @@ export class InternalCameraManager extends SimpleEventEmitter implements CameraM
             this.array[idOrIndex] || 
             this.array.filter(x => x.id == idOrIndex.toString())[0]
         );
+    }
+
+    public test(viewPt:Point):Camera
+    {
+        for (let i = this.array.length - 1; i >= 0; i--) 
+        {
+            let camera = this.array[i];
+
+            if (camera.bounds.contains(viewPt))
+            {
+                return camera;
+            }
+        }
+
+        return null;
     }
     
     protected indexOf(id:string):number
