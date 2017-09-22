@@ -3,16 +3,20 @@ import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
 import { Point, PointInput } from '../geom/Point';
-import { KeyTracker } from './input/KeyTracker';
+import { Rect } from '../geom/Rect';
+import { BufferManager } from './BufferManager';
+import { CameraManager } from './CameraManager';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
-import { RefreshLoop } from './RefreshLoop';
+import { KeyTracker } from './input/KeyTracker';
+import { InternalCameraManager } from './InternalCameraManager';
+import { RefreshLoop, RefreshTicker } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
 import { DefaultTheme } from './styling/DefaultTheme';
 import { Theme } from './styling/Theme';
-import { Visual } from './Visual';
+import { Visual, VisualPredicate } from './Visual';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
 import * as u from '../misc/Util';
@@ -35,22 +39,12 @@ import * as vq from './VisualQuery';
  * 
  */
 
-export interface VisualPredicate
-{
-    (v:Visual):boolean;
-}
-
 export class Surface extends SimpleEventEmitter
 {
+    public readonly cameras:CameraManager;
     public readonly root:Visual;
-    public readonly view:HTMLCanvasElement;
     public readonly ticker:RefreshLoop;
-
-    @Observable(0)
-    public scrollLeft:number;
-
-    @Observable(0)
-    public scrollTop:number;
+    public readonly view:HTMLCanvasElement;
 
     @Observable()
     public width:number;
@@ -62,25 +56,27 @@ export class Surface extends SimpleEventEmitter
     public theme:Theme;
 
     private readonly sequence:VisualSequence;
-    private buffers:{[key:number]:HTMLCanvasElement};
+    private readonly buffers:BufferManager;
+
     private dirtyRender:boolean;
     private dirtySequence:boolean;
     private tracker:VisualTracker;
-    private viewTransform:Matrix = Matrix.identity;
 
     constructor(width:number = 800, height:number = 800)
     {
         super();
+        
+        this.width = width;
+        this.height = height;
 
         this.root = this.createRoot();
         this.view = this.createView();
-        this.buffers = {};
+        this.cameras = this.createCameraManager();        
+        this.buffers = this.createBufferManager();
+
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
         this.theme = new DefaultTheme();
-
-        this.width = width;
-        this.height = height;
  
         this.ticker = new RefreshLoop(60);
         this.ticker.add(() => this.render());
@@ -138,70 +134,97 @@ export class Surface extends SimpleEventEmitter
             }
 
             return true;
-
-            // let transform = visual.transform;
-
-            // let absBounds = visual.bounds.apply(transform);
-            // if (absBounds.contains(pt))
-            // {
-            //     // let absBorder = visual.border.offset(location);
-            //     // if (absBorder.contains(pt))
-            //     {
-            //         if (filter(visual))
-            //         {
-            //             collected.push(visual);
-            //         }
-            //     }
-            // }
         });
 
         return collected;
     }
 
-    public toSurfacePoint(viewPt:PointInput):Point
-    {
-        return this.viewTransform
-            .inverse()
-            .apply(Point.create(viewPt));
-    }
-
-    public toViewPoint(surfacePt:PointInput):Point
-    {
-        return this.viewTransform.apply(Point.create(surfacePt));
-    }
-
     private performRender()
     {
-        let { buffers, sequence, view, viewTransform } = this;
-        let liveBuffers = {};
+        let { buffers, cameras, sequence, view } = this;
 
-        let make = (v:Visual) => document.createElement('canvas');
-        let map = (v:Visual, b:HTMLCanvasElement) =>
+        buffers.beginRender();
+
+        sequence.climb(visual =>
         {
-            if (b.width != v.width) b.width = v.width + 10;
-            if (b.height != v.height) b.height = v.height + 10;
-            return b;
-        };
+            let visBuf = buffers.getFor('visual', visual);
+            let visGfx = visBuf.getContext('2d');
 
-        let gfx = view.getContext('2d');
-        set_transform(gfx, Matrix.identity);
-        gfx.clearRect(0, 0, view.width, view.height);
+            visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
+            set_transform(visGfx, Matrix.identity.translate(5, 5));
+            visual.render(visGfx);
 
-        sequence.climb(v =>
-        {
-            let vb = liveBuffers[v.id] = map(v, buffers[v.id] || make(v));
-            let vfx = vb.getContext('2d');
-            vfx.clearRect(0, 0, vb.width, vb.height);
+            for (let i = 0; i < cameras.count; i++) 
+            {
+                let cam = cameras.item(i);
+                if (!cam.bounds.width || !cam.bounds.height)
+                    continue;
 
-            set_transform(vfx, Matrix.identity.translate(5, 5));
-            v.render(vfx);
+                let camBuf = buffers.getFor('camera', cam);
+                let camGfx = camBuf.getContext('2d');
+                let camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse()
+                let cvt = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
 
-            let t = v.transform.translate(-5, -5).multiply(viewTransform);
-            gfx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-            gfx.drawImage(vb, 0, 0, vb.width, vb.height, 0, 0, vb.width, vb.height);
+                camGfx.setTransform(cvt.a, cvt.b, cvt.c, cvt.d, cvt.e, cvt.f);
+                camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
+            }
 
             return true;
         });
+
+        let viewGfx = view.getContext('2d');
+        set_transform(viewGfx, Matrix.identity);
+        viewGfx.clearRect(0, 0, view.width, view.height);
+
+        for (let i = 0; i < cameras.count; i++) 
+        {
+            let cam = cameras.item(i);
+            if (!cam.bounds.width || !cam.bounds.height)
+                continue;
+
+
+            let camBuf = buffers.getFor('camera', cam);
+            let camGfx = camBuf.getContext('2d');
+            set_transform(camGfx, Matrix.identity);
+            camGfx.fillStyle = 'red';
+            camGfx.fillText('Cam ' + cam.id, 3, 12);
+            
+            set_transform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
+            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+        }
+
+        buffers.endRender();
+    }
+
+    private createCameraManager():InternalCameraManager
+    {
+        let cm = new InternalCameraManager();
+        cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
+        // cm.create('main2', 2, new Rect(this.width / 2, 0, this.width / 2, this.height / 2), Point.empty);
+        // cm.create('main3', 3, new Rect(0, this.height / 2, this.width / 2, this.height / 2), Point.empty);
+        // cm.create('main4', 4, new Rect(this.width / 2, this.height / 2, this.width / 2, this.height / 2), Point.empty);
+
+        let callback = () => this.dirtyRender = true;
+        cm.on('create', callback);
+        cm.on('destroy', callback);
+        cm.on('change', callback);
+
+        return cm;
+    }
+    
+    private createBufferManager():BufferManager
+    {
+        let bm = new BufferManager();
+        bm.configure('visual', {
+            identify: v => v.id,
+            measure: v => v.size.add(10),
+        });
+        bm.configure('camera', {
+            identify: c => c.id,
+            measure: c => new Point(c.bounds.width, c.bounds.height),
+        });
+
+        return bm;
     }
 
     private createRoot():RootVisual
@@ -215,6 +238,8 @@ export class Surface extends SimpleEventEmitter
     private createView():HTMLCanvasElement
     {
         let view = document.createElement('canvas');
+        view.width = this.width;
+        view.height = this.height;
         view.tabIndex = -1;
         
         let keys = new KeyTracker(window);
@@ -265,15 +290,13 @@ export class Surface extends SimpleEventEmitter
         switch (property) {
             case 'width':
             case 'height':
-                this.view.width = this.width;
-                this.view.height = this.height;
-                this.dirtyRender = true;
-                this.propagateEvent(new Event('resize'), []);
-            case 'scrollLeft':
-            case 'scrollTop':
-                this.viewTransform = Matrix.identity.translate(this.scrollLeft, this.scrollTop).inverse();
-                this.dirtyRender = true;
-                this.propagateEvent(new Event('scroll'), []);
+                if (this.view) 
+                {
+                    this.view.width = this.width;
+                    this.view.height = this.height;
+                    this.dirtyRender = true;
+                    this.propagateEvent(new Event('resize'), []);
+                }
                 break;
             case 'theme':
                 this.applyTheme(this.theme);
@@ -285,7 +308,11 @@ export class Surface extends SimpleEventEmitter
     private onViewMouseEvent(type:VisualMouseEventTypes, keyTracker:KeyTracker, me:MouseEvent):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
-        let surfacePt = this.toSurfacePoint(viewPt);
+        
+        let camera = this.cameras.test(viewPt);
+        if (!camera) return;
+
+        let surfacePt = camera.toSurfacePoint('view', viewPt);        
         let keys = keyTracker.capture();
         let stack = this.test(surfacePt);
         let hoverVisual = this.tracker.get('hover');
@@ -294,7 +321,7 @@ export class Surface extends SimpleEventEmitter
         {
             if (hoverVisual)
             {
-                let evt = new VisualMouseEvent('mouseleave', hoverVisual, me.button, viewPt, surfacePt, keys);    
+                let evt = new VisualMouseEvent('mouseleave', hoverVisual, camera, surfacePt, me.button, keys);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
 
@@ -302,12 +329,12 @@ export class Surface extends SimpleEventEmitter
 
             if (hoverVisual)
             {
-                let evt = new VisualMouseEvent('mouseenter', hoverVisual, me.button, viewPt, surfacePt, keys);    
+                let evt = new VisualMouseEvent('mouseenter', hoverVisual, camera, surfacePt, me.button, keys);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
         }
 
-        let evt = new VisualMouseEvent(type, stack[0] || null, me.button, viewPt, surfacePt, keys);
+        let evt = new VisualMouseEvent(type, stack[0] || null, camera, surfacePt, me.button, keys);
         this.propagateEvent(evt, stack);
     }
 
@@ -352,7 +379,7 @@ export class Surface extends SimpleEventEmitter
 
     private propagateEvent(se:Event, stack:Visual[]):void
     {
-        this.emit(se.type, se);
+        this.emit(se);
 
         for (let i = 0; i < stack.length; i++)
         {
@@ -361,15 +388,10 @@ export class Surface extends SimpleEventEmitter
 
             let visual = stack[i];
 
-            if (i == 0)
-            {
-                visual.emit('!' + se.type, se);
-            }
-
             if (se.canceled)
                 break;
 
-            visual.emit(se.type, se);
+            visual.emit( se);
         }
     }
 }

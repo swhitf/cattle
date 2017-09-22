@@ -13,6 +13,11 @@ import { Surface } from './Surface';
 
 var IdSeed:number = Math.floor(Math.random() * (new Date().getTime() / 1000));
 
+export interface VisualPredicate
+{
+    (v:Visual):boolean;
+}
+
 export interface VisualTagSet
 {
     readonly length:number;
@@ -303,23 +308,18 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         this.cacheData = {};
     }
 
-    protected notify(event:VisualEvent, bubble:boolean = true):void
+    protected notify(evt:VisualEvent, bubble:boolean = true):void
     {
         if (!this.isMounted())
             return;
 
-        if (event.target == this)
+        if (!evt.canceled)
         {
-            this.emit('!' + event.type, event);
-        }
+            this.emit(evt);
 
-        if (!event.canceled)
-        {
-            this.emit(event.type, event);
-
-            if (bubble && this.parentVisual && !event.canceled)
+            if (bubble && this.parentVisual && !evt.canceled)
             {
-                this.parentVisual.notify(event, bubble);
+                this.parentVisual.notify(evt, bubble);
             }
         }
     }

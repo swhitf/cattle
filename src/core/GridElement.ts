@@ -1,29 +1,32 @@
-import { ObjectMap } from '../common';
+import { AbstractDestroyable } from '../base/AbstractDestroyable';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
+import { ObjectMap } from '../common';
 import { Padding } from '../geom/Padding';
 import { Point } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
+import { Camera } from '../vom/Camera';
+import { CameraEvent } from '../vom/events/CameraEvent';
 import { Surface } from '../vom/Surface';
 import { CellVisual } from './CellVisual';
 import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
-import { GridView } from './GridView';
 
 
 export class GridElement extends SimpleEventEmitter
 {
-    private viewBuffers:ObjectMap<ViewBuffer> = {};
-
+    private cameraBuffers:ObjectMap<CameraBuffer> = {};
+    private autoBufferUpdateEnabled:boolean = true;
+    
     private readonly internal = {
         container: null as HTMLElement,
         layout: null as GridLayout,
         surface: null as Surface,
         kernel: null as GridKernel,
-        view: null as GridView,
+        //view: null as GridView,
     } 
 
     public static create(container:HTMLElement, initialModel?:GridModel):GridElement
@@ -40,17 +43,18 @@ export class GridElement extends SimpleEventEmitter
         super();
 
         this.internal.container = container;
-        this.internal.surface = surface;
         this.internal.kernel = new GridKernel(this.emit.bind(this));
+        this.internal.layout = GridLayout.empty;
+        this.internal.surface = surface;
+
+        this.initCameras();        
+        this.initSurface();
+
+        //Do this last to kick everything in...
         this.model = model;
-
-        surface.ticker.add(() => this.updateSurface());
-
-        surface.on('resize', () => this.notifyChange('surface'));
-        surface.on('scroll', () => this.notifyChange('surface'));
     }
 
-    @Observable()
+    @Observable(GridModel.empty)
     public model:GridModel;
     
     @Observable(Point.empty)
@@ -58,6 +62,9 @@ export class GridElement extends SimpleEventEmitter
     
     @Observable(Padding.empty)
     public padding:Padding;
+    
+    @Observable(Point.empty)
+    public scroll:Point;
 
     public get container():HTMLElement
     {
@@ -117,109 +124,112 @@ export class GridElement extends SimpleEventEmitter
         return this;
     }
 
+    private initCameras():void
+    {
+        let { surface } = this;
+
+        //Setup events to auto-reflect camera changes
+        
+        surface.cameras.on('create', (e:CameraEvent) => this.allocateBuffer(e.target));
+        surface.cameras.on('destroy', (e:CameraEvent) => this.destroyBuffer(e.target));
+        surface.cameras.on('change', (e:CameraEvent) => 
+        {
+            if (this.autoBufferUpdateEnabled) 
+            {
+                this.cameraBuffers[e.target.id].update(this.layout);
+            }
+        });
+        
+        //Camera "main" already exists, so we need to allocate buffer
+        this.allocateBuffer(surface.cameras.item('main'));
+
+        let camTop = surface.cameras.create('gm-top');
+        let camLeft = surface.cameras.create('gm-left');
+        let camTopLeft = surface.cameras.create('gm-topleft');
+    }
+
+    private initSurface():void
+    {
+        let { surface } = this;
+
+        surface.on('resize', () => this.updateSurface());
+        surface.ticker.add(() => this.updateSurface());
+    }
+    
+    private updateCameras():void
+    {
+        let { freezeMargin, layout, surface } = this;
+        this.autoBufferUpdateEnabled = false;
+
+        let camMain = surface.cameras.item('main');
+        let camTop = surface.cameras.item('gm-top');
+        let camLeft = surface.cameras.item('gm-left');
+        let camTopLeft = surface.cameras.item('gm-topleft');
+
+        if (freezeMargin.equals(Point.empty))
+        {   
+            let camMain = surface.cameras.item('main');
+            camMain.vector = this.scroll;   
+            camMain.bounds = new Rect(0, 0, this.surface.width, this.surface.height);
+
+            //Setting bounds to nothing will disable cameras
+            camTop.bounds = camLeft.bounds = camTopLeft.bounds = Rect.empty;
+        }
+        else
+        {
+            let margin = new Point(
+                layout.measureColumnRange(0, freezeMargin.x).width, 
+                layout.measureRowRange(0, freezeMargin.y).height);
+
+            camMain.vector = margin.add(this.scroll);
+            camMain.bounds = new Rect(margin.x, margin.y, surface.width - margin.x, surface.height - margin.y);
+
+            camTop.vector = new Point(margin.x + this.scroll.x, 0);
+            camTop.bounds = new Rect(margin.x, 0, surface.width - margin.x, margin.y);
+            
+            camLeft.vector = new Point(0, margin.y + this.scroll.y);
+            camLeft.bounds = new Rect(0, margin.y, margin.x, surface.height - margin.y );
+            
+            camTopLeft.vector = new Point(0, 0);
+            camTopLeft.bounds = new Rect(0, 0, margin.x, margin.y);
+        }
+
+        this.autoBufferUpdateEnabled = true;
+    }
+
     private updateSurface():void
     {
-        let { layout, view } = this.internal;
+        let layout = this.layout;
+        let cameras = this.surface.cameras;
 
-        for (let vlt of view.viewlets)
+        for (let i = 0; i < cameras.count; i++)
         {
-            let buffer = this.viewBuffers[vlt.key];
-            let cells = layout.captureCells(vlt);
+            let camera = cameras.item(i);
+            let buffer = this.cameraBuffers[camera.id];
 
-            this.updateBuffer(buffer, cells);
+            buffer.update(layout);
         }
     }
-
-    private updateBuffer(buffer:ViewBuffer, cells:GridCell[]):void
+    
+    private allocateBuffer(camera:Camera):CameraBuffer
     {
-        let { layout } = this;
-        let newList = new Array<ViewBufferEntry>(cells.length);
-
-        buffer.cycle++;
-
-        for (let i = 0; i < cells.length; i++)
-        {
-            let cell = cells[i];
-            let entry = buffer.index[cell.ref];
-
-            if (!entry)
-            {
-                let rect = layout.measureCell(cell.ref);
-                let visual = this.doCreateVisual(cell, rect);
-                entry = buffer.index[cell.ref] = new ViewBufferEntry(cell.ref, visual);
-            }
-
-            if (entry.nonce != cell.nonce)
-            {
-                let rect = layout.measureCell(cell.ref);
-                this.doUpdateVisual(entry.visual, cell, rect);
-                entry.nonce = cell.nonce;
-            }
-
-            entry.cycle = buffer.cycle;
-            newList[i] = entry;
-        }
-
-        for (let entry of buffer.list)
-        {
-            if (entry.cycle < buffer.cycle)
-            {
-                delete buffer.index[entry.cellId];
-                this.doDestroyVisual(entry.visual);
-            }
-        }
-
-        buffer.list = newList;
+        return this.cameraBuffers[camera.id] = new CameraBuffer(camera, {
+            create: this.doCreateVisual.bind(this),
+            update: this.doUpdateVisual.bind(this),
+            destroy: this.doDestroyVisual.bind(this),
+        });
     }
 
-    private destroyBuffer(buffer:ViewBuffer):void
+    private destroyBuffer(camera:Camera):void
     {
-        for (let entry of buffer.list)
-        {
-            this.doDestroyVisual(entry.visual);
-        }
-
-        buffer.index = null;
-        buffer.list = null;
+        let buffer = this.cameraBuffers[camera.id];
+        buffer.destroy();
+        delete this.cameraBuffers[camera.id];
     }
 
     private updateLayout():void
     {
         this.internal.layout = GridLayout.compute(this.model, this.padding);
-    }
-
-    private updateView():void
-    {
-        let { surface } = this;
-
-        let viewport = new Rect(surface.scrollLeft, surface.scrollTop, surface.width, surface.height);
-        this.internal.view = GridView.compute(viewport, this.freezeMargin, this.internal.layout);
-
-        let buffers = this.viewBuffers;
-        let keys = this.internal.view.viewlets.map(x => x.key);
-
-        this.viewBuffers = {};
-
-        for (let k of keys)
-        {
-            if (buffers[k])
-            {
-                this.viewBuffers[k] = buffers[k];
-                delete buffers[k];
-            }
-            else
-            {
-                this.viewBuffers[k] = new ViewBuffer();
-            }
-        }
-
-        for (let k in buffers)
-        {
-            if (buffers[k])
-            {
-                this.destroyBuffer(buffers[k]);
-            }
-        }
     }
 
     @Routine()
@@ -257,25 +267,98 @@ export class GridElement extends SimpleEventEmitter
             case 'freezeMargin':
             case 'padding':
                 this.updateLayout();
-                this.updateView();
-                this.updateSurface();
+                this.updateCameras();
                 break;
-            case 'surface':
-                this.updateView();
-                this.updateSurface();
+            case 'scroll':
+                this.updateCameras();
                 break;
         }   
     }
 }
 
-export class ViewBuffer
+interface VisualDelegate
 {
-    public cycle:number = 0;
-    public index:ObjectMap<ViewBufferEntry> = {};
-    public list:ViewBufferEntry[] = [];
+    create(cell:GridCell, rect:RectLike):CellVisual;
+
+    update(visual:CellVisual, cell:GridCell, rect:RectLike):void;
+
+    destroy(visual:CellVisual):void;
 }
 
-export class ViewBufferEntry
+class CameraBuffer extends AbstractDestroyable
+{
+    private cycle:number = 0;
+    private index:ObjectMap<CameraBufferEntry> = {};
+    private list:CameraBufferEntry[] = [];
+
+    constructor(public camera:Camera, private visuals:VisualDelegate)
+    {
+        super();
+    }
+
+    public destroy():void
+    {
+        let { visuals } = this;
+
+        super.destroy();
+
+        for (let entry of this.list)
+        {
+            visuals.destroy(entry.visual);
+        }
+
+        this.index = null;
+        this.list = null;
+    }
+
+    public update(layout:GridLayout):void
+    {
+        let { camera, visuals } = this;
+
+        let cameraArea = new Rect(camera.vector.x, camera.vector.y, camera.bounds.width, camera.bounds.height);
+        let cells = layout.captureCells(cameraArea);
+
+        let newList = new Array<CameraBufferEntry>(cells.length);
+
+        this.cycle++;
+
+        for (let i = 0; i < cells.length; i++)
+        {
+            let cell = cells[i];
+            let entry = this.index[cell.ref];
+
+            if (!entry)
+            {
+                let rect = layout.measureCell(cell.ref);
+                let visual = visuals.create(cell, rect);
+                entry = this.index[cell.ref] = new CameraBufferEntry(cell.ref, visual);
+            }
+
+            if (entry.nonce != cell.nonce)
+            {
+                let rect = layout.measureCell(cell.ref);
+                visuals.update(entry.visual, cell, rect);
+                entry.nonce = cell.nonce;
+            }
+
+            entry.cycle = this.cycle;
+            newList[i] = entry;
+        }
+
+        for (let entry of this.list)
+        {
+            if (entry.cycle < this.cycle)
+            {
+                delete this.index[entry.cellId];
+                visuals.destroy(entry.visual);
+            }
+        }
+
+        this.list = newList;
+    }
+}
+
+export class CameraBufferEntry
 {
     constructor(public cellId:string, 
                 public visual:CellVisual, 

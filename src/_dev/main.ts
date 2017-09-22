@@ -1,3 +1,4 @@
+import { GridModel } from '../model/GridModel';
 import { MouseExpression } from '../vom/input/MouseExpression';
 import { MouseGesture } from '../vom/input/MouseGesture';
 import { NetManager } from '../extensions/nets/NetManager';
@@ -11,10 +12,14 @@ import { debug_events } from '../base/EventEmitter';
 import { Theme } from '../vom/styling/Theme';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridElement } from '../core/GridElement';
+import { Point, PointInput } from '../geom/Point';
 
 
-let grid = window['grid'] = GridElement
-   .create(document.getElementById('x'))
+let model = GridModel.dim(26, 50);
+model.cells.forEach(x => x.value = x.ref);
+
+let grid = GridElement
+   .create(document.getElementById('x'), model)
    .extend(new NetExtension())
 //    .extend(new SelectorExtension())
 //    .extend(new EditingExtension())
@@ -27,6 +32,13 @@ let grid = window['grid'] = GridElement
    .mergeInterface()
 ;
 
+debug_events(grid.surface);
+debug_events(grid.surface.cameras);
+
+window['grid'] = grid;
+window['surface'] = grid.surface;
+window['pt'] = Point.create;
+
 grid.model.cells[0].style = GridCellStyle.get('test');
 grid.model.cells[0].value = 'Test';
 
@@ -37,13 +49,4 @@ grid.surface.theme = theme;
 let nets = grid.get('nets') as NetManager;
 nets.create('test', 'default', 'B2', 'E4');
 
-// .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
-// .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
-// .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
-// .on('UP:PRIMARY', (e:GridMouseDragEvent) => this.endSelectGesture(/*e.gridX, e.gridY*/))
-
-//
-// LEFT+CTRL
-// LEFT.DOWN+CTRL
-//
-//
+grid.freezeMargin = new Point(2, 2);

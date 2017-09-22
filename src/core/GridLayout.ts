@@ -18,6 +18,8 @@ export interface GridLayoutRegion<T> extends RectLike
 
 export class GridLayout
 {
+    public static empty:GridLayout = new GridLayout(0, 0, [], [], [], {});
+
     public static compute(model:GridModel, padding:Padding):GridLayout
     {
         let colLookup = <ObjectIndex<GridColumn>>model.columns.reduce((t, x) => { t[x.ref] = x; return t }, {});

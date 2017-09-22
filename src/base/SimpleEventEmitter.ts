@@ -1,3 +1,4 @@
+import { Event } from "./Event";
 import { EventEmitter, EventCallback, EventSubscription } from "./EventEmitter";
 
 
@@ -29,12 +30,12 @@ export class SimpleEventEmitter implements EventEmitter
         }
     }
 
-    public emit(event:string, ...args:any[]):void
+    public emit(evt:Event):void
     {
-        let list = this.getCallbackList(event);
+        let list = this.getCallbackList(evt.type);
         for (let callback of list)
         {
-            callback.apply(null, args);
+            callback.call(null, evt);
         }
     }
 

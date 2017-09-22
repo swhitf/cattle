@@ -45,7 +45,7 @@ class AnchorTether implements TetherHandle
             throw 'Cannot anchor a visual without a parent.';
         }
         
-        this.evtSub = subject.parent.on('!change', this.onTargetChange.bind(this));
+        this.evtSub = subject.parent.on('change', this.onTargetChange.bind(this));
         this.parent = subject.parent;
         this.origTopLeft = subject.topLeft;
         this.origSize = subject.parent.size;

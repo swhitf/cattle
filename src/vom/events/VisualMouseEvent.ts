@@ -1,3 +1,4 @@
+import { Camera } from '../Camera';
 import { Point } from '../../geom/Point';
 import { Visual } from '../Visual';
 import { KeySet } from '../input/KeySet';
@@ -15,19 +16,19 @@ export type VisualMouseEventTypes = 'mousedown'|'mousemove'|'mouseup'|'mouseente
 export class VisualMouseEvent extends VisualEvent
 {
     /**
-     * If applicable the button that was actioned.
+     * The camera on which the mouse gesture was performed.
      */
-    public readonly button:number;
+    public readonly camera:Camera;
     
     /**
      * The position of the mouse relative to the surface when the event was raised.
      */
     public readonly surfacePoint:Point;
-    
+
     /**
-     * The position of the mouse relative to the view when the event was raised.
+     * If applicable the button that was actioned.
      */
-    public readonly viewPoint:Point;
+    public readonly button:number;
     
     /**
      * An object describing the current state of all keys.
@@ -39,18 +40,18 @@ export class VisualMouseEvent extends VisualEvent
      * 
      * @param type A string value that identifies the type of event.
      * @param target The visual that the event was raised from.
-     * @param button If applicable the button that was actioned.
-     * @param viewPoint The position of the mouse relative to the view when the event was raised.
+     * @param camera The camera on which the mouse gesture was performed.
      * @param surfacePoint The position of the mouse relative to the surface when the event was raised.
+     * @param button If applicable the button that was actioned.
      * @param keys An object describing the current state of all keys.
      */
-    constructor(type:VisualMouseEventTypes, target:Visual, button:number, viewPoint:Point, surfacePoint:Point, keys:KeySet)
+    constructor(type:VisualMouseEventTypes, target:Visual, camera:Camera, surfacePoint:Point, button:number, keys:KeySet)
     {
         super(type, target); 
         
-        this.button = button;
-        this.viewPoint = viewPoint;
+        this.camera = camera;
         this.surfacePoint = surfacePoint;
+        this.button = button;
         this.keys = keys;
     }
 }

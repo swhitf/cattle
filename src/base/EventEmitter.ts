@@ -1,3 +1,4 @@
+import { Event } from './Event';
 
 
 export interface EventSubscription
@@ -7,7 +8,7 @@ export interface EventSubscription
 
 export interface EventCallback
 {
-    (...args:any[]):void;
+    (evt:Event):void;
 }
 
 export interface EventEmitter
@@ -16,15 +17,15 @@ export interface EventEmitter
 
     off(event:string, callback?:EventCallback):void;
 
-    emit(event:string, ...args:any[]):void;
+    emit(evt:Event):void;
 }
 
 export function debug_events(ee:EventEmitter):void
 {
     let original = ee['emit'];
-    ee['emit'] = function(event:string, ...args:any[]):void
+    ee['emit'] = function(e:Event):void
     {
-        console.debug(event + ' -> ', (args || []).join(', '));
+        console.debug(e.type + ' -> ', e);
         original.apply(this, arguments);
     };
 }
