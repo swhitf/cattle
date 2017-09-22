@@ -11,6 +11,8 @@ import { Camera } from './Camera';
 
 export class InternalCamera implements Camera
 {
+    private initializing = true;
+
     public readonly id:string;
     
     @Observable()
@@ -22,16 +24,14 @@ export class InternalCamera implements Camera
     @Observable()
     public vector:Point;
 
-    public transform:Matrix;
-
     constructor(id:string, order:number, bounds:Rect, vector:Point, private emitter:EventEmitter)
     {
         this.id = id;
         this.order = order;
         this.bounds = bounds;
         this.vector = vector;
-
-        this.transform = Matrix.identity.translate(vector.x, vector.y).inverse()
+        
+        this.initializing = false;
     }
     
     public toCameraPoint(type:'surface'|'view', pt:PointInput):Point
@@ -68,6 +68,9 @@ export class InternalCamera implements Camera
 
     protected notifyChange(property:string):void
     {
-        this.emitter.emit(new CameraChangeEvent(this, property));
+        if (!this.initializing)
+        {
+            this.emitter.emit(new CameraChangeEvent(this, property));
+        }
     }
 }

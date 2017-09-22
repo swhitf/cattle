@@ -18,7 +18,7 @@ export interface CameraManager extends EventEmitter
     /**
      * Creates a new camera with the specified id and settings.
      */
-    create(id:string, order:number, bounds:Rect, vector:Point):Camera;
+    create(id:string, order?:number, bounds?:Rect, vector?:Point):Camera;
 
     /**
      * Destroys the camera with the specified id.  Cannot destroy `main`.
@@ -34,4 +34,9 @@ export interface CameraManager extends EventEmitter
      * Given a specified view point, retrieves the top most camera at the specified point.
      */
     test(viewPt:Point):Camera;
+
+    /**
+     * Returns a new array containing all the cameras.
+     */
+    toArray():Camera[];
 }

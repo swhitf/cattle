@@ -7,9 +7,7 @@ import { Rect } from '../geom/Rect';
 
 export interface Camera
 {
-    readonly id:string; 
-    
-    readonly transform:Matrix;
+    readonly id:string;
     
     order:number; 
 

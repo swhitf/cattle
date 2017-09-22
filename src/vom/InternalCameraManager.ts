@@ -17,14 +17,14 @@ export class InternalCameraManager extends SimpleEventEmitter implements CameraM
         return this.array.length;
     }
     
-    public create(id:string, order:number, bounds:Rect, vector:Point):Camera 
+    public create(id:string, order?:number, bounds?:Rect, vector?:Point):Camera
     {
         if (!!this.item(id))
         {
             throw `Camera ${id} already exists.`
         }
 
-        let camera = new InternalCamera(id, order, bounds, vector, this);
+        let camera = new InternalCamera(id, order || 1, bounds || Rect.empty, vector || Point.empty, this);
         
         this.array.push(camera);
         this.array.sort((a, b) => a.order - b.order);
@@ -71,6 +71,11 @@ export class InternalCameraManager extends SimpleEventEmitter implements CameraM
         }
 
         return null;
+    }
+
+    public toArray():Camera[]
+    {
+        return this.array.slice(0);
     }
     
     protected indexOf(id:string):number

@@ -30,6 +30,11 @@ export class Rect
 
     public static fromMany(rects:RectLike[]):Rect
     {
+        if (rects.length == 0) 
+        {
+            return Rect.empty;
+        }
+
         let points = [].concat.apply([], rects.map(x => Rect.prototype.points.call(x)));
         return Rect.fromPointBuffer(points);
     }

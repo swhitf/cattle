@@ -46,12 +46,6 @@ export class Surface extends SimpleEventEmitter
     public readonly ticker:RefreshLoop;
     public readonly view:HTMLCanvasElement;
 
-    @Observable(0)
-    public scrollLeft:number;
-
-    @Observable(0)
-    public scrollTop:number;
-
     @Observable()
     public width:number;
 
@@ -67,7 +61,6 @@ export class Surface extends SimpleEventEmitter
     private dirtyRender:boolean;
     private dirtySequence:boolean;
     private tracker:VisualTracker;
-    private viewTransform:Matrix = Matrix.identity;
 
     constructor(width:number = 800, height:number = 800)
     {
@@ -164,9 +157,13 @@ export class Surface extends SimpleEventEmitter
             for (let i = 0; i < cameras.count; i++) 
             {
                 let cam = cameras.item(i);
+                if (!cam.bounds.width || !cam.bounds.height)
+                    continue;
+
                 let camBuf = buffers.getFor('camera', cam);
                 let camGfx = camBuf.getContext('2d');
-                let cvt = visual.transform.translate(-5, -5).multiply(cam.transform); //camera+visual transform
+                let camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse()
+                let cvt = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
 
                 camGfx.setTransform(cvt.a, cvt.b, cvt.c, cvt.d, cvt.e, cvt.f);
                 camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
@@ -182,7 +179,15 @@ export class Surface extends SimpleEventEmitter
         for (let i = 0; i < cameras.count; i++) 
         {
             let cam = cameras.item(i);
+            if (!cam.bounds.width || !cam.bounds.height)
+                continue;
+
+
             let camBuf = buffers.getFor('camera', cam);
+            let camGfx = camBuf.getContext('2d');
+            set_transform(camGfx, Matrix.identity);
+            camGfx.fillStyle = 'red';
+            camGfx.fillText('Cam ' + cam.id, 3, 12);
             
             set_transform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
             viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
@@ -194,12 +199,15 @@ export class Surface extends SimpleEventEmitter
     private createCameraManager():InternalCameraManager
     {
         let cm = new InternalCameraManager();
-        cm.create('main', 1, new Rect((this.width / 2) / 2, (this.height / 2) / 2, this.width / 2, this.height / 2), Point.empty);
+        cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
+        // cm.create('main2', 2, new Rect(this.width / 2, 0, this.width / 2, this.height / 2), Point.empty);
+        // cm.create('main3', 3, new Rect(0, this.height / 2, this.width / 2, this.height / 2), Point.empty);
+        // cm.create('main4', 4, new Rect(this.width / 2, this.height / 2, this.width / 2, this.height / 2), Point.empty);
 
-        let callacbk = () => this.dirtyRender = true;
-        cm.on('create', callacbk);
-        cm.on('destroy', callacbk);
-        cm.on('change', callacbk);
+        let callback = () => this.dirtyRender = true;
+        cm.on('create', callback);
+        cm.on('destroy', callback);
+        cm.on('change', callback);
 
         return cm;
     }
@@ -289,11 +297,6 @@ export class Surface extends SimpleEventEmitter
                     this.dirtyRender = true;
                     this.propagateEvent(new Event('resize'), []);
                 }
-            case 'scrollLeft':
-            case 'scrollTop':
-                this.viewTransform = Matrix.identity.translate(this.scrollLeft, this.scrollTop).inverse();
-                this.dirtyRender = true;
-                this.propagateEvent(new Event('scroll'), []);
                 break;
             case 'theme':
                 this.applyTheme(this.theme);
