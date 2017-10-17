@@ -12,12 +12,14 @@ export class NetVisual extends Visual
     @Styleable('transparent')
     public background:string;
 
-    @Styleable(new Border(2, '#4285f4'))
+    @Styleable(new Border(1, '#4285f4'))
     public border:Border;
 
     public render(gfx:CanvasRenderingContext2D):void
     {
         let { border } = this;
+
+        let offset = (border.width % 2) / 2; 
 
         gfx.lineWidth = border.width;
         gfx.strokeStyle = border.color;
@@ -44,7 +46,7 @@ export class NetVisual extends Visual
         }
         
         gfx.beginPath();
-        gfx.rect(0, 0, this.width, this.height);
+        gfx.rect(offset, offset, this.width, this.height);
         gfx.fill();
         gfx.stroke();
     }

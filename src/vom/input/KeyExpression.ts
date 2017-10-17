@@ -1,5 +1,6 @@
+import { VisualKeyboardEvent } from '../events/VisualKeyboardEvent';
 import { Keys } from './Keys';
-import { KeySet } from './KeySet';
+import { KeySequence } from './KeySequence';
 
 
 export class KeyExpression
@@ -12,59 +13,96 @@ export class KeyExpression
             input = input.substr(1);
         }
 
-        let keys = input
+        let sequence = input
             .split(/[\s\-\+]+/)
             .map(x => Keys.parse(x));
 
-        return new KeyExpression(keys, exclusive);
+        return new KeyExpression(sequence, exclusive);
     }
 
-    public readonly ctrl:boolean;
-    public readonly alt:boolean;
-    public readonly shift:boolean;
-    public readonly key:number;
+    public readonly sequence:number[];
     public readonly exclusive:boolean;
 
-    private constructor(keys:number[], exclusive:boolean)
+    private constructor(sequence:number[], exclusive:boolean)
     {
+        this.sequence = sequence;
         this.exclusive = exclusive;
 
-        this.ctrl = keys.some(x => x === Keys.CTRL);
-        this.alt = keys.some(x => x === Keys.ALT);
-        this.shift = keys.some(x => x === Keys.SHIFT);
-        this.key = keys.filter(x => x !== Keys.CTRL && x !== Keys.ALT && x !== Keys.SHIFT)[0] || null;
+        // this.ctrl = keys.some(x => x === Keys.CTRL);
+        // this.alt = keys.some(x => x === Keys.ALT);
+        // this.shift = keys.some(x => x === Keys.SHIFT);
+        // this.key = keys.filter(x => x !== Keys.CTRL && x !== Keys.ALT && x !== Keys.SHIFT)[0] || null;
     }
+    
+        public matches(input:KeyExpression|VisualKeyboardEvent|KeySequence):boolean
+        {
+            if (input instanceof KeyExpression)
+            {
+                return array_contains(input.sequence, this.sequence);
+            }
+            else if (input instanceof VisualKeyboardEvent)
+            {
+                let sequence = input.modifiers.toArray();
+                sequence.push(input.key);
+    
+                return array_contains(sequence, this.sequence);
+            }
+            else
+            {
+                return array_contains(input.toArray(), this.sequence);
+            }        
+        }
+        
+        public matchesExact(input:KeyExpression|VisualKeyboardEvent|KeySequence):boolean
+        {
+            if (input instanceof KeyExpression)
+            {
+                return array_equals(input.sequence, this.sequence);
+            }
+            else if (input instanceof VisualKeyboardEvent)
+            {
+                let sequence = input.modifiers.toArray();
+                sequence.push(input.key);
+    
+                return array_equals(sequence, this.sequence);
+            }
+            else
+            {
+                return array_equals(input.toArray(), this.sequence);
+            }        
+        }
+}
 
-    public matches(keyData:KeyExpression|KeyboardEvent|KeySet):boolean
+export function array_equals<T>(a:T[], b:T[]):boolean
+{
+    if (a.length !== b.length)
     {
-        if (keyData instanceof KeyExpression)
-        {
-            return (
-                this.ctrl == keyData.ctrl &&
-                this.alt == keyData.alt &&
-                this.shift == keyData.shift &&
-                this.key == keyData.key
-            );
-        }
-        else if (keyData instanceof KeyboardEvent)
-        {
-            return (
-                this.ctrl == keyData.ctrlKey &&
-                this.alt == keyData.altKey &&
-                this.shift == keyData.shiftKey &&
-                this.key == keyData.keyCode
-            );
-        }
-        else if (!!keyData.contains)
-        {
-            return (
-                this.ctrl == keyData.contains(Keys.CTRL) &&
-                this.alt == keyData.contains(Keys.ALT) &&
-                this.shift == keyData.contains(Keys.SHIFT) &&
-                keyData.contains(this.key)
-            );
-        }
-
-        throw 'KeyExpression.matches: Invalid input';
+        return false;
     }
+
+    for (let i = 0; i < a.length; i++)
+    {
+        if (a[i] !== b[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+export function array_contains<T>(arr:T[], x:T[]):boolean
+{
+    for (let i = 0, j = 0; i < arr.length; i++)
+    {
+        if (arr[i] == x[j]) 
+        {
+            if (++j >= x.length)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }

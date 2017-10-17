@@ -1,18 +1,20 @@
+import { DragHelper } from './input/DragHelper';
 import { Event } from '../base/Event';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
-import { Point, PointInput } from '../geom/Point';
+import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { BufferManager } from './BufferManager';
 import { CameraManager } from './CameraManager';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
+import { VisualMouseDragEvent } from './events/VisualMouseDragEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
 import { KeyTracker } from './input/KeyTracker';
 import { InternalCameraManager } from './InternalCameraManager';
-import { RefreshLoop, RefreshTicker } from './RefreshLoop';
+import { RefreshLoop } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
 import { DefaultTheme } from './styling/DefaultTheme';
 import { Theme } from './styling/Theme';
@@ -141,7 +143,11 @@ export class Surface extends SimpleEventEmitter
 
     private performRender()
     {
-        let { buffers, cameras, sequence, view } = this;
+        let { buffers, sequence, view } = this;
+        
+        //Only render to cameras with valid bounds
+        let cameras = this.cameras.toArray()
+            .filter(x => !!x.bounds.width && !!x.bounds.height)
 
         buffers.beginRender();
 
@@ -154,9 +160,8 @@ export class Surface extends SimpleEventEmitter
             set_transform(visGfx, Matrix.identity.translate(5, 5));
             visual.render(visGfx);
 
-            for (let i = 0; i < cameras.count; i++) 
+            for (let cam of cameras) 
             {
-                let cam = cameras.item(i);
                 if (!cam.bounds.width || !cam.bounds.height)
                     continue;
 
@@ -176,13 +181,8 @@ export class Surface extends SimpleEventEmitter
         set_transform(viewGfx, Matrix.identity);
         viewGfx.clearRect(0, 0, view.width, view.height);
 
-        for (let i = 0; i < cameras.count; i++) 
+        for (let cam of cameras)  
         {
-            let cam = cameras.item(i);
-            if (!cam.bounds.width || !cam.bounds.height)
-                continue;
-
-
             let camBuf = buffers.getFor('camera', cam);
             let camGfx = camBuf.getContext('2d');
             set_transform(camGfx, Matrix.identity);
@@ -250,6 +250,9 @@ export class Surface extends SimpleEventEmitter
         view.addEventListener('dblclick', this.onViewMouseEvent.bind(this, 'dblclick', keys));
         view.addEventListener('keydown', this.onViewKeyEvent.bind(this, 'keydown', keys));
         view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup', keys));
+
+        let dragSupport = new DragHelper(
+            view, (me:MouseEvent, distance:Point) => this.onViewMouseDragEvent(keys, me, distance));
 
         return view;
     }
@@ -335,6 +338,21 @@ export class Surface extends SimpleEventEmitter
         }
 
         let evt = new VisualMouseEvent(type, stack[0] || null, camera, surfacePt, me.button, keys);
+        this.propagateEvent(evt, stack);
+    }
+
+    private onViewMouseDragEvent(keyTracker:KeyTracker, me:MouseEvent, distance:Point):void
+    {
+        let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
+        
+        let camera = this.cameras.test(viewPt);
+        if (!camera) return;
+
+        let surfacePt = camera.toSurfacePoint('view', viewPt);        
+        let keys = keyTracker.capture();
+        let stack = this.test(surfacePt);
+
+        let evt = new VisualMouseDragEvent(stack[0] || null, camera, surfacePt, me.button, keys, distance);
         this.propagateEvent(evt, stack);
     }
 

@@ -85,11 +85,6 @@ export class GridElement extends SimpleEventEmitter
     {
         return this.internal.surface;
     }
-    
-    public get view():GridView
-    {
-        return this.internal.view;
-    }
 
     public extend(ext:GridExtension):GridElement
     {

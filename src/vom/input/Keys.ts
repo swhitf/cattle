@@ -121,9 +121,13 @@ export class Keys
             case 'PAGE_DOWN': return Keys.PAGE_DOWN;
             case 'END': return Keys.END;
             case 'HOME': return Keys.HOME;
+            case 'LEFT': return Keys.LEFT_ARROW;
             case 'LEFT_ARROW': return Keys.LEFT_ARROW;
+            case 'UP': return Keys.UP_ARROW;
             case 'UP_ARROW': return Keys.UP_ARROW;
+            case 'RIGHT': return Keys.RIGHT_ARROW;
             case 'RIGHT_ARROW': return Keys.RIGHT_ARROW;
+            case 'DOWN': return Keys.DOWN_ARROW;
             case 'DOWN_ARROW': return Keys.DOWN_ARROW;
             case 'INSERT': return Keys.INSERT;
             case 'DELETE': return Keys.DELETE;

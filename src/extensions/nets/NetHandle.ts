@@ -8,6 +8,11 @@ import { Destroyable } from '../../base/Destroyable';
 export interface NetHandle extends Destroyable
 {
     /**
+     * The id of the net.
+     */
+    readonly id:string;
+
+    /**
      * The net type.
      */
     readonly type:string;

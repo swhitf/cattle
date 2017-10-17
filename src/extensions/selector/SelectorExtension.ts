@@ -1,3 +1,9 @@
+import { KeyGesture } from '../../vom/input/KeyGesture';
+import { CellVisual } from '../../core/CellVisual';
+import { VisualMouseEvent } from '../../vom/events/VisualMouseEvent';
+import { MouseGesture } from '../../vom/input/MouseGesture';
+import { NetManager } from '../nets/NetManager';
+import { GridEvent } from '../../core/events/GridEvent';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridRange, GridRangeLike } from '../../model/GridRange';
 import { Destroyable } from '../../base/Destroyable';
@@ -10,9 +16,10 @@ import { Point, PointLike } from '../../geom/Point';
 import { RectLike, Rect } from '../../geom/Rect';
 import * as Tether from 'tether';
 import * as Dom from '../../misc/Dom';
+import * as u from '../../misc/Util';
 
 
-const Vectors = {
+let Vectors = {
     nw: new Point(-1, -1),
     n: new Point(0, -1),
     ne: new Point(1, -1),
@@ -60,16 +67,18 @@ export enum SelectHints
 export class SelectorExtension
 {
     private grid:GridElement;
+    private kernel:GridKernel;
 
     @Variable(false)
     private canSelect:boolean = true;
 
     @Variable(false)
-    private selections:Selection[] = [];
+    private selections:SelectionImpl[] = [];
 
     public init(grid:GridElement, kernel:GridKernel)
     {
         this.grid = grid;
+        this.kernel = kernel;
 
         /*
         KeyInput.for(grid)
@@ -98,12 +107,40 @@ export class SelectorExtension
         ;
         */
 
+        //event.target to cell ref
+        const e2ref = (e:VisualMouseEvent) => {
+            let cell = grid.layout.pickCell(e.surfacePoint);
+            return !!cell ? cell.ref : null;
+        };
+
+        MouseGesture.for(grid.surface)
+            .on(['LEFT.DOWN', 'LEFT.DOWN+CTRL+SHIFT'], e => this.select(e2ref(e)))
+            .on(['LEFT.DOWN+CTRL'], e => this.select(e2ref(e), null, SelectHints.Append))
+            .on(['LEFT.DRAG', 'LEFT.DOWN+SHIFT'], e => this.select((this.primarySelection || {} as any).from, e2ref(e)))
+            //.on('LEFT.DRAG', e => this.select(et2ref(e)))
+        ;
+
+        KeyGesture.for(grid.surface)
+            .on('RIGHT_ARROW', () => this.selectNext(Vectors.e))
+            .on('LEFT_ARROW', () => this.selectNext(Vectors.w))
+            .on('UP_ARROW', () => this.selectNext(Vectors.n))
+            .on('DOWN_ARROW', () => this.selectNext(Vectors.s))
+        ;
+
         // grid.on('invalidate', () => this.reselect(false));
         // grid.on('scroll', () => this.alignSelectors(false));
+
+        //On select visualize selection
+        grid.on('select', () => this.doVisualizeSelection());
 
         kernel.variables.define('primarySelection', {
             get: () => this.primarySelection
         });
+    }
+
+    private get nets():NetManager
+    {
+        return this.kernel.variables.get('nets');
     }
 
     private get primarySelection():Selection
@@ -139,11 +176,13 @@ export class SelectorExtension
     //     this.captureSelector = Selector.create(layer, false);
     // }
 
+    private select(from:string, to:string, ...hints:SelectHints[]):void;
+    private select(cell:string, ...hints:SelectHints[]):void;
+
     @Command()
-    private select(from:string, to:string, ...hints:SelectHints[]):void
+    private select(...args:any[]):void
     {
-        this.doSelect(from, to, hints);
-        //this.alignSelectors(true);
+        this.doSelect.apply(this, args);
     }
 
     // @command()
@@ -256,23 +295,22 @@ export class SelectorExtension
     //     this.select(cellRefs, autoScroll);
     // }
 
-    // @command()
-    // private selectNeighbor(vector:Point, autoScroll = true):void
-    // {
-    //     let { grid } = this;
+    @Command()
+    private selectNext(vector:Point):void
+    {
+        let { grid, primarySelection } = this;
 
-    //     vector = vector.normalize();
+        vector = vector.normalize();
 
-    //     let ref = this.selection[0] || null;
-    //     if (ref)
-    //     {
-    //         let cell = grid.model.findCellNeighbor(ref, vector);
-    //         if (cell)
-    //         {
-    //             this.select([cell.ref], autoScroll);
-    //         }
-    //     }
-    // }
+        if (primarySelection)
+        {
+            let cell = grid.model.findCellNeighbor(primarySelection.from, vector);
+            if (cell)
+            {
+                this.doSelect(cell.ref);
+            }
+        }
+    }
 
     // private reselect(autoScroll:boolean = true):void
     // {
@@ -344,37 +382,96 @@ export class SelectorExtension
         if (!this.canSelect)
             return;
 
-        const from = args[0] || null;
-        const to = typeof(args[1]) === 'string' ? args[1] : from;
-        const hints = args.slice(typeof(args[1]) === 'string' ? 2 : 1);
-
-        const { model, view } = this.grid;
-
-        if (from)
+        while (args[0] === undefined && args.length > 0) 
         {
-            const range = GridRange.expand(model, cellRefs);
-            const selection = new SelectionImpl(range);
+            args.splice(0, 1);
+        }
+
+        let from = args[0] || null;
+        let to = typeof(args[1]) === 'string' ? args[1] : from;
+        let hints = args.slice(typeof(args[1]) === 'string' ? 2 : 1);
+
+        let selections = this.selections;
+        let grid = this.grid;
+        let model = grid.model;
+
+        for (let sel of selections) {
+            if (sel.from == from && sel.to == to) {
+                return;
+            }
+        }
+
+        if (from && !!model.findCell(from) && !!model.findCell(to))
+        {
+            let sel = new SelectionImpl(from, to);
+
+            if (!!~hints.indexOf(SelectHints.Append))
+            {
+                selections.push(sel);
+            }
+            else
+            {
+                selections.splice(0, selections.length, sel);
+            }
 
             if (!!~hints.indexOf(SelectHints.AutoScroll))
             {
-                //NO I NEED THE FUCKING START -> END
-
-                //view.measure
-            }
-
-            if (autoScroll)
-            {
-                grid.layout
-
-                let primaryRect = grid.getCellViewRect(cellRefs[0]);
-                grid.scrollTo(primaryRect);
+                // let primaryRect = grid.getCellViewRect(cellRefs[0]);
+                // grid.scrollTo(primaryRect);
             }
         }
         else
         {
-            alert('Deselect');
             // this.selection = [];
             // this.selectGesture = null;
+        }
+
+        grid.emit(new GridEvent('select', grid));
+    }
+
+    @Routine()
+    private doVisualizeSelection():void
+    {
+        let { primarySelection, selections, nets } = this;
+
+        let selectionMap = u.index(selections, x => x.id);
+        let netMap = u.index(nets.toArray(x => x.type == 'selection'), x => x.id);
+
+        //For any selections that do not have nets, create nets
+        for (let id in selectionMap)
+        {
+            let s = selectionMap[id];
+
+            if (!netMap[id])
+            {
+                netMap[id] = nets.create(id, 'selection', s.from, s.to);
+            }
+        }
+
+        //For any nets that do not have selections, destroy nets
+        for (let id in netMap)
+        {
+            let n = netMap[id];
+
+            if (!selectionMap[id])
+            {
+                nets.destroy(id);
+                delete netMap[id];
+            }
+        }
+
+        //If we have selections, show the primary net on the primary selection from cell
+        if (primarySelection) {            
+            let inputNet = nets.get('input');
+            if (inputNet) {
+                inputNet.move(primarySelection.from);
+            }
+            else {
+                inputNet = nets.create('input', 'input', primarySelection.from);
+            }
+        }
+        else {
+            nets.destroy('input');
         }
     }
 
@@ -444,33 +541,26 @@ export class SelectorExtension
 
 class SelectionImpl extends AbstractDestroyable implements Selection
 {
-    constructor(private range:GridRange)
+    private static tracker:number = 0;
+
+    public readonly id:string;
+
+    constructor(public from:string, public to:string)
     {
         super();
+
+        this.id = `S${++SelectionImpl.tracker}`;
     }
 
-    public get ltr():GridCell[]
+    public toString():string
     {
-        return this.range.ltr;
-    }
-    
-    public get ttb():GridCell[]
-    {
-        return this.range.ttb;
-    }
-
-    public get width():number
-    {
-        return this.range.width;
-    }
-
-    public get height():number
-    {
-        return this.range.height;
-    }
-
-    public get length():number
-    {
-        return this.range.length;
+        if (this.from === this.to)
+        {
+            return this.from;
+        }
+        else
+        {
+            return `${this.from}:${this.to}`;
+        }
     }
 }

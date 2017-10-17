@@ -1,3 +1,5 @@
+import { Point } from '../../geom/Point';
+import { VoidCallback } from '../../common';
 import { VisualMouseEvent } from '../events/VisualMouseEvent';
 import { Surface } from '../Surface';
 import { Visual } from '../Visual';
@@ -7,9 +9,9 @@ import { MouseExpression } from './MouseExpression';
 import { EventEmitter, EventSubscription } from '../../base/EventEmitter';
 
 
-export interface MouseGestureCallback
+export interface MouseGestureCallback<T extends VisualMouseEvent>
 {
-    (e?:VisualMouseEvent):void;
+    (e?:T):void;
 }
 
 export class MouseGesture extends AbstractDestroyable
@@ -44,7 +46,7 @@ export class MouseGesture extends AbstractDestroyable
         return this;
     }
 
-    private createListener(target:EventEmitter, expr:MouseExpression, callback:MouseGestureCallback):EventSubscription
+    private createListener(target:EventEmitter, expr:MouseExpression, callback:any):EventSubscription
     {
         return target.on(expr.event, (evt:VisualMouseEvent) =>
         {
@@ -61,3 +63,60 @@ export class MouseGesture extends AbstractDestroyable
     }
 }
 
+class RegularListener implements EventSubscription
+{
+    public cancel:VoidCallback;
+
+    constructor(target:EventEmitter, expr:MouseExpression, callback:any)
+    {
+        let es = target.on(expr.event, (evt:VisualMouseEvent) =>
+        {
+            if (expr.matches(evt))
+            {
+                if (expr.exclusive)
+                {
+                    evt.cancel();
+                }
+
+                callback(evt);
+            }
+        });
+        
+        this.cancel = es.cancel;
+    }
+}
+
+// class DragListener implements EventSubscription
+// {
+//     private start:Point;
+
+//     public cancel:VoidCallback;
+
+//     constructor(target:EventEmitter, expr:MouseExpression, private callback:MouseGestureCallback)
+//     {
+//         let es = target.on('mousedown', (evt:VisualMouseEvent) =>
+//         {
+//             evt.native
+//         });
+        
+//         this.cancel = es.cancel;
+//     }
+
+//     private hijack():void
+//     {
+//         const mm = (me:MouseEvent) =>
+//         {
+//             callback
+//         };
+
+//         const mu = (me:MouseEvent) =>
+//         {
+
+//             window.removeEventListener('mousemove', mm);
+//             window.removeEventListener('mousemove', mu);
+//         }
+
+//         window.addEventListener('mousemove', mm);
+//         window.addEventListener('mousemove', mu);
+//     }
+// }

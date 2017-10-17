@@ -1,73 +1,120 @@
-import { KeySet } from './KeySet';
+import { KeySequence } from './KeySequence';
 
 
-export class KeyTracker implements KeySet
+export class KeyTracker
 {
-    private lookup:{ [key:string]:boolean };
+    private iks:InternalKeySequence;
+    private blurHandle:any;
     private downHandle:any;
     private upHandle:any;
-    private count:number = 0;
 
     constructor(private source:EventTarget)
     {
-        this.lookup = {};
+        let iks = this.iks = new InternalKeySequence();
+
+        this.blurHandle = () =>
+        {
+            iks.clear();
+        };
 
         this.downHandle = (ke:KeyboardEvent) =>
         {
-            if (!this.lookup[ke.keyCode])
+            if (!iks.contains(ke.keyCode))
             {
-                this.count++;
-                this.lookup[ke.keyCode] = true;
+                iks.add(ke.keyCode);
             }
         };
 
         this.upHandle = (ke:KeyboardEvent) =>
         {
-            if (this.lookup[ke.keyCode])
+            if (iks.contains(ke.keyCode))
             {
-                this.count--;
-                delete this.lookup[ke.keyCode];
+                iks.remove(ke.keyCode);
             }
         };
 
         this.source.addEventListener('keydown', this.downHandle);
         this.source.addEventListener('keyup', this.upHandle);
+        this.source.addEventListener('blur', this.blurHandle);
     }
     
-    public get length():number
-    { 
-        return this.count;
-    }
+    // public get length():number
+    // { 
+    //     return this.iks.length;
+    // }
 
-    public capture():KeySet
+    public capture():KeySequence
     {
-        let snapshot =
-        {
-            length: this.length,
-            lookup: {} as { [key:string]:boolean },
-            contains: function(key:number):boolean 
-            {
-                return !!this.lookup[key];
-            }
-        };
-
-        for (let key in this.lookup)
-        {
-            snapshot.lookup[key] = this.lookup[key];
-        }
-
-        return snapshot;
+        return this.iks.clone();
     }
 
-    public destroy():void
-    {
-        this.source.removeEventListener('keydown', this.downHandle);
-        this.source.removeEventListener('keyup', this.upHandle);
-    }
-
-    public contains(key:number):boolean
-    {
-        return !!this.lookup[key];
-    }
+    // public contains(key:number):boolean
+    // {
+    //     return this.iks.contains(key);
+// }
+    
+    // public destroy():void
+    // {
+    //     this.source.removeEventListener('keydown', this.downHandle);
+    //     this.source.removeEventListener('keyup', this.upHandle);
+    // }       
+    
+    // public item(index:number):number 
+    // {
+    //     return this.iks.item(index);
+    // }
 }
 
+class InternalKeySequence implements KeySequence
+{
+    public readonly keys:number[] = [];
+
+    constructor(keys:number[] = [])
+    {
+        this.keys = keys;
+    }
+
+    public get length():number
+    {
+        return this.keys.length;
+    }
+    
+    public clear():void
+    {
+        this.keys.splice(0, this.keys.length);
+    }   
+
+    public clone():InternalKeySequence
+    {
+        return new InternalKeySequence(this.keys.slice(0));
+    }     
+    
+    public contains(key:number):boolean 
+    {
+        return this.keys.indexOf(key) >= 0;
+    }  
+    
+    public item(index:number):number 
+    {
+        return this.keys[index];
+    } 
+    
+    public add(key:number):void 
+    {
+        this.keys.push(key);
+    } 
+    
+    public remove(key:number):void 
+    {
+        let idx = this.keys.indexOf(key);
+        if (idx >= 0)
+        {
+            this.keys.splice(idx, 1);
+        }
+    }
+
+    public toArray():number[]
+    {
+        return this.keys.slice(0);
+    }
+}

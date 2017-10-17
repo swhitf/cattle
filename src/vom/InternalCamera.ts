@@ -54,7 +54,7 @@ export class InternalCamera implements Camera
             ? this.toCameraPoint(type, pt)
             : Point.create(pt);
 
-        return x.subtract(this.vector);
+        return x.add(this.vector);
     }
     
     public toViewPoint(type:'camera'|'surface', pt:PointInput):Point

@@ -45,12 +45,12 @@ export class MouseExpression
         if (this.button !== null && this.button !== mouseData.button)
             return false;
 
-        if (this.keys.length != mouseData.keys.length)
+        if (this.keys.length != mouseData.modifiers.length)
             return false;
 
         for (let k of this.keys)
         {
-            if (!mouseData.keys.contains(k))
+            if (!mouseData.modifiers.contains(k))
             {
                 return false;
             }
@@ -69,12 +69,14 @@ function parse_event(value:string):VisualMouseEventTypes
         case 'down':
         case 'move':
         case 'up':
+        case 'drag':
         case 'enter':
         case 'leave':
             return ('mouse' + value) as VisualMouseEventTypes;
         case 'mousedown':
         case 'mousemove':
         case 'mouseup':
+        case 'mousedrag':
         case 'mouseenter':
         case 'mouseleave':
         case 'click':

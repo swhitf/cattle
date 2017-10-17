@@ -1,3 +1,4 @@
+import { Predicate } from '../../common';
 import { NetHandle } from './NetHandle';
 
 
@@ -35,6 +36,11 @@ export interface NetManager
      * @returns {NetHandle}
      */
     createPrivate(id:string, type:string, from:string, to?:string):NetHandle;
+
+    /**
+     * Destroys the net with the specified id.  Throws an exception if the net does not exist.
+     */
+    destroy(id:string):void 
     
     /**
      * Gets the net with the specified id or `null` if no net exists.
@@ -51,4 +57,10 @@ export interface NetManager
      * @returns {NetHandle}
      */
     item(index:number):NetHandle;
+
+    /**
+     * Returns an array of the public net handles that currently exist.  Optionally a filter can be specified
+     * to reduce the results to a specific list.
+     */
+    toArray(filter?:Predicate<NetHandle>):NetHandle[];
 }

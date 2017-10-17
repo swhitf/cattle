@@ -1,8 +1,9 @@
+import { index } from '../../misc/Util';
 import { NetVisual } from './NetVisual';
 import { GridElement } from '../../core/GridElement';
 import { Surface } from '../../vom/Surface';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
-import { ObjectMap } from '../../common';
+import { ObjectMap, Predicate } from '../../common';
 import { Rect, RectLike } from '../../geom/Rect';
 import { Observable } from '../../base/Observable';
 import { NetHandle } from './NetHandle';
@@ -27,8 +28,27 @@ export class DefaultNetManager implements NetManager
     {
         let nh = NetHandleImpl.create(this.grid, id, type, from, to);
         this.list.push(nh);
+        this.lookup[id] = nh;
 
         return nh;
+    }
+    
+    public destroy(id:string):void 
+    {
+        let { list, lookup } = this;
+
+        let net = lookup[id];
+        
+        if (net)
+        {
+            net.destroy();
+            list.splice(list.indexOf(net), 1);
+            delete lookup[id];
+        }
+        else
+        {
+            throw `Invalid id: ${id}`;
+        }
     }
 
     public createPrivate(id:string, type:string, from:string, to?:string):NetHandle
@@ -53,11 +73,24 @@ export class DefaultNetManager implements NetManager
     {
         return this.list[index] || null;
     }
-}
 
-interface DestroyCallback
-{
-    
+    public toArray(filter?:Predicate<NetHandle>):NetHandle[]
+    {
+        return this.list.filter(filter || (x => true));
+    }
+
+    protected indexOf(id:string):number
+    {
+        for (let i = 0; i < this.list.length; i++) 
+        {
+            if (this.list[i].id === id)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 }
 
 class NetHandleImpl extends AbstractDestroyable implements NetHandle
@@ -69,6 +102,7 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
         visual.mountTo(grid.surface.root);
 
         let handle = new NetHandleImpl();   
+        handle.id = id;
         handle.grid = grid;
         handle.visual = visual;
         handle.type = type;
@@ -76,8 +110,10 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
         
         return handle;
     }
-
+    
     public grid:GridElement;
+
+    public id:string;
     
     public visual:NetVisual;
 
@@ -93,6 +129,13 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
     public get bounds():RectLike
     {
         return this.visual.absoluteBounds;
+    }
+    
+    public destroy():void
+    {
+        super.destroy();
+        this.visual.unmountSelf();
+        this.visual = null;
     }
 
     public move(from:string, to?:string):void

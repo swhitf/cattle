@@ -51,7 +51,13 @@ export class BufferManager
 
     public beginRender():void
     {
-
+        for (let key in this.backMap)
+        {
+            let buffer = this.backMap[key];
+            let gfx = buffer.getContext('2d');
+            gfx.setTransform(1, 0, 0, 1, 0, 0);
+            gfx.clearRect(0, 0, buffer.width, buffer.height);
+        }
     }
 
     public endRender():void

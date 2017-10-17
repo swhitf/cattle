@@ -67,7 +67,7 @@ export class KeyGesture extends AbstractDestroyable
     {
         return ee.on('keydown', (evt:VisualKeyboardEvent) =>
         {
-            if (ke.matches(evt.keys))
+            if (ke.matches(evt))
             {
                 if (ke.exclusive)
                 {
