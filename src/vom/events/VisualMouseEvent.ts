@@ -1,7 +1,7 @@
+import { Modifiers } from '../input/Modifiers';
 import { Camera } from '../Camera';
 import { Point } from '../../geom/Point';
 import { Visual } from '../Visual';
-import { KeySequence } from '../input/KeySequence';
 import { VisualEvent } from './VisualEvent';
 
 
@@ -31,9 +31,9 @@ export class VisualMouseEvent extends VisualEvent
     public readonly button:number;
     
     /**
-     * An object describing the sequence of modifiers pressed before the current event.
+     * An object describing the modifiers keys active during the event.
      */
-    public readonly modifiers:KeySequence;
+    public readonly modifiers:Modifiers;
     
     /**
      * Initializes a new instance of VisualMouseEvent.
@@ -43,9 +43,9 @@ export class VisualMouseEvent extends VisualEvent
      * @param camera The camera on which the mouse gesture was performed.
      * @param surfacePoint The position of the mouse relative to the surface when the event was raised.
      * @param button If applicable the button that was actioned.
-     * @param keysAn object describing the sequence of modifiers pressed before the current event.
+     * @param modifiers An object describing the modifiers keys active during the event.
      */
-    constructor(type:VisualMouseEventTypes, target:Visual, camera:Camera, surfacePoint:Point, button:number, modifiers:KeySequence)
+    constructor(type:VisualMouseEventTypes, target:Visual, camera:Camera, surfacePoint:Point, button:number, modifiers:Modifiers)
     {
         super(type, target); 
         

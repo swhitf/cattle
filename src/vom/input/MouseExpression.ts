@@ -29,7 +29,7 @@ export class MouseExpression
 
     public readonly event:VisualMouseEventTypes = null;
     public readonly button:number = null;
-    public readonly keys:number[] = [];
+    public readonly modifiers:number[] = [];
     public readonly exclusive:boolean = false;
 
     private constructor(cfg:any)
@@ -45,10 +45,10 @@ export class MouseExpression
         if (this.button !== null && this.button !== mouseData.button)
             return false;
 
-        if (this.keys.length != mouseData.modifiers.length)
+        if (this.modifiers.length != mouseData.modifiers.length)
             return false;
 
-        for (let k of this.keys)
+        for (let k of this.modifiers)
         {
             if (!mouseData.modifiers.contains(k))
             {

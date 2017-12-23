@@ -1,4 +1,4 @@
-import { KeySequence } from '../input/KeySequence';
+import { Modifiers } from '../input/Modifiers';
 import { Visual } from '../Visual';
 import { VisualEvent } from './VisualEvent';
 
@@ -19,9 +19,9 @@ export class VisualKeyboardEvent extends VisualEvent
     public readonly key:number;
 
     /**
-     * An object describing the sequence of modifiers pressed before the current event.
+     * An object describing the modifiers keys active during the event.
      */
-    public readonly modifiers:KeySequence;
+    public readonly modifiers:Modifiers;
 
     /**
      * Initializes a new instance of VisualKeyboardEvent.
@@ -29,13 +29,13 @@ export class VisualKeyboardEvent extends VisualEvent
      * @param type A string value that identifies the type of event.
      * @param target The visual that the event was raised from.
      * @param key The key that was actioned.
-     * @param keys An object describing the sequence of modifiers pressed before the current event.
+     * @param modifiers An object describing the modifiers keys active during the event.
      */
-    constructor(type:VisualKeyboardEventTypes, target:Visual, key:number, keys:KeySequence)
+    constructor(type:VisualKeyboardEventTypes, target:Visual, key:number, modifiers:Modifiers)
     {
         super(type, target); 
         
         this.key = key;
-        this.modifiers = keys;
+        this.modifiers = modifiers;
     }
 }
