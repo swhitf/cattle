@@ -25,15 +25,21 @@ export interface GridCellRefParts
     readonly row:number;
 }
 
-
-
-
-
 /**
  * Represents a cell within a grid.
  */
 export class GridCell extends GridObject
 {
+    /**
+     * Determines whether or not the specified string is a valid cell reference.
+     * 
+     * @param str 
+     */
+    public static isRef(str:string):boolean
+    {
+        return !!str.match(/[A-Za-z]+\d+/);
+    }
+
     /**
      * Creates a cell reference string from the specified column and row references.
      * 
@@ -60,17 +66,15 @@ export class GridCell extends GridObject
         {
             let c = cellRef.charAt(i);
             
-            if (isNaN(+c))
+            if (!isNaN(+c))
             {
-                b26cr += c;
-            }
-            else
-            {
-                b10rr = cellRef.substr(i);
+                b26cr = cellRef.slice(0, i);
+                b10rr = cellRef.slice(i, cellRef.length);
+                break;
             }
         }
 
-        return { col: Base26.str(b26cr).num, row: parseInt(b10rr), };
+        return { col: Base26.str(b26cr).num, row: parseInt(b10rr) - 1, };
     }
 
     /**
@@ -125,7 +129,7 @@ export class GridCell extends GridObject
     {
         super();
 
-        this.ref = GridCell.makeRef(params.colRef, params.rowRef + 1);
+        this.ref = GridCell.makeRef(params.colRef, params.rowRef);
         this.type = params.type || 'default';
         this.colRef = params.colRef;
         this.colSpan = params.colSpan || 1;

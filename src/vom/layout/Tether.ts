@@ -1,15 +1,11 @@
-import { EventSubscription } from '../../base/EventEmitter';
 import { Point } from '../../geom/Point';
 import { VisualChangeEvent } from '../events/VisualChangeEvent';
 import { Visual } from '../Visual';
+import { Destroyable } from '../../base/Destroyable';
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 
 
 export type TetherPosition = 'top'|'right'|'bottom'|'left'|'center';
-
-export interface TetherHandle
-{
-    cancel():void;
-}
 
 export interface TetherSettings
 {
@@ -18,12 +14,12 @@ export interface TetherSettings
 
 export class Tether
 {
-    public static anchor(subject:Visual):TetherHandle
+    public static anchor(subject:Visual):Destroyable
     {
         return new AnchorTether(subject);
     }
 
-    public static dock(subject:Visual, to:Visual, where:TetherPosition):TetherHandle
+    public static dock(subject:Visual, to:Visual, where:TetherPosition):Destroyable
     {
         throw 'Not implemented';
     }
@@ -31,36 +27,32 @@ export class Tether
 
 const GeomProps = ['topLeft', 'size', 'top', 'left', 'width', 'height'];
 
-class AnchorTether implements TetherHandle
+class AnchorTether extends AbstractDestroyable
 {
     private origTopLeft:Point;
     private origSize:Point;
     private parent:Visual;
-    private evtSub:EventSubscription;
 
     constructor(private subject:Visual)
     {
+        super();
+
         if (!subject.parent)
         {
             throw 'Cannot anchor a visual without a parent.';
         }
         
-        this.evtSub = subject.parent.on('change', this.onTargetChange.bind(this));
+        this.chain(subject.parent.on('change', this.onTargetChange.bind(this)));
         this.parent = subject.parent;
         this.origTopLeft = subject.topLeft;
         this.origSize = subject.parent.size;
-    }
-
-    public cancel():void
-    {
-        this.evtSub.cancel();
     }
 
     private onTargetChange(e:VisualChangeEvent):void
     {
         if (this.parent != this.subject.parent)
         {
-            this.cancel();
+            this.destroy();
             return;
         }
 

@@ -1,5 +1,35 @@
-import { ObjectIndex, ObjectMap } from '../common';
+import { ObjectIndex, ObjectMap, Predicate } from '../common';
 
+
+export function first<T>(arr:T[], p?:Predicate<T>):T
+{
+    p = p || (x => true);
+
+    for (let i = 0; i < arr.length; i++) 
+    {
+        if (p(arr[i]))
+        {
+            return arr[i];
+        }
+    }
+
+    return null;
+} 
+
+export function last<T>(arr:T[], p?:Predicate<T>):T
+{
+    p = p || (x => true);
+
+    for (let i = arr.length - 1; i >= 0; i--) 
+    {
+        if (p(arr[i]))
+        {
+            return arr[i];
+        }
+    }
+
+    return null;
+} 
 
 export function coalesce<T>(...inputs:T[]):T
 {

@@ -12,7 +12,6 @@ import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
 import { VisualMouseDragEvent } from './events/VisualMouseDragEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
-import { KeyTracker } from './input/KeyTracker';
 import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
@@ -23,6 +22,8 @@ import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
 import * as u from '../misc/Util';
 import * as vq from './VisualQuery';
+import { Modifiers } from './input/Modifiers';
+import { perf } from '../perf';
 
 
 /**
@@ -242,17 +243,16 @@ export class Surface extends SimpleEventEmitter
         view.height = this.height;
         view.tabIndex = -1;
         
-        let keys = new KeyTracker(window);
-        view.addEventListener('mousedown', this.onViewMouseEvent.bind(this, 'mousedown', keys));
-        view.addEventListener('mousemove', this.onViewMouseEvent.bind(this, 'mousemove', keys));
-        view.addEventListener('mouseup', this.onViewMouseEvent.bind(this, 'mouseup', keys));
-        view.addEventListener('click', this.onViewMouseEvent.bind(this, 'click', keys));
-        view.addEventListener('dblclick', this.onViewMouseEvent.bind(this, 'dblclick', keys));
-        view.addEventListener('keydown', this.onViewKeyEvent.bind(this, 'keydown', keys));
-        view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup', keys));
+        view.addEventListener('mousedown', this.onViewMouseEvent.bind(this, 'mousedown'));
+        view.addEventListener('mousemove', this.onViewMouseEvent.bind(this, 'mousemove'));
+        view.addEventListener('mouseup', this.onViewMouseEvent.bind(this, 'mouseup'));
+        view.addEventListener('click', this.onViewMouseEvent.bind(this, 'click'));
+        view.addEventListener('dblclick', this.onViewMouseEvent.bind(this, 'dblclick'));
+        view.addEventListener('keydown', this.onViewKeyEvent.bind(this, 'keydown'));
+        view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup'));
 
         let dragSupport = new DragHelper(
-            view, (me:MouseEvent, distance:Point) => this.onViewMouseDragEvent(keys, me, distance));
+            view, (me:MouseEvent, distance:Point) => this.onViewMouseDragEvent(me, distance));
 
         return view;
     }
@@ -308,15 +308,15 @@ export class Surface extends SimpleEventEmitter
         }
     }
 
-    private onViewMouseEvent(type:VisualMouseEventTypes, keyTracker:KeyTracker, me:MouseEvent):void
+    private onViewMouseEvent(type:VisualMouseEventTypes, me:MouseEvent):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
         
         let camera = this.cameras.test(viewPt);
         if (!camera) return;
 
+        let modifiers = Modifiers.create(me);
         let surfacePt = camera.toSurfacePoint('view', viewPt);        
-        let keys = keyTracker.capture();
         let stack = this.test(surfacePt);
         let hoverVisual = this.tracker.get('hover');
 
@@ -324,7 +324,7 @@ export class Surface extends SimpleEventEmitter
         {
             if (hoverVisual)
             {
-                let evt = new VisualMouseEvent('mouseleave', hoverVisual, camera, surfacePt, me.button, keys);    
+                let evt = new VisualMouseEvent('mouseleave', hoverVisual, camera, surfacePt, me.button, modifiers);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
 
@@ -332,34 +332,36 @@ export class Surface extends SimpleEventEmitter
 
             if (hoverVisual)
             {
-                let evt = new VisualMouseEvent('mouseenter', hoverVisual, camera, surfacePt, me.button, keys);    
+                let evt = new VisualMouseEvent('mouseenter', hoverVisual, camera, surfacePt, me.button, modifiers);    
                 this.propagateEvent(evt, [ hoverVisual ]);
             }
         }
 
-        let evt = new VisualMouseEvent(type, stack[0] || null, camera, surfacePt, me.button, keys);
+        let evt = new VisualMouseEvent(type, stack[0] || null, camera, surfacePt, me.button, modifiers);
         this.propagateEvent(evt, stack);
     }
 
-    private onViewMouseDragEvent(keyTracker:KeyTracker, me:MouseEvent, distance:Point):void
+    private onViewMouseDragEvent(me:MouseEvent, distance:Point):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
         
         let camera = this.cameras.test(viewPt);
         if (!camera) return;
 
+        let modifiers = Modifiers.create(me);
         let surfacePt = camera.toSurfacePoint('view', viewPt);        
-        let keys = keyTracker.capture();
         let stack = this.test(surfacePt);
 
-        let evt = new VisualMouseDragEvent(stack[0] || null, camera, surfacePt, me.button, keys, distance);
+        let evt = new VisualMouseDragEvent(stack[0] || null, camera, surfacePt, me.button, modifiers, distance);
         this.propagateEvent(evt, stack);
     }
 
-    private onViewKeyEvent(type:VisualKeyboardEventTypes, keyTracker:KeyTracker, ke:KeyboardEvent):void
+    private onViewKeyEvent(type:VisualKeyboardEventTypes, ke:KeyboardEvent):void
     {
+        ke.preventDefault();
+
         let key = ke.keyCode;
-        let keys = keyTracker.capture();
+        let modifiers = Modifiers.create(ke);
         let stack = [] as Visual[];
         let hoverVisual = this.tracker.get('hover');
 
@@ -370,7 +372,7 @@ export class Surface extends SimpleEventEmitter
             x = x.parent;
         }
 
-        let evt = new VisualKeyboardEvent(type, hoverVisual || null, key, keys);
+        let evt = new VisualKeyboardEvent(type, hoverVisual || null, key, modifiers);
         this.propagateEvent(evt, stack);
     }
 

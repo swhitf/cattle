@@ -101,7 +101,7 @@ class Animation implements RefreshTicker
         {
             if (!visual.isMounted())
             {
-                es.cancel();
+                es.destroy();
                 this.stop = true;
             }
         });

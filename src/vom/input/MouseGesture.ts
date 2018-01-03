@@ -3,10 +3,11 @@ import { VoidCallback } from '../../common';
 import { VisualMouseEvent } from '../events/VisualMouseEvent';
 import { Surface } from '../Surface';
 import { Visual } from '../Visual';
-import { KeyGesture } from './KeyGesture';
+import { KeyBehavior } from './KeyBehavior';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { MouseExpression } from './MouseExpression';
-import { EventEmitter, EventSubscription } from '../../base/EventEmitter';
+import { EventEmitter } from '../../base/EventEmitter';
+import { Destroyable } from '../../base/Destroyable';
 
 
 export interface MouseGestureCallback<T extends VisualMouseEvent>
@@ -20,8 +21,6 @@ export class MouseGesture extends AbstractDestroyable
     {
         return new MouseGesture(objects);
     }
-
-    private subs:EventSubscription[] = [];
 
     private constructor(private emitters:EventEmitter[])
     {
@@ -37,54 +36,49 @@ export class MouseGesture extends AbstractDestroyable
 
         for (let expr of expressions)
         {
-            let es = this.emitters.map(x => this.createListener(
+            let subs = this.emitters.map(x => this.createListener(
                 x, MouseExpression.parse(expr), callback));
     
-            this.subs = this.subs.concat(es);
+            this.chain(...subs);
         }
 
         return this;
     }
 
-    private createListener(target:EventEmitter, expr:MouseExpression, callback:any):EventSubscription
+    private createListener(target:EventEmitter, expr:MouseExpression, callback:any):Destroyable
     {
         return target.on(expr.event, (evt:VisualMouseEvent) =>
         {
             if (expr.matches(evt))
             {
-                if (expr.exclusive)
-                {
-                    evt.cancel();
-                }
-
                 callback(evt);
             }
         });
     }
 }
 
-class RegularListener implements EventSubscription
-{
-    public cancel:VoidCallback;
+// class RegularListener extends AbstractDestroyable 
+// {
+//     constructor(target:EventEmitter, expr:MouseExpression, callback:any)
+//     {
+//         super(); 
 
-    constructor(target:EventEmitter, expr:MouseExpression, callback:any)
-    {
-        let es = target.on(expr.event, (evt:VisualMouseEvent) =>
-        {
-            if (expr.matches(evt))
-            {
-                if (expr.exclusive)
-                {
-                    evt.cancel();
-                }
+//         let es = target.on(expr.event, (evt:VisualMouseEvent) =>
+//         {
+//             if (expr.matches(evt))
+//             {
+//                 if (expr.exclusive)
+//                 {
+//                     evt.cancel();
+//                 }
 
-                callback(evt);
-            }
-        });
+//                 callback(evt);
+//             }
+//         });
         
-        this.cancel = es.cancel;
-    }
-}
+//         this.chain(es);
+//     }
+// }
 
 // class DragListener implements EventSubscription
 // {

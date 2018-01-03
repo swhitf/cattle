@@ -20,6 +20,7 @@ export class NetVisual extends Visual
         let { border } = this;
 
         let offset = (border.width % 2) / 2; 
+        let deflate = Math.floor(border.width / 2);
 
         gfx.lineWidth = border.width;
         gfx.strokeStyle = border.color;
@@ -46,7 +47,10 @@ export class NetVisual extends Visual
         }
         
         gfx.beginPath();
-        gfx.rect(offset, offset, this.width, this.height);
+        if (deflate)
+            gfx.rect(offset + deflate, offset + deflate, this.width - (deflate * 2) + 1, this.height - (deflate * 2) + 1);
+        else
+            gfx.rect(offset + deflate, offset + deflate, this.width, this.height);
         gfx.fill();
         gfx.stroke();
     }

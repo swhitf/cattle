@@ -1,10 +1,6 @@
 import { Event } from './Event';
+import { Destroyable } from './Destroyable';
 
-
-export interface EventSubscription
-{
-    cancel():void;
-}
 
 export interface EventCallback
 {
@@ -13,7 +9,7 @@ export interface EventCallback
 
 export interface EventEmitter
 {
-    on(event:string, callback:EventCallback):EventSubscription;
+    on(event:string, callback:EventCallback):Destroyable;
 
     off(event:string, callback?:EventCallback):void;
 

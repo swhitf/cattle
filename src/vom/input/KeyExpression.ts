@@ -1,108 +1,95 @@
 import { VisualKeyboardEvent } from '../events/VisualKeyboardEvent';
 import { Keys } from './Keys';
-import { KeySequence } from './KeySequence';
+import { Modifiers } from './Modifiers';
 
 
 export class KeyExpression
 {
+    public static create(e:KeyboardEvent|VisualKeyboardEvent):KeyExpression 
+    {
+        if (e instanceof KeyboardEvent) 
+        {
+            let keys = [ e.keyCode ];
+            if (e.ctrlKey) keys.push(Keys.CTRL);
+            if (e.altKey) keys.push(Keys.ALT);
+            if (e.shiftKey) keys.push(Keys.SHIFT);
+            return new KeyExpression(keys);
+        }
+        else 
+        {
+            let keys = [ e.key ];
+            if (e.modifiers.ctrl) keys.push(Keys.CTRL);
+            if (e.modifiers.alt) keys.push(Keys.ALT);
+            if (e.modifiers.shift) keys.push(Keys.SHIFT);
+            return new KeyExpression(keys);
+        }
+    }
+
     public static parse(input:string):KeyExpression
     {
+        input = input || '';
+
         let exclusive = input[0] === '!';
         if (exclusive)
         {
             input = input.substr(1);
         }
 
-        let sequence = input
+        let [keys, ...tags] = input.split('/');
+
+        let sequence = keys
             .split(/[\s\-\+]+/)
+            .filter(x => !!x)
             .map(x => Keys.parse(x));
 
-        return new KeyExpression(sequence, exclusive);
+        return new KeyExpression(sequence, tags);
     }
 
-    public readonly sequence:number[];
     public readonly exclusive:boolean;
+    public readonly key:number;
+    public readonly modifiers:Modifiers;
+    public readonly exact:boolean;
 
-    private constructor(sequence:number[], exclusive:boolean)
+    private constructor(keys:number[], tags:string[] = [])
     {
-        this.sequence = sequence;
-        this.exclusive = exclusive;
-
-        // this.ctrl = keys.some(x => x === Keys.CTRL);
-        // this.alt = keys.some(x => x === Keys.ALT);
-        // this.shift = keys.some(x => x === Keys.SHIFT);
-        // this.key = keys.filter(x => x !== Keys.CTRL && x !== Keys.ALT && x !== Keys.SHIFT)[0] || null;
+        this.key = keys.filter(x => x !== Keys.CTRL && x !== Keys.ALT && x !== Keys.SHIFT)[0] || null;
+        this.exact = !!~tags.indexOf('e');
+        this.modifiers = new Modifiers(
+            keys.some(x => x === Keys.ALT),
+            keys.some(x => x === Keys.CTRL),
+            keys.some(x => x === Keys.SHIFT)
+        );
     }
     
-        public matches(input:KeyExpression|VisualKeyboardEvent|KeySequence):boolean
-        {
-            if (input instanceof KeyExpression)
-            {
-                return array_contains(input.sequence, this.sequence);
-            }
-            else if (input instanceof VisualKeyboardEvent)
-            {
-                let sequence = input.modifiers.toArray();
-                sequence.push(input.key);
-    
-                return array_contains(sequence, this.sequence);
-            }
-            else
-            {
-                return array_contains(input.toArray(), this.sequence);
-            }        
-        }
-        
-        public matchesExact(input:KeyExpression|VisualKeyboardEvent|KeySequence):boolean
-        {
-            if (input instanceof KeyExpression)
-            {
-                return array_equals(input.sequence, this.sequence);
-            }
-            else if (input instanceof VisualKeyboardEvent)
-            {
-                let sequence = input.modifiers.toArray();
-                sequence.push(input.key);
-    
-                return array_equals(sequence, this.sequence);
-            }
-            else
-            {
-                return array_equals(input.toArray(), this.sequence);
-            }        
-        }
-}
-
-export function array_equals<T>(a:T[], b:T[]):boolean
-{
-    if (a.length !== b.length)
+    public matches(input:KeyExpression|KeyboardEvent|VisualKeyboardEvent):boolean 
     {
-        return false;
-    }
+        const expr = norm(input);
 
-    for (let i = 0; i < a.length; i++)
-    {
-        if (a[i] !== b[i])
-        {
+        if (this.key != expr.key)
             return false;
-        }
+
+        if (this.exact && !this.modifiers.matchesExact(expr.modifiers))
+            return false;
+    
+        if (!this.modifiers.matches(expr.modifiers))
+            return false;
+        
+        return true;
     }
 
-    return true;
+    public toString():string
+    {
+        const keys = [ String.fromCharCode(this.key) ];
+        if (this.modifiers.ctrl) keys.push('CTRL');
+        if (this.modifiers.alt) keys.push('ALT');
+        if (this.modifiers.shift) keys.push('SHIFT');
+        return keys.join('+');
+    }
 }
 
-export function array_contains<T>(arr:T[], x:T[]):boolean
+function norm(x:KeyExpression|KeyboardEvent|VisualKeyboardEvent):KeyExpression 
 {
-    for (let i = 0, j = 0; i < arr.length; i++)
-    {
-        if (arr[i] == x[j]) 
-        {
-            if (++j >= x.length)
-            {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return (x instanceof KeyboardEvent || x instanceof VisualKeyboardEvent)
+        ? KeyExpression.create(x)
+        : x;
 }

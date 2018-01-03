@@ -100,7 +100,7 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
         let visual = new NetVisual();
         visual.classes.add(type);
         visual.mountTo(grid.surface.root);
-
+ 
         let handle = new NetHandleImpl();   
         handle.id = id;
         handle.grid = grid;

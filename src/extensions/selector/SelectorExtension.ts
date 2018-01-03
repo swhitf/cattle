@@ -1,4 +1,4 @@
-import { KeyGesture } from '../../vom/input/KeyGesture';
+import { KeyBehavior } from '../../vom/input/KeyBehavior';
 import { CellVisual } from '../../core/CellVisual';
 import { VisualMouseEvent } from '../../vom/events/VisualMouseEvent';
 import { MouseGesture } from '../../vom/input/MouseGesture';
@@ -12,11 +12,11 @@ import { GridElement } from '../../core/GridElement';
 import { Command, Routine, Variable } from '../../core/Extensibility';
 import { GridKernel, GridVariable } from '../../core/GridKernel';
 import { GridCell } from '../../model/GridCell';
-import { Point, PointLike } from '../../geom/Point';
+import { Point, PointLike, PointInput } from '../../geom/Point';
 import { RectLike, Rect } from '../../geom/Rect';
-import * as Tether from 'tether';
 import * as Dom from '../../misc/Dom';
 import * as u from '../../misc/Util';
+import { GridWalk } from '../../model/GridWalk';
 
 
 let Vectors = {
@@ -51,17 +51,20 @@ export interface SelectorExtensionExports
     selectNeighbor(vector:Point, autoScroll?:boolean):void;
 }
 
-export interface Selection extends Destroyable
+export type SelectNextTargetType = 'cell'|'dataPoint'|'edge';
+
+export interface Selection
 {
     readonly from:string;
 
     readonly to:string;
 }
 
-export enum SelectHints
+export enum SelectMode
 {
-    AutoScroll,
-    Append,
+    Default = 'default',
+    Extend = 'extend',
+    Append = 'append',
 }
 
 export class SelectorExtension
@@ -84,10 +87,6 @@ export class SelectorExtension
         KeyInput.for(grid)
             .on('!TAB', () => this.selectNeighbor(Vectors.e))
             .on('!SHIFT+TAB', () => this.selectNeighbor(Vectors.w))
-            .on('!RIGHT_ARROW', () => this.selectNeighbor(Vectors.e))
-            .on('!LEFT_ARROW', () => this.selectNeighbor(Vectors.w))
-            .on('!UP_ARROW', () => this.selectNeighbor(Vectors.n))
-            .on('!DOWN_ARROW', () => this.selectNeighbor(Vectors.s))
             .on('!CTRL+RIGHT_ARROW', () => this.selectEdge(Vectors.e))
             .on('!CTRL+LEFT_ARROW', () => this.selectEdge(Vectors.w))
             .on('!CTRL+UP_ARROW', () => this.selectEdge(Vectors.n))
@@ -108,23 +107,32 @@ export class SelectorExtension
         */
 
         //event.target to cell ref
-        const e2ref = (e:VisualMouseEvent) => {
+        const ref = (e:VisualMouseEvent) => {
             let cell = grid.layout.pickCell(e.surfacePoint);
             return !!cell ? cell.ref : null;
         };
 
         MouseGesture.for(grid.surface)
-            .on(['LEFT.DOWN', 'LEFT.DOWN+CTRL+SHIFT'], e => this.select(e2ref(e)))
-            .on(['LEFT.DOWN+CTRL'], e => this.select(e2ref(e), null, SelectHints.Append))
-            .on(['LEFT.DRAG', 'LEFT.DOWN+SHIFT'], e => this.select((this.primarySelection || {} as any).from, e2ref(e)))
-            //.on('LEFT.DRAG', e => this.select(et2ref(e)))
+            .on(['LEFT.DOWN/e'], e => this.select(ref(e)))
+            .on(['LEFT.DOWN+CTRL/e'], e => this.select(ref(e), SelectMode.Append))
+            .on(['LEFT.DRAG', 'LEFT.DOWN+SHIFT'], e => this.select(ref(e), SelectMode.Extend))
         ;
 
-        KeyGesture.for(grid.surface)
-            .on('RIGHT_ARROW', () => this.selectNext(Vectors.e))
-            .on('LEFT_ARROW', () => this.selectNext(Vectors.w))
-            .on('UP_ARROW', () => this.selectNext(Vectors.n))
-            .on('DOWN_ARROW', () => this.selectNext(Vectors.s))
+        KeyBehavior.for(grid.surface)
+            .on('TAB/e', () => this.selectNext('cell', Vectors.e))
+            .on('SHIFT+TAB/e', () => this.selectNext('cell', Vectors.w))
+            .on('RIGHT_ARROW/e', () => this.selectNext('cell', Vectors.e))
+            .on('LEFT_ARROW/e', () => this.selectNext('cell', Vectors.w))
+            .on('UP_ARROW/e', () => this.selectNext('cell', Vectors.n))
+            .on('DOWN_ARROW/e', () => this.selectNext('cell', Vectors.s))
+            .on('SHIFT+RIGHT_ARROW/e', () => this.selectNext('cell', Vectors.e, SelectMode.Extend))
+            .on('SHIFT+LEFT_ARROW/e', () => this.selectNext('cell', Vectors.w, SelectMode.Extend))
+            .on('SHIFT+UP_ARROW/e', () => this.selectNext('cell', Vectors.n, SelectMode.Extend))
+            .on('SHIFT+DOWN_ARROW/e', () => this.selectNext('cell', Vectors.s, SelectMode.Extend))
+            .on('HOME/e', () => this.selectNext('edge', Vectors.w))
+            .on('END/e', () => this.selectNext('edge', Vectors.e))
+            .on('CTRL+HOME/e', () => this.selectNext('edge', Vectors.nw))
+            .on('CTRL+END/e', () => this.selectNext('edge', Vectors.se))
         ;
 
         // grid.on('invalidate', () => this.reselect(false));
@@ -145,7 +153,7 @@ export class SelectorExtension
 
     private get primarySelection():Selection
     {
-        return !!this.selections.length ? this.selections[this.selections.length - 1] : null;
+        return u.last(this.selections) || null;
     }
 
     // private createElements(target:HTMLElement):void
@@ -176,8 +184,8 @@ export class SelectorExtension
     //     this.captureSelector = Selector.create(layer, false);
     // }
 
-    private select(from:string, to:string, ...hints:SelectHints[]):void;
-    private select(cell:string, ...hints:SelectHints[]):void;
+    private select(from:string, to:string, mode?:SelectMode):void;
+    private select(cell:string, mode?:SelectMode):void;
 
     @Command()
     private select(...args:any[]):void
@@ -296,18 +304,17 @@ export class SelectorExtension
     // }
 
     @Command()
-    private selectNext(vector:Point):void
+    private selectNext(type:SelectNextTargetType, vector:PointInput, mode?:SelectMode):void
     {
         let { grid, primarySelection } = this;
 
-        vector = vector.normalize();
-
         if (primarySelection)
         {
-            let cell = grid.model.findCellNeighbor(primarySelection.from, vector);
-            if (cell)
+            let source = mode == SelectMode.Extend ? primarySelection.to : primarySelection.from;
+            let nextCell = this.resolveTarget(source, type, vector)
+            if (nextCell)
             {
-                this.doSelect(cell.ref);
+                this.doSelect(nextCell.ref, mode);
             }
         }
     }
@@ -373,57 +380,51 @@ export class SelectorExtension
     //     this.selectGesture = null;
     // }
 
-    private doSelect(from:string, to:string, ...hints:SelectHints[]):void;
-    private doSelect(cell:string, ...hints:SelectHints[]):void;
+    private doSelect(from:string, to:string, mode?:SelectMode):void;
+    private doSelect(cell:string, mode?:SelectMode):void;
 
     @Routine()
     private doSelect(...args:any[]):void
     {
+        args = args.filter(x => !!x);
+
         if (!this.canSelect)
             return;
 
-        while (args[0] === undefined && args.length > 0) 
-        {
-            args.splice(0, 1);
-        }
+        let from = args[0];
+        let to = GridCell.isRef(args[0]) ? args[0] : from;
+        let mode = !GridCell.isRef(u.last(args)) ? u.last(args) : SelectMode.Default;
 
-        let from = args[0] || null;
-        let to = typeof(args[1]) === 'string' ? args[1] : from;
-        let hints = args.slice(typeof(args[1]) === 'string' ? 2 : 1);
-
-        let selections = this.selections;
-        let grid = this.grid;
+        let { grid, selections } = this;
         let model = grid.model;
 
-        for (let sel of selections) {
-            if (sel.from == from && sel.to == to) {
-                return;
-            }
-        }
+        let valid = !!model.findCell(from) && !!model.findCell(to);
 
-        if (from && !!model.findCell(from) && !!model.findCell(to))
+        if (mode == SelectMode.Default)
         {
-            let sel = new SelectionImpl(from, to);
-
-            if (!!~hints.indexOf(SelectHints.Append))
+            if (valid)
             {
-                selections.push(sel);
+                selections.splice(0, selections.length, new SelectionImpl(from, to));
             }
             else
             {
-                selections.splice(0, selections.length, sel);
-            }
-
-            if (!!~hints.indexOf(SelectHints.AutoScroll))
-            {
-                // let primaryRect = grid.getCellViewRect(cellRefs[0]);
-                // grid.scrollTo(primaryRect);
+                selections.splice(0, selections.length);
             }
         }
-        else
+        else if (mode == SelectMode.Append)
         {
-            // this.selection = [];
-            // this.selectGesture = null;
+            if (valid)
+            {
+                selections.push(new SelectionImpl(from, to));
+            }
+        }
+        else if (mode == SelectMode.Extend)
+        {
+            if (!!selections.length && valid)
+            {
+                let primary = u.last(selections);
+                selections[selections.length - 1] = new SelectionImpl(primary.from, from);
+            }
         }
 
         grid.emit(new GridEvent('select', grid));
@@ -441,6 +442,10 @@ export class SelectorExtension
         for (let id in selectionMap)
         {
             let s = selectionMap[id];
+
+            //If primary selection and only one cell, don't show a selection net
+            if (s == primarySelection && s.from == s.to)
+                continue;
 
             if (!netMap[id])
             {
@@ -461,18 +466,42 @@ export class SelectorExtension
         }
 
         //If we have selections, show the primary net on the primary selection from cell
-        if (primarySelection) {            
+        if (primarySelection)
+        {            
             let inputNet = nets.get('input');
-            if (inputNet) {
+            if (inputNet) 
+            {
                 inputNet.move(primarySelection.from);
             }
-            else {
+            else 
+            {
                 inputNet = nets.create('input', 'input', primarySelection.from);
             }
         }
-        else {
+        else 
+        {
             nets.destroy('input');
         }
+    }
+
+    private resolveTarget(fromRef:string, target:SelectNextTargetType, vector:PointInput):GridCell 
+    {
+        let { model } = this.grid;
+
+        if (target == 'cell')
+        {
+            return GridWalk.until(model, fromRef, vector, cell => cell.ref != fromRef);
+        }
+        else if (target == 'edge')
+        {
+            return GridWalk.toEdge(model, fromRef, vector);
+        }
+        else if (target == 'dataPoint')
+        {
+            return GridWalk.toEdge(model, fromRef, vector);
+        }
+
+        throw 'What is this type: ' + target;
     }
 
     // private alignSelectors(animate:boolean):void
@@ -539,7 +568,7 @@ export class SelectorExtension
 //     }
 // }
 
-class SelectionImpl extends AbstractDestroyable implements Selection
+class SelectionImpl implements Selection
 {
     private static tracker:number = 0;
 
@@ -547,8 +576,6 @@ class SelectionImpl extends AbstractDestroyable implements Selection
 
     constructor(public from:string, public to:string)
     {
-        super();
-
         this.id = `S${++SelectionImpl.tracker}`;
     }
 

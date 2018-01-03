@@ -6,6 +6,8 @@ var silent = process.argv.some(x => x == '-s');
 var loop = process.argv.some(x => x == '-w');
 var tracker = {};
 
+
+
 function log(msg) {
     if (!silent) {
         console.log(msg);

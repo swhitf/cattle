@@ -2,7 +2,7 @@ import { ObjectIndex, ObjectMap } from '../common';
 import { GridColumn } from './GridColumn';
 import { GridCell } from './GridCell';
 import { GridRow } from './GridRow';
-import { Point } from '../geom/Point';
+import { Point, PointInput } from '../geom/Point';
 import * as u from '../misc/Util';
 
 
@@ -73,6 +73,7 @@ export class GridModel
 
     private byId:ObjectMap<GridCell>;
     private byCoord:ObjectIndex<ObjectIndex<GridCell>>;
+    private dims = { width:0, height:0 };
 
     /**
      * Initializes a new instance of GridModel.
@@ -88,6 +89,22 @@ export class GridModel
         this.rows = rows;
 
         this.refresh();
+    }
+
+    /**
+     * Gets the width of the model in columns.
+     */
+    public get width():number
+    {
+        return this.dims.width;
+    }
+
+    /**
+     * Gets the height of the model in rows.
+     */
+    public get height():number
+    {
+        return this.dims.height;
     }
 
     /**
@@ -135,9 +152,20 @@ export class GridModel
 
         this.byId = u.index(cells, x => x.ref);
         this.byCoord = {};
+        this.dims = { width: 0, height: 0};
 
         for (let cell of cells)
         {
+            if (this.dims.width < cell.colRef + cell.colSpan)
+            {
+                this.dims.width = cell.colRef + cell.colSpan;
+            }
+
+            if (this.dims.height < cell.rowRef + cell.rowSpan)
+            {
+                this.dims.height = cell.rowRef + cell.rowSpan;
+            }
+
             for (let co = 0; co < cell.colSpan; co++) 
             {
                 for (let ro = 0; ro < cell.rowSpan; ro++)

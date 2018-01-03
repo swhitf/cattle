@@ -5,7 +5,7 @@
  */
 export class GridObject
 {
-    private n:number = Number.MIN_SAFE_INTEGER;
+    private n:number = Number.MIN_VALUE;
 
     /**
      * Gets a numerical value that represents the unique state of the element.  When an Observable()

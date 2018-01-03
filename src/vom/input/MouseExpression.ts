@@ -1,6 +1,7 @@
 import { VisualMouseEvent, VisualMouseEventTypes } from '../events/VisualMouseEvent';
 import { Keys } from './Keys';
 import * as u from '../../misc/Util';
+import { Modifiers } from './Modifiers';
 
 
 
@@ -12,25 +13,21 @@ export class MouseExpression
             keys: [],
         };
 
-        cfg.exclusive = input[0] === '!';
-        if (cfg.exclusive)
-        {
-            input = input.substr(1);
-        }
+        let [expr, ...tags] = input.split('/');
+        let [left, right] = divide_expression(expr);
 
-        let [left, right] = divide_expression(input);
-
-        cfg.button = parse_button(left);
         cfg.event = parse_event(left);
-        cfg.keys = !!right ? Keys.parseExpression(right) : [];
+        cfg.button = parse_button(left);
+        cfg.modifiers = Modifiers.parse(right);
+        cfg.exact = !!~tags.indexOf('e');
 
         return new MouseExpression(cfg);
     }
 
     public readonly event:VisualMouseEventTypes = null;
     public readonly button:number = null;
-    public readonly modifiers:number[] = [];
-    public readonly exclusive:boolean = false;
+    public readonly modifiers:Modifiers;
+    public readonly exact:boolean;
 
     private constructor(cfg:any)
     {
@@ -45,16 +42,11 @@ export class MouseExpression
         if (this.button !== null && this.button !== mouseData.button)
             return false;
 
-        if (this.modifiers.length != mouseData.modifiers.length)
+        if (this.exact && !this.modifiers.matchesExact(mouseData.modifiers))
             return false;
-
-        for (let k of this.modifiers)
-        {
-            if (!mouseData.modifiers.contains(k))
-            {
-                return false;
-            }
-        }
+        
+        if (!this.modifiers.matches(mouseData.modifiers))
+            return false;
 
         return true;
     }

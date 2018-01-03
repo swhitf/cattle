@@ -1,9 +1,10 @@
-import { KeyExpression } from './KeyExpression';
-import { VisualKeyboardEvent } from '../events/VisualKeyboardEvent';
-import { Visual } from '../Visual';
-import { Surface } from '../Surface';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
-import { EventEmitter, EventSubscription } from '../../base/EventEmitter';
+import { Destroyable } from '../../base/Destroyable';
+import { EventEmitter } from '../../base/EventEmitter';
+import { VisualKeyboardEvent } from '../events/VisualKeyboardEvent';
+import { Surface } from '../Surface';
+import { Visual } from '../Visual';
+import { KeyExpression } from './KeyExpression';
 
 
 /*KeyInput.for(grid)
@@ -24,26 +25,24 @@ import { EventEmitter, EventSubscription } from '../../base/EventEmitter';
 .on('!CTRL+END', () => this.selectBorder(Vectors.se))
 */
 
-export interface KeyGestureCallback
+export interface KeyBehaviorCallback
 {
     (e?:VisualKeyboardEvent):void;
 }
 
-export class KeyGesture extends AbstractDestroyable
+export class KeyBehavior extends AbstractDestroyable
 {
-    public static for(...objects:Array<Surface|Visual>):KeyGesture
+    public static for(...objects:Array<Surface|Visual>):KeyBehavior
     {
-        return new KeyGesture(objects);
+        return new KeyBehavior(objects);
     }
-
-    private subs:EventSubscription[] = [];
 
     private constructor(private emitters:EventEmitter[])
     {
         super();
     }
 
-    public on(expressions:string|string[], callback:any):KeyGesture
+    public on(expressions:string|string[], callback:any):KeyBehavior
     {
         if (!Array.isArray(expressions))
         {
@@ -52,18 +51,18 @@ export class KeyGesture extends AbstractDestroyable
 
         for (let re of expressions)
         {
-            let ss = this.emitters.map(ee => this.createListener(
+            let subs = this.emitters.map(ee => this.createListener(
                 ee,
                 KeyExpression.parse(re),
                 callback));
 
-            this.subs = this.subs.concat(ss);
+            this.chain(...subs);
         }
 
         return this;
     }
 
-    private createListener(ee:EventEmitter, ke:KeyExpression, callback:KeyGestureCallback):EventSubscription
+    private createListener(ee:EventEmitter, ke:KeyExpression, callback:KeyBehaviorCallback):Destroyable
     {
         return ee.on('keydown', (evt:VisualKeyboardEvent) =>
         {

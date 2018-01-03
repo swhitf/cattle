@@ -58,6 +58,8 @@ export class VisualSequence
 
     public update():void
     {
+        console.log('sequence:update');
+
         let node = this.head;
 
         while (true)

@@ -14,32 +14,15 @@
   "author": "Stephen Whitfield",
   "license": "MIT",
   "dependencies": {
-    "@types/papaparse": "^4.1.28",
-    "@types/tether": "^1.4.0",
+    "@types/bases": "^0.2.2",
     "bases": "^0.2.1",
-    "clipboard-js": "^0.3.3",
-    "es6-promise": "^4.0.5",
-    "papaparse": "^4.1.2",
     "parse-color": "^1.0.0",
-    "tether": "1.4.0"
+    "reflect-metadata": "^0.1.10"
   },
   "devDependencies": {
-    "@types/jquery": "^2.0.34",
-    "browserify": "^13.3.0",
-    "concurrently": "^3.5.0",
-    "fs-extra": "^2.1.2",
-    "glob": "^7.1.2",
-    "gulp": "^3.9.1",
-    "gulp-connect": "^5.0.0",
-    "http-server": "^0.10.0",
-    "merge-stream": "^1.0.1",
-    "parallelshell": "^2.0.0",
-    "parse-color": "^1.0.0",
-    "reflect-metadata": "^0.1.10",
-    "tsify": "^3.0.0",
-    "typescript": "^2.1.4",
-    "vinyl-source-stream": "^1.1.0",
-    "watch": "^1.0.2",
-    "watchify": "^3.8.0"
+    "browserify": "^14.5.0",
+    "fs-extra": "^5.0.0",
+    "tsify": "^3.0.4",
+    "watch": "^1.0.2"
   }
 }

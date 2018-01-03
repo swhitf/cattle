@@ -408,9 +408,17 @@ class VisualTagSetImpl implements VisualTagSet
 
         for (let key in this.values)
         {
-            arr.push(this.values[key]);
+            if (this.values[key])
+            {
+                arr.push(key);
+            }
         }
 
         return arr;
+    }
+
+    public toString():string
+    {
+        return this.toArray().join(' ');
     }
 }

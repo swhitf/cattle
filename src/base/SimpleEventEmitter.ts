@@ -1,15 +1,17 @@
 import { Event } from "./Event";
-import { EventEmitter, EventCallback, EventSubscription } from "./EventEmitter";
+import { EventEmitter, EventCallback } from "./EventEmitter";
+import { Destroyable } from "./Destroyable";
+import { AbstractDestroyable } from "./AbstractDestroyable";
 
 
 export class SimpleEventEmitter implements EventEmitter
 {
     private buckets:any = {};
 
-    public on(event:string, callback:EventCallback):EventSubscription
+    public on(event:string, callback:EventCallback):Destroyable
     {
         this.getCallbackList(event).push(callback);
-        return { cancel: () => this.off(event, callback) };
+        return new CallbackDestroyable(() => this.off(event, callback));
     }
 
     public off(event:string, callback?:EventCallback):void
@@ -42,5 +44,19 @@ export class SimpleEventEmitter implements EventEmitter
     private getCallbackList(event:string):EventCallback[]
     {
         return this.buckets[event] || (this.buckets[event] = []);
+    }
+}
+
+class CallbackDestroyable extends AbstractDestroyable
+{
+    constructor(private callback:any)
+    {
+        super();
+    }
+
+    public destroy():void 
+    {
+        this.destroy();
+        this.callback();
     }
 }
