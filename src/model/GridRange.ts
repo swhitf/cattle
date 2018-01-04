@@ -16,11 +16,6 @@ export interface GridRangeLike
      * The cells in the GridRange ordered from left to right.
      */
     readonly ltr:GridCell[];
-    
-    /**
-     * The cells in the GridRange ordered from top to bottom.
-     */
-    readonly ttb:GridCell[];
 
     /**
      * The width of the GridRange in columns.
@@ -40,10 +35,13 @@ export interface GridRangeLike
 
 
 /**
- * Provides a method of selecting and representing a range of cells from a `GridModel`.
+ * Provides a method of selecting and representing a range of cells from a `GridModel`.  GridRanges
+ * will always be rectangular and contain no gaps unless there are cells missing.
  */
 export class GridRange implements GridRangeLike
 {
+    public 
+
     /**
      * Creates a new GridRange object from the specified cellRefs by expanding the list to 
      * include those that fall within the rectangle of the upper left most and lower right 
@@ -61,8 +59,11 @@ export class GridRange implements GridRangeLike
      * @param cellRefs
      * @returns {Range}
      */
-    public static expand(model:GridModel, cellRefs:string[]):GridRange
+    public static fromRefs(model:GridModel, cellRefs:string[]):GridRange
     {
+        if (!cellRefs.length)
+            return GridRange.empty();
+
         let lo = cellRefs[0];
         let hi = cellRefs[0];
 
@@ -76,12 +77,19 @@ export class GridRange implements GridRangeLike
         let hiRp = GridCell.unmakeRef(hi);
 
         let cells = [] as GridCell[];
+        let tracker = {} as any; //Track to prevent dupes when row/col span > 1
 
         for (let col = loRp.col; col < (hiRp.col + 1); col++)
         {
             for (let row = loRp.row; row < (hiRp.row + 1); row++)
             {
-                cells.push(model.locateCell(col, row));
+                let cell = model.locateCell(col, row);
+
+                if (tracker[cell.ref])
+                    continue;
+
+                cells.push(cell);
+                tracker[cell.ref] = true;
             }
         }
     
@@ -89,43 +97,16 @@ export class GridRange implements GridRangeLike
     }
 
     /**
-     * Captures a range of cells from the specified model based on the specified vectors.  The vectors should be
-     * two points in grid coordinates (e.g. col and row references) that draw a logical line across the grid.
-     * Any cells falling into the rectangle created from these two points will be included in the selected GridRange.
-     *
-     * @param model
-     * @param from
-     * @param to
-     * @param toInclusive
-     * @returns {Range}
+     * Returns a GridRange that includes all cells captured by computing a rectangle around the 
+     * specified cell coordinates.
+     * 
+     * @param model 
+     * @param points 
      */
-    public static capture(model:GridModel, from:Point, to:Point, toInclusive:boolean = false):GridRange
+    public static fromPoints(model:GridModel, points:Point[])
     {
-        //TODO: Explain this...
-        let tl = new Point(from.x < to.x ? from.x : to.x, from.y < to.y ? from.y : to.y);
-        let br = new Point(from.x > to.x ? from.x : to.x, from.y > to.y ? from.y : to.y);
-
-        if (toInclusive)
-        {
-            br = br.add(1);
-        }
-
-        let dims = Rect.fromPoints(tl, br);
-        let results = [] as GridCell[];
-
-        for (let r = dims.top; r < dims.bottom; r++)
-        {
-            for (let c = dims.left; c < dims.right; c++)
-            {
-                let cell = model.locateCell(c, r);
-                if (cell)
-                {
-                    results.push(cell);
-                }
-            }
-        }
-
-        return GridRange.createInternal(model, results);
+        let refs = points.map(p => GridCell.makeRef(p.x, p.y));
+        return GridRange.fromRefs(model, refs);
     }
     
     /**
@@ -137,31 +118,12 @@ export class GridRange implements GridRangeLike
      * @param model
      * @param query
      */
-    public static select(model:GridModel, query:string):GridRange
+    public static fromQuery(model:GridModel, query:string):GridRange
     {
         let [from, to] = query.split(':');
-        let fromCell = resolve_expr_ref(model, from);
+        to = to || from;
 
-        if (!to)
-        {
-            if (!!fromCell)
-            {
-                return GridRange.createInternal(model, [fromCell]);
-            }
-        }
-        else
-        {
-            let toCell = resolve_expr_ref(model, to);
-
-            if (!!fromCell && !!toCell)
-            {
-                let fromVector = new Point(fromCell.colRef, fromCell.rowRef);
-                let toVector = new Point(toCell.colRef, toCell.rowRef);
-                return GridRange.capture(model, fromVector, toVector, true);
-            }
-        }
-
-        return GridRange.empty();
+        return GridRange.fromRefs(model, [to, from]);
     }
 
     /**
@@ -182,33 +144,18 @@ export class GridRange implements GridRangeLike
 
     private static createInternal(model:GridModel, cells:GridCell[]):GridRange
     {
-        let lc = Number.MAX_VALUE, lr = Number.MAX_VALUE;
-        let hc = Number.MIN_VALUE, hr = Number.MIN_VALUE;
-
-        for (let c of cells)
+        if (!cells.length)
         {
-            if (lc > c.colRef) lc = c.colRef;
-            if (hc < c.colRef) hc = c.colRef;
-            if (lr > c.rowRef) lr = c.rowRef;
-            if (hr < c.rowRef) hr = c.rowRef;
+            return GridRange.empty();
         }
 
-        let ltr:GridCell[];
-        let ttb:GridCell[];
-
-        if (cells.length > 1)
-        {
-            ltr = cells.sort(ltr_sort);
-            ttb = cells.slice(0).sort(ttb_sort);
-        }
-        else
-        {
-            ltr = ttb = cells;
-        }
+        cells = cells.sort((a, b) => a.ref < b.ref ? -1 : 1);
+        
+        let [lc, lr] = GridCell.unmakeRefToArray(cells[0].ref);
+        let [hc, hr] = GridCell.unmakeRefToArray(u.last(cells).ref);
 
         return new GridRange({
-            ltr: ltr,
-            ttb: ttb,
+            ltr: cells,
             width: hc - lc,
             height: hr - lr,
             length: (hc - lc) * (hr - lr),
@@ -219,11 +166,6 @@ export class GridRange implements GridRangeLike
      * The cells in the GridRange ordered from left to right.
      */
     public readonly ltr:GridCell[];
-
-    /**
-     * The cells in the GridRange ordered from top to bottom.
-     */
-    public readonly ttb:GridCell[];
 
     /**
      * The width of the GridRange in columns.
@@ -267,43 +209,4 @@ export class GridRange implements GridRangeLike
     {
         return this.ltr.map(x => x.ref);
     }
-}
-
-function ltr_sort(a:GridCell, b:GridCell):number
-{
-    let n = 0;
-
-    n = a.rowRef - b.rowRef;
-    if (n === 0)
-    {
-        n = a.colRef - b.colRef;
-    }
-
-    return n;
-}
-
-function ttb_sort(a:GridCell, b:GridCell):number
-{
-    let n = 0;
-
-    n = a.colRef - b.colRef;
-    if (n === 0)
-    {
-        n = a.rowRef - b.rowRef;
-    }
-
-    return n;
-}
-
-function resolve_expr_ref(model:GridModel, value:string):GridCell
-{
-    const RefConvert = /([A-Za-z]+)([0-9]+)/g;
-
-    RefConvert.lastIndex = 0;
-    let result = RefConvert.exec(value);
-
-    let colRef = Base26.str(result[1]).num;
-    let rowRef = parseInt(result[2]) - 1;
-
-    return model.locateCell(colRef, rowRef);
 }

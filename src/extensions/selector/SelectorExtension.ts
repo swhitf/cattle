@@ -141,9 +141,7 @@ export class SelectorExtension
         //On select visualize selection
         grid.on('select', () => this.doVisualizeSelection());
 
-        kernel.variables.define('primarySelection', {
-            get: () => this.primarySelection
-        });
+        kernel.variables.define('primarySelection', { get: () => this.primarySelection });
     }
 
     private get nets():NetManager

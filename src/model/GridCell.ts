@@ -54,8 +54,7 @@ export class GridCell extends GridObject
     /**
      * Reads a cell reference string and returns the column and row reference values.
      * 
-     * @param col 
-     * @param row 
+     * @param cellRef 
      */
     public static unmakeRef(cellRef:string):GridCellRefParts
     {
@@ -75,6 +74,18 @@ export class GridCell extends GridObject
         }
 
         return { col: Base26.str(b26cr).num, row: parseInt(b10rr) - 1, };
+    }
+
+    /**
+     * Reads a cell reference string and returns the column and row as the first and 
+     * second values in an array.
+     * 
+     * @param cellRef 
+     */
+    public static unmakeRefToArray(cellRef:string):number[]
+    {
+        let parts = this.unmakeRef(cellRef);
+        return [parts.col, parts.row];
     }
 
     /**
