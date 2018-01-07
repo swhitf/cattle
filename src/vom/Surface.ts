@@ -249,6 +249,7 @@ export class Surface extends SimpleEventEmitter
         view.addEventListener('click', this.onViewMouseEvent.bind(this, 'click'));
         view.addEventListener('dblclick', this.onViewMouseEvent.bind(this, 'dblclick'));
         view.addEventListener('keydown', this.onViewKeyEvent.bind(this, 'keydown'));
+        view.addEventListener('keypress', this.onViewKeyEvent.bind(this, 'keypress'));
         view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup'));
 
         let dragSupport = new DragHelper(
@@ -361,6 +362,7 @@ export class Surface extends SimpleEventEmitter
         ke.preventDefault();
 
         let key = ke.keyCode;
+        let char = !!ke.which ? String.fromCharCode(ke.which) : null;
         let modifiers = Modifiers.create(ke);
         let stack = [] as Visual[];
         let hoverVisual = this.tracker.get('hover');
@@ -372,7 +374,7 @@ export class Surface extends SimpleEventEmitter
             x = x.parent;
         }
 
-        let evt = new VisualKeyboardEvent(type, hoverVisual || null, key, modifiers);
+        let evt = new VisualKeyboardEvent(type, hoverVisual || null, key, char, modifiers);
         this.propagateEvent(evt, stack);
     }
 
