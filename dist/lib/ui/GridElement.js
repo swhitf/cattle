@@ -19,17 +19,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Polyfill_1 = require("../misc/Polyfill");
 var Padding_1 = require("../geom/Padding");
-var DefaultGridModel_1 = require("../model/default/DefaultGridModel");
-var EventEmitter_1 = require("./internal/EventEmitter");
-var GridKernel_1 = require("./GridKernel");
-var GridRange_1 = require("../model/GridRange");
-var GridLayout_1 = require("./internal/GridLayout");
-var Rect_1 = require("../geom/Rect");
 var Point_1 = require("../geom/Point");
+var Rect_1 = require("../geom/Rect");
+var Polyfill_1 = require("../misc/Polyfill");
 var Property_1 = require("../misc/Property");
 var _ = require("../misc/Util");
+var DefaultGridModel_1 = require("../model/default/DefaultGridModel");
+var GridRange_1 = require("../model/GridRange");
+var GridKernel_1 = require("./GridKernel");
+var EventEmitter_1 = require("./internal/EventEmitter");
+var GridLayout_1 = require("./internal/GridLayout");
 var GridElement = (function (_super) {
     __extends(GridElement, _super);
     function GridElement(canvas) {

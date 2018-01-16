@@ -1,7 +1,7 @@
-import { ComputeEngine } from './ComputeEngine';
-import { GridChangeSet } from '../common/EditingExtension';
-import { GridElement } from '../../ui/GridElement';
 import { GridCell } from '../../model/GridCell';
+import { GridElement } from '../../ui/GridElement';
+import { GridChangeSet } from '../common/EditingExtension';
+import { ComputeEngine } from './ComputeEngine';
 export interface CompiledFormula {
     (changeScope?: GridChangeSet): number;
 }

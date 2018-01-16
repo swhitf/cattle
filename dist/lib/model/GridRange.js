@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var Base26_1 = require("../misc/Base26");
 var Point_1 = require("../geom/Point");
 var Rect_1 = require("../geom/Rect");
+var Base26_1 = require("../misc/Base26");
 var _ = require("../misc/Util");
 /**
  * Describes a resolveExpr of grid cells.

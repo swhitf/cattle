@@ -1,8 +1,8 @@
 import { GridCell } from '../../model/GridCell';
 import { GridModel } from '../../model/GridModel';
-import { GridKernel } from '.././../ui/GridKernel';
-import { GridElement } from '.././../ui/GridElement';
 import { Widget } from '../../ui/Widget';
+import { GridElement } from '.././../ui/GridElement';
+import { GridKernel } from '.././../ui/GridKernel';
 export interface GridEditEvent {
     changes: GridChange[];
 }

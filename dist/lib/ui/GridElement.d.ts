@@ -1,11 +1,11 @@
 import { Padding } from '../geom/Padding';
-import { EventEmitterBase } from './internal/EventEmitter';
-import { GridKernel } from './GridKernel';
+import { Point, PointLike } from '../geom/Point';
+import { Rect, RectLike } from '../geom/Rect';
+import { MouseDragEvent } from '../input/MouseDragEvent';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
-import { MouseDragEvent } from '../input/MouseDragEvent';
-import { Rect, RectLike } from '../geom/Rect';
-import { Point, PointLike } from '../geom/Point';
+import { GridKernel } from './GridKernel';
+import { EventEmitterBase } from './internal/EventEmitter';
 export interface GridExtension {
     init?(grid: GridElement, kernel: GridKernel): void;
 }

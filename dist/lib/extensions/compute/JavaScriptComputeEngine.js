@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Util_1 = require("../../misc/Util");
-var EditingExtension_1 = require("../common/EditingExtension");
 var GridRange_1 = require("../../model/GridRange");
+var EditingExtension_1 = require("../common/EditingExtension");
 var WatchManager_1 = require("./WatchManager");
 var RefExtract = /(?!.*['"`])[A-Za-z]+[0-9]+:?([A-Za-z]+[0-9]+)?/g;
 var SupportFunctions = {
@@ -188,7 +188,7 @@ var JavaScriptComputeEngine = (function () {
         for (var _a = 0, values_1 = values; _a < values_1.length; _a++) {
             var v = values_1[_a];
             if (v !== undefined) {
-                return parseFloat(v) || 0;
+                return parseFloat(v.replace(/,/g, '')) || 0;
             }
         }
         return 0;

@@ -1,3 +1,4 @@
+import { ObjectMap } from './Interfaces';
 export declare function parse(html: string): HTMLElement;
 export declare function css(e: HTMLElement, styles: ObjectMap<string>): HTMLElement;
 export declare function fit(e: HTMLElement, target: HTMLElement): HTMLElement;

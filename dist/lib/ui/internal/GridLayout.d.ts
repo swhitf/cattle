@@ -1,6 +1,6 @@
 import { Padding } from '../../geom/Padding';
-import { GridModel } from '../../model/GridModel';
 import { RectLike } from '../../geom/Rect';
+import { GridModel } from '../../model/GridModel';
 export interface GridLayoutRegion<T> extends RectLike {
     readonly ref: T;
 }

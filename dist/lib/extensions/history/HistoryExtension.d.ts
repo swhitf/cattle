@@ -1,6 +1,6 @@
-import { HistoryManager } from './HistoryManager';
-import { GridExtension, GridElement } from '../../ui/GridElement';
+import { GridElement, GridExtension } from '../../ui/GridElement';
 import { GridKernel } from '../../ui/GridKernel';
+import { HistoryManager } from './HistoryManager';
 export declare class HistoryExtension implements GridExtension {
     private grid;
     private manager;

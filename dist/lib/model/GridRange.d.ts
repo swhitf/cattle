@@ -1,6 +1,6 @@
+import { Point } from '../geom/Point';
 import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
-import { Point } from '../geom/Point';
 /**
  * Describes a resolveExpr of grid cells.
  */

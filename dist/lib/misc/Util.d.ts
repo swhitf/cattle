@@ -1,3 +1,4 @@
+import { ObjectIndex, ObjectMap } from './Interfaces';
 export declare function coalesce<T>(...inputs: T[]): T;
 export declare function extend(target: any, data: any): any;
 export declare function index<T>(arr: T[], indexer: (tm: T) => number | string): ObjectMap<T>;

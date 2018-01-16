@@ -19,14 +19,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var Tether = require("tether");
+var Point_1 = require("../../geom/Point");
 var KeyInput_1 = require("../../input/KeyInput");
 var MouseInput_1 = require("../../input/MouseInput");
-var Point_1 = require("../../geom/Point");
-var Util_1 = require("../../misc/Util");
-var Widget_1 = require("../../ui/Widget");
-var Extensibility_1 = require("../../ui/Extensibility");
-var Tether = require("tether");
 var Dom = require("../../misc/Dom");
+var Util_1 = require("../../misc/Util");
+var Extensibility_1 = require("../../ui/Extensibility");
+var Widget_1 = require("../../ui/Widget");
 var Vectors = {
     n: new Point_1.Point(0, -1),
     s: new Point_1.Point(0, 1),

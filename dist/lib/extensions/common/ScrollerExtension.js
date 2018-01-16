@@ -55,7 +55,7 @@ var ScrollerExtension = (function () {
     };
     ScrollerExtension.prototype.onContainerScroll = function () {
         var grid = this.grid;
-        var maxScroll = new Point_1.Point(grid.virtualWidth - grid.width, grid.virtualHeight - grid.height);
+        var maxScroll = new Point_1.Point(Math.max(0, grid.virtualWidth - grid.width), Math.max(0, grid.virtualHeight - grid.height));
         grid.scroll = new Point_1.Point(grid.container.scrollLeft, grid.container.scrollTop)
             .clamp(Point_1.Point.empty, maxScroll);
     };

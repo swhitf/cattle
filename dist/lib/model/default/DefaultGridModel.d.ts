@@ -1,8 +1,8 @@
-import { GridModel } from '../GridModel';
-import { GridColumn } from '../GridColumn';
-import { GridRow } from '../GridRow';
-import { GridCell } from '../GridCell';
 import { Point } from '../../geom/Point';
+import { GridCell } from '../GridCell';
+import { GridColumn } from '../GridColumn';
+import { GridModel } from '../GridModel';
+import { GridRow } from '../GridRow';
 /**
  * Provides a by-the-book implementation of GridModel.  All inspection methods use O(1) implementations.
  */

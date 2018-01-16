@@ -9,11 +9,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var HistoryManager_1 = require("./HistoryManager");
-var Util_1 = require("../../misc/Util");
-var EditingExtension_1 = require("../common/EditingExtension");
 var KeyInput_1 = require("../../input/KeyInput");
+var Util_1 = require("../../misc/Util");
 var Extensibility_1 = require("../../ui/Extensibility");
+var EditingExtension_1 = require("../common/EditingExtension");
+var HistoryManager_1 = require("./HistoryManager");
 var HistoryExtension = (function () {
     function HistoryExtension(manager) {
         this.noCapture = false;
