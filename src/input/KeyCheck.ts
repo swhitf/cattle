@@ -1,4 +1,4 @@
-import { Keys } from './Keys';
+import { ObjectIndex } from '../misc/Interfaces';
 
 
 let Tracker:ObjectIndex<boolean>;

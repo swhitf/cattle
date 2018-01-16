@@ -1,4 +1,5 @@
-import * as _ from '../misc/Util'
+import { ObjectMap } from '../misc/Interfaces';
+import * as _ from '../misc/Util';
 
 //This keeps WebStorm quiet, for some reason it is complaining...
 declare var Reflect:any;

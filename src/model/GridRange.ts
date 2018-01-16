@@ -1,9 +1,10 @@
-import { Base26 } from '../misc/Base26';
-import { GridCell } from './GridCell';
-import { GridModel } from './GridModel';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
+import { Base26 } from '../misc/Base26';
+import { ObjectMap } from '../misc/Interfaces';
 import * as _ from '../misc/Util';
+import { GridCell } from './GridCell';
+import { GridModel } from './GridModel';
 
 
 /**
