@@ -60,9 +60,36 @@ export class EditingExtension
     }
 
     @Routine()
-    private doBeginEdit(override:string):boolean
+    private doBeginEdit(override?:string):boolean
     {
-        throw 'Not implemented';
+        let { grid, primarySelection } = this;
+
+        if (this.state != State.Idle || !primarySelection)
+            return false;
+
+        let cell = grid.model.findCell(primarySelection.from);
+
+        if (is_readonly(cell))
+            return false;
+
+        // if (!!override || override === '')
+        // {
+        //     input.val(override);
+        // }
+        // else
+        // {
+        //     input.val(cell.value);
+        // }
+
+        grid.surface.cameras.item("").
+
+        input.goto(this.primarySelector.viewRect);
+        input.focus();
+
+        this.isEditingDetailed = false;
+        this.isEditing = true;
+
+        return true;
     }
 
     @Routine()
