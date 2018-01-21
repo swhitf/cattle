@@ -2,7 +2,6 @@ import {GridCell} from '../../model/GridCell';
 import { GridModel } from "../../model/GridModel";
 
 
-
 export interface GridChangeSetEntry
 {
     readonly ref:string;
