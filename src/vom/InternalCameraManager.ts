@@ -19,15 +19,18 @@ export class InternalCameraManager extends SimpleEventEmitter implements CameraM
     
     public create(id:string, order?:number, bounds?:Rect, vector?:Point):Camera
     {
+        order = order === undefined ?this.array.length + 1 : order;
+
         if (!!this.item(id))
         {
             throw `Camera ${id} already exists.`
         }
 
-        let camera = new InternalCamera(id, order || 1, bounds || Rect.empty, vector || Point.empty, this);
+        let camera = new InternalCamera(id, order, bounds || Rect.empty, vector || Point.empty, this);
         
         this.array.push(camera);
         this.array.sort((a, b) => a.order - b.order);
+        this.array = this.array.reverse();
 
         this.emit(new CameraEvent('create', camera));
 

@@ -1,3 +1,5 @@
+import { CallbackDestroyable } from '../../base/CallbackDestroyable';
+import { test } from '../VisualQuery';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { Destroyable } from '../../base/Destroyable';
 import { EventEmitter } from '../../base/EventEmitter';
@@ -25,46 +27,49 @@ import { KeyExpression } from './KeyExpression';
 .on('!CTRL+END', () => this.selectBorder(Vectors.se))
 */
 
-export interface KeyBehaviorCallback
-{
-    (e?:VisualKeyboardEvent):void;
-}
+export type KeyEmitter = Surface|Visual|HTMLElement;
 
-export class KeyBehavior extends AbstractDestroyable
+export abstract class KeyBehavior extends AbstractDestroyable
 {
-    public static for(...objects:Array<Surface|Visual>):KeyBehavior
+    public static for(object:KeyEmitter):KeyBehavior
     {
-        return new KeyBehavior(objects);
+        return (object instanceof HTMLElement)
+            ? new HTMLElementKeyBehavior(object)
+            : new VisualKeyBehavior(object);
     }
 
-    private constructor(private emitters:EventEmitter[])
+    protected constructor(protected object:KeyEmitter)
     {
         super();
     }
 
     public on(expressions:string|string[], callback:any):KeyBehavior
     {
+        let { object } = this;
+
         if (!Array.isArray(expressions))
         {
             return this.on([expressions as string], callback);
         }
 
-        for (let re of expressions)
+        for (let e of expressions)
         {
-            let subs = this.emitters.map(ee => this.createListener(
-                ee,
-                KeyExpression.parse(re),
-                callback));
-
-            this.chain(...subs);
+            this.chain(this.createListener(KeyExpression.parse(e), callback));
         }
 
         return this;
     }
 
-    private createListener(ee:EventEmitter, ke:KeyExpression, callback:KeyBehaviorCallback):Destroyable
+    protected abstract createListener(ke:KeyExpression, callback:any):Destroyable;
+}
+
+class VisualKeyBehavior extends KeyBehavior
+{
+    protected createListener(ke:KeyExpression, callback:any):Destroyable
     {
-        return ee.on('keydown', (evt:VisualKeyboardEvent) =>
+        let emitter = this.object as EventEmitter;
+
+        return emitter.on('keydown', (evt:VisualKeyboardEvent) =>
         {
             if (ke.matches(evt))
             {
@@ -76,5 +81,28 @@ export class KeyBehavior extends AbstractDestroyable
                 callback();
             }
         });
+    }
+}
+
+class HTMLElementKeyBehavior extends KeyBehavior
+{
+    protected createListener(ke:KeyExpression, callback:any):Destroyable
+    {
+        let elmt = this.object as HTMLElement;
+        let handler = (evt:KeyboardEvent) =>
+        {
+            if (ke.matches(evt))
+            {
+                if (ke.exclusive)
+                {
+                    evt.preventDefault();
+                }
+
+                callback();
+            }
+        };
+
+        elmt.addEventListener('keydown', handler);
+        return new CallbackDestroyable(() => elmt.removeEventListener('keydown', handler));
     }
 }

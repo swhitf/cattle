@@ -27,15 +27,7 @@ export class KeyExpression
 
     public static parse(input:string):KeyExpression
     {
-        input = input || '';
-
-        let exclusive = input[0] === '!';
-        if (exclusive)
-        {
-            input = input.substr(1);
-        }
-
-        let [keys, ...tags] = input.split('/');
+        let [keys, ...tags] = (input || '').split('/');
 
         let sequence = keys
             .split(/[\s\-\+]+/)
@@ -54,6 +46,7 @@ export class KeyExpression
     {
         this.key = keys.filter(x => x !== Keys.CTRL && x !== Keys.ALT && x !== Keys.SHIFT)[0] || null;
         this.exact = !!~tags.indexOf('e');
+        this.exclusive = !!~tags.indexOf('x');
         this.modifiers = new Modifiers(
             keys.some(x => x === Keys.ALT),
             keys.some(x => x === Keys.CTRL),

@@ -1,3 +1,4 @@
+import { GridView } from './GridView';
 import { AbstractDestroyable } from '../base/AbstractDestroyable';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
@@ -26,7 +27,7 @@ export class GridElement extends SimpleEventEmitter
         layout: null as GridLayout,
         surface: null as Surface,
         kernel: null as GridKernel,
-        //view: null as GridView,
+        view: null as GridView,
     } 
 
     public static create(container:HTMLElement, initialModel?:GridModel):GridElement
@@ -46,6 +47,7 @@ export class GridElement extends SimpleEventEmitter
         this.internal.kernel = new GridKernel(this.emit.bind(this));
         this.internal.layout = GridLayout.empty;
         this.internal.surface = surface;
+        this.internal.view = new GridView(this.layout, this.surface);
 
         this.initCameras();        
         this.initSurface();
@@ -86,6 +88,11 @@ export class GridElement extends SimpleEventEmitter
         return this.internal.surface;
     }
 
+    public get view():GridView
+    {
+        return this.internal.view;
+    }
+
     public extend(ext:GridExtension):GridElement
     {
         this.kernel.install(ext);
@@ -117,6 +124,17 @@ export class GridElement extends SimpleEventEmitter
     {
         this.kernel.exportInterface(this);
         return this;
+    }
+
+    public focus():void
+    {
+        this.surface.view.focus();
+    }
+
+    public forceUpdate():void
+    {
+        this.updateSurface();
+        this.surface.render();
     }
 
     private initCameras():void
@@ -225,6 +243,7 @@ export class GridElement extends SimpleEventEmitter
     private updateLayout():void
     {
         this.internal.layout = GridLayout.compute(this.model, this.padding);
+        this.internal.view = new GridView(this.layout, this.surface);
     }
 
     @Routine()
@@ -310,9 +329,7 @@ class CameraBuffer extends AbstractDestroyable
     {
         let { camera, visuals } = this;
 
-        let cameraArea = new Rect(camera.vector.x, camera.vector.y, camera.bounds.width, camera.bounds.height);
-        let cells = layout.captureCells(cameraArea);
-
+        let cells = layout.captureCells(camera.area);
         let newList = new Array<CameraBufferEntry>(cells.length);
 
         this.cycle++;

@@ -46,6 +46,11 @@ export abstract class GridWalk
         return cell;
     }
 
+    public static toNext(model:GridModel, fromRef:string, vector:PointInput):GridCell
+    {
+        return this.until(model, fromRef, vector, (c, v, m) => c.ref != fromRef);
+    }
+
     public static until(model:GridModel, fromRef:string, vector:PointInput, callback:GridWalkCallback<boolean|void>):GridCell
     {
         let dir = Point.create(vector).round();
@@ -63,7 +68,7 @@ export abstract class GridWalk
         {
             cell = model.locateCell(col, row);
             
-            if (callback(cell, dir, model) === true)
+            if (cell && callback(cell, dir, model) === true)
             {
                 return cell;
             }

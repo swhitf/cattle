@@ -20,6 +20,7 @@ export class MouseExpression
         cfg.button = parse_button(left);
         cfg.modifiers = Modifiers.parse(right);
         cfg.exact = !!~tags.indexOf('e');
+        cfg.exclusive = !!~tags.indexOf('x');
 
         return new MouseExpression(cfg);
     }
@@ -28,6 +29,7 @@ export class MouseExpression
     public readonly button:number = null;
     public readonly modifiers:Modifiers;
     public readonly exact:boolean;
+    public readonly exclusive:boolean;
 
     private constructor(cfg:any)
     {

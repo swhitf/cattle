@@ -1,3 +1,4 @@
+import { Surface } from '../vom/Surface';
 import { Point, PointLike } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
 import { GridCell } from '../model/GridCell';
@@ -6,65 +7,10 @@ import { GridRow } from '../model/GridRow';
 import { GridLayout } from './GridLayout';
 
 
-export interface GridViewlet
-{
-    readonly key:string;
-    readonly offsetLeft:number;
-    readonly offsetTop:number;
-    readonly left:number;
-    readonly top:number;
-    readonly width:number;
-    readonly height:number;
-}
-
 export class GridView
 {
-    public readonly left:number;
-    public readonly top:number;
-    public readonly width:number;
-    public readonly height:number;
-    public readonly viewlets:GridViewlet[];
-
-    public static compute(viewport:Rect, freezeMargin:Point, layout:GridLayout)
+    constructor(private layout:GridLayout, private surface:Surface) 
     {
-        let main = new GridViewletImpl('main', viewport, Point.empty);
-        
-        if (freezeMargin.equals(Point.empty))
-        {
-            return new GridView(viewport, [ main ]);
-        }
-        else
-        {
-            let marginLeft = layout.measureColumnRange(0, freezeMargin.x).width;
-            let marginTop = layout.measureRowRange(0, freezeMargin.y).height;
-            let margin = new Point(marginLeft, marginTop);
-
-            let top = new GridViewletImpl('left', 
-                new Rect(viewport.left + margin.x, 0, viewport.width - margin.x, margin.y),
-                new Point(margin.x, 0)
-            );
-
-            let left = new GridViewletImpl('left', 
-                new Rect(0, viewport.top + margin.y, margin.x, viewport.height - margin.y),
-                new Point(0, margin.y)
-            );
-
-            let topLeft = new GridViewletImpl('left', 
-                new Rect(0, viewport.top + margin.y, margin.x, viewport.height - margin.y),
-                new Point(0, margin.y)
-            );
-
-            return new GridView(viewport, [ main, top, left, topLeft ]);
-        }
-    }
-
-    private constructor(viewport:Rect, viewlets:GridViewlet[])
-    {
-        this.left = viewport.left;
-        this.top = viewport.top;
-        this.width = viewport.width;
-        this.height = viewport.height;
-        this.viewlets = viewlets;
     }
 
     public captureColumns(region:RectLike):GridColumn[]
@@ -104,7 +50,22 @@ export class GridView
 
     public measureCell(ref:string):RectLike
     {
-        throw 'Not implemented';
+        const { layout, surface } = this;
+
+        let rect = Rect.fromLike(layout.measureCell(ref));
+        
+        for (let i = 0; i < surface.cameras.count; i++)
+        {
+            let cam = surface.cameras.item(i);
+
+            if (rect.intersects(cam.area))
+            {
+                let viewPt = cam.toViewPoint('surface', rect.topLeft());
+                return new Rect(viewPt.x, viewPt.y, rect.width, rect.height);
+            }
+        }
+
+        return null;
     }
 
     public pickColumn(at:PointLike):GridColumn

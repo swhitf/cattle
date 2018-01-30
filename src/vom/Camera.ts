@@ -15,6 +15,8 @@ export interface Camera
     
     vector:Point;
 
+    readonly area:Rect;
+
     toCameraPoint(type:'surface'|'view', pt:PointInput):Point;
 
     toSurfacePoint(type:'view'|'camera', pt:PointInput):Point;

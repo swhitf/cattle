@@ -1,3 +1,4 @@
+import { Point } from '../geom/Point';
 import { ObjectMap } from '../common';
 
 
@@ -10,6 +11,21 @@ export function parse(html:string):HTMLElement
 
     return <HTMLElement>body.firstElementChild;
 }
+
+export function cumulativeOffset(element:HTMLElement):Point
+{
+    let top = 0, left = 0;
+    do 
+    {
+        left += element.offsetLeft || 0;
+        top += element.offsetTop  || 0;
+        element = element.offsetParent as HTMLElement;
+    } 
+    while(element);
+
+    return new Point(left, top);
+};
+
 
 export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
 {

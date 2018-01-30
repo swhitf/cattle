@@ -2,14 +2,13 @@ import 'reflect-metadata';
 
 import { debug_events } from '../base/EventEmitter';
 import { GridElement } from '../core/GridElement';
+import { EditingExtension } from '../extensions/editing/EditingExtension';
 import { NetExtension } from '../extensions/nets/NetExtension';
 import { NetManager } from '../extensions/nets/NetManager';
 import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
-import { VisualKeyboardEvent } from '../vom/events/VisualKeyboardEvent';
-import { KeyExpression } from '../vom/input/KeyExpression';
 import { Border } from '../vom/styling/Border';
 import { Theme } from '../vom/styling/Theme';
 
@@ -36,10 +35,10 @@ let model = GridModel.dim(26, 50);
 model.cells.forEach(x => x.value = x.ref);
 
 let grid = GridElement
-   .create(document.getElementById('x'), model)
-   .extend(new NetExtension())
-   .extend(new SelectorExtension())
-//    .extend(new EditingExtension())
+    .create(document.getElementById('x'), model)
+    .extend(new NetExtension())
+    .extend(new SelectorExtension())
+    .extend(new EditingExtension())
 //    .extend(new ClipboardExtension())
 //    .extend(new HistoryExtension(history))
 //    .extend(new ComputeExtension())

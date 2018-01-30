@@ -34,13 +34,18 @@ export class InternalCamera implements Camera
         this.initializing = false;
     }
     
+    public get area():Rect
+    {
+        return new Rect(this.vector.x, this.vector.y, this.bounds.width, this.bounds.height);
+    }
+
     public toCameraPoint(type:'surface'|'view', pt:PointInput):Point
     {
         let x = Point.create(pt);
         
         if (type === 'surface')
         {
-            return x.add(this.vector);
+            return x.subtract(this.vector);
         }
         else
         {
