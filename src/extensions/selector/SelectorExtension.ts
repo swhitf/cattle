@@ -1,22 +1,16 @@
-import { KeyBehavior } from '../../vom/input/KeyBehavior';
-import { CellVisual } from '../../core/CellVisual';
-import { VisualMouseEvent } from '../../vom/events/VisualMouseEvent';
-import { MouseGesture } from '../../vom/input/MouseGesture';
-import { NetManager } from '../nets/NetManager';
 import { GridEvent } from '../../core/events/GridEvent';
-import { AbstractDestroyable } from '../../base/AbstractDestroyable';
-import { GridRange, GridRangeLike } from '../../model/GridRange';
-import { Destroyable } from '../../base/Destroyable';
-import { select } from '../../vom/VisualQuery';
-import { GridElement } from '../../core/GridElement';
 import { Command, Routine, Variable } from '../../core/Extensibility';
-import { GridKernel, GridVariable } from '../../core/GridKernel';
-import { GridCell } from '../../model/GridCell';
-import { Point, PointLike, PointInput } from '../../geom/Point';
-import { RectLike, Rect } from '../../geom/Rect';
-import * as Dom from '../../misc/Dom';
+import { GridElement } from '../../core/GridElement';
+import { GridKernel } from '../../core/GridKernel';
+import { Point, PointInput } from '../../geom/Point';
 import * as u from '../../misc/Util';
+import { GridCell } from '../../model/GridCell';
 import { GridWalk } from '../../model/GridWalk';
+import { VisualMouseEvent } from '../../vom/events/VisualMouseEvent';
+import { KeyBehavior } from '../../vom/input/KeyBehavior';
+import { MouseBehavior } from '../../vom/input/MouseBehavior';
+import { select } from '../../vom/VisualQuery';
+import { NetManager } from '../nets/NetManager';
 
 
 let Vectors = {
@@ -112,7 +106,7 @@ export class SelectorExtension
             return !!cell ? cell.ref : null;
         };
 
-        MouseGesture.for(grid.surface)
+        MouseBehavior.for(grid.surface)
             .on(['LEFT.DOWN/e'], e => this.select(ref(e)))
             .on(['LEFT.DOWN+CTRL/e'], e => this.select(ref(e), SelectMode.Append))
             .on(['LEFT.DRAG', 'LEFT.DOWN+SHIFT'], e => this.select(ref(e), SelectMode.Extend))

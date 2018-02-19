@@ -5,11 +5,12 @@
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
   "scripts": {
-    "build": "node scripts/build.js",
-    "dev": "concurrently -k \"node scripts/build.js -w -s\" \"http-server ./dist/dev -c-1\"",
     "export:lib": "tsc -v",
     "export:browser": "node scripts\\export-browser.js",
-    "export:tsd": "node scripts\\export-tsd.js"
+    "export:tsd": "node scripts\\export-tsd.js",
+    "build": "node scripts/build.js",
+    "dev": "concurrently -k \"node scripts/build.js -w \" \"http-server ./dist/dev -s -c-1\"",
+    "start": "npm run dev"
   },
   "author": "Stephen Whitfield",
   "license": "MIT",
@@ -22,7 +23,9 @@
   "devDependencies": {
     "browserify": "^14.5.0",
     "fs-extra": "^5.0.0",
+    "gaze": "^1.1.2",
     "tsify": "^3.0.4",
-    "watch": "^1.0.2"
+    "typescript": "^2.6.2",
+    "watchify": "^3.10.0"
   }
 }

@@ -7,6 +7,26 @@ import { Modifiers } from './Modifiers';
 
 export class MouseExpression
 {
+    public static create(e:MouseEvent|VisualMouseEvent):MouseExpression 
+    {
+        const cfg = { exact: false, exclusive: false, } as any;
+
+        if (e instanceof MouseEvent) 
+        {
+            cfg.event = e.type;
+            cfg.button = e.button;
+            cfg.modifiers = new Modifiers(e.altKey, e.ctrlKey, e.shiftKey);
+        }
+        else 
+        {
+            cfg.event = e.type;
+            cfg.button = e.button;
+            cfg.modifiers = e.modifiers;
+        }
+
+        return new MouseExpression(cfg);
+    }
+
     public static parse(input:string):MouseExpression
     {
         let cfg = <any>{
@@ -36,22 +56,40 @@ export class MouseExpression
         u.extend(this, cfg);
     }
 
-    public matches(mouseData:VisualMouseEvent):boolean
+    public matches(input:MouseExpression|MouseEvent|VisualMouseEvent):boolean 
     {
-        if (this.event !== mouseData.type)
+        const expr = norm(input);
+
+        if (this.event !== expr.event)
             return false;
 
-        if (this.button !== null && this.button !== mouseData.button)
+        if (this.button !== null && this.button !== expr.button)
             return false;
 
-        if (this.exact && !this.modifiers.matchesExact(mouseData.modifiers))
+        if (this.exact && !this.modifiers.matchesExact(expr.modifiers))
             return false;
-        
-        if (!this.modifiers.matches(mouseData.modifiers))
+    
+        if (!this.modifiers.matches(expr.modifiers))
             return false;
 
         return true;
     }
+
+    public toString():string
+    {
+        const keys = [];
+        if (this.modifiers.ctrl) keys.push('CTRL');
+        if (this.modifiers.alt) keys.push('ALT');
+        if (this.modifiers.shift) keys.push('SHIFT');
+        return [this.button, this.event].join('_') + '+' + keys.join('+');
+    }
+}
+
+function norm(x:MouseExpression|MouseEvent|VisualMouseEvent):MouseExpression 
+{
+    return (x instanceof MouseEvent || x instanceof VisualMouseEvent)
+        ? MouseExpression.create(x)
+        : x;
 }
 
 function parse_event(value:string):VisualMouseEventTypes
@@ -117,5 +155,3 @@ function divide_expression(value:string):string[]
 
     return parts;
 }
-
-window['de'] = divide_expression;

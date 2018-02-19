@@ -7,6 +7,7 @@ import { VisualKeyboardEvent } from '../events/VisualKeyboardEvent';
 import { Surface } from '../Surface';
 import { Visual } from '../Visual';
 import { KeyExpression } from './KeyExpression';
+import { VoidCallback1, BlankPredicate, VoidCallback } from '../../common';
 
 
 /*KeyInput.for(grid)
@@ -38,15 +39,15 @@ export abstract class KeyBehavior extends AbstractDestroyable
             : new VisualKeyBehavior(object);
     }
 
+    private predicateStack = [] as BlankPredicate[];
+
     protected constructor(protected object:KeyEmitter)
     {
         super();
     }
 
-    public on(expressions:string|string[], callback:any):KeyBehavior
+    public on(expressions:string|string[], callback:VoidCallback1<any>):KeyBehavior
     {
-        let { object } = this;
-
         if (!Array.isArray(expressions))
         {
             return this.on([expressions as string], callback);
@@ -54,23 +55,41 @@ export abstract class KeyBehavior extends AbstractDestroyable
 
         for (let e of expressions)
         {
-            this.chain(this.createListener(KeyExpression.parse(e), callback));
+            this.chain(this.createListener(KeyExpression.parse(e), callback, this.predicateStack[this.predicateStack.length - 1]));
         }
-
+        
         return this;
     }
 
-    protected abstract createListener(ke:KeyExpression, callback:any):Destroyable;
+    public when(predicate:BlankPredicate, configurator:VoidCallback1<KeyBehavior>):KeyBehavior
+    {
+        try
+        {
+            this.predicateStack.push(predicate);
+            configurator(this);
+        }
+        finally
+        {
+            this.predicateStack.pop();
+        }
+        
+        return this;
+    }
+
+    protected abstract createListener(ke:KeyExpression, callback:VoidCallback1<any>, predicate?:BlankPredicate):Destroyable;
 }
 
 class VisualKeyBehavior extends KeyBehavior
 {
-    protected createListener(ke:KeyExpression, callback:any):Destroyable
+    protected createListener(ke:KeyExpression, callback:VoidCallback1<any>, predicate?:BlankPredicate):Destroyable
     {
         let emitter = this.object as EventEmitter;
 
-        return emitter.on('keydown', (evt:VisualKeyboardEvent) =>
+        return emitter.on(ke.event, (evt:VisualKeyboardEvent) =>
         {
+            if (!!predicate && !predicate())   
+                return;
+
             if (ke.matches(evt))
             {
                 if (ke.exclusive)
@@ -78,7 +97,7 @@ class VisualKeyBehavior extends KeyBehavior
                     evt.cancel();
                 }
 
-                callback();
+                callback(evt);
             }
         });
     }
@@ -86,11 +105,14 @@ class VisualKeyBehavior extends KeyBehavior
 
 class HTMLElementKeyBehavior extends KeyBehavior
 {
-    protected createListener(ke:KeyExpression, callback:any):Destroyable
+    protected createListener(ke:KeyExpression, callback:VoidCallback1<any>, predicate?:BlankPredicate):Destroyable
     {
         let elmt = this.object as HTMLElement;
         let handler = (evt:KeyboardEvent) =>
         {
+            if (!!predicate && !predicate())   
+                return;
+                
             if (ke.matches(evt))
             {
                 if (ke.exclusive)
@@ -98,11 +120,11 @@ class HTMLElementKeyBehavior extends KeyBehavior
                     evt.preventDefault();
                 }
 
-                callback();
+                callback(evt);
             }
         };
 
-        elmt.addEventListener('keydown', handler);
-        return new CallbackDestroyable(() => elmt.removeEventListener('keydown', handler));
+        elmt.addEventListener(ke.event, handler);
+        return new CallbackDestroyable(() => elmt.removeEventListener(ke.event, handler));
     }
 }

@@ -359,7 +359,7 @@ export class Surface extends SimpleEventEmitter
 
     private onViewKeyEvent(type:VisualKeyboardEventTypes, ke:KeyboardEvent):void
     {
-        ke.preventDefault();
+        //ke.preventDefault();
 
         let key = ke.keyCode;
         let char = !!ke.which ? String.fromCharCode(ke.which) : null;

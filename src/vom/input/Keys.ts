@@ -2,6 +2,7 @@
 
 export class Keys
 {
+    public static WILDCARD = -1;
     public static BACKSPACE = 8;
     public static TAB = 9;
     public static ENTER = 13;
@@ -107,6 +108,7 @@ export class Keys
     {
         switch (input.trim())
         {
+            case '*': return Keys.WILDCARD;
             case 'BACKSPACE': return Keys.BACKSPACE;
             case 'TAB': return Keys.TAB;
             case 'ENTER': return Keys.ENTER;

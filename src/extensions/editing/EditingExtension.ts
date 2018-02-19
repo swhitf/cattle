@@ -1,28 +1,27 @@
-import { GridWalk } from '../../model/GridWalk';
-import { Point } from '../../geom/Point';
-import { Vectors } from '../../misc/Vectors';
-import { KeyBehavior } from '../../vom/input/KeyBehavior';
-import { KeyExpression } from '../../vom/input/KeyExpression';
 import { SimpleEventEmitter } from '../../base/SimpleEventEmitter';
-import { NetVisual } from '../nets/NetVisual';
-import { Rect, RectLike } from '../../geom/Rect';
-import { MouseGesture } from '../../vom/input/MouseGesture';
-import {GridRange} from '../../model/GridRange';
-import {GridCell} from '../../model/GridCell';
-import {Command, Routine,  Variable} from '../../core/Extensibility';
-import {GridElement} from '../../core/GridElement';
+import { Command, Routine } from '../../core/Extensibility';
+import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-import { GridChangeSet } from './GridChangeSet';
-import { GridChangeEvent } from './GridChangeEvent';
-import { Selection } from '../selector/SelectorExtension';
+import { Point } from '../../geom/Point';
+import { Rect, RectLike } from '../../geom/Rect';
 import * as dom from '../../misc/Dom';
+import { Vectors } from '../../misc/Vectors';
+import { GridCell } from '../../model/GridCell';
+import { GridRange } from '../../model/GridRange';
+import { KeyBehavior } from '../../vom/input/KeyBehavior';
+import { NetVisual } from '../nets/NetVisual';
+import { Selection } from '../selector/SelectorExtension';
+import { GridChangeEvent } from './GridChangeEvent';
+import { GridChangeSet } from './GridChangeSet';
+import { when } from '../../common';
+import { MouseBehavior } from '../../vom/input/MouseBehavior';
 
 
 enum State
 {
     Idle = 'idle',
     Editing = 'editing',
-    EditingDetailed = 'editingDetailed',
+    EditingPrecise = 'editingPrecice',
 }
 
 export class EditingExtension
@@ -40,8 +39,20 @@ export class EditingExtension
         this.grid = grid;
         this.input = InputHandle.create(grid.container);
 
-        MouseGesture.for(grid.surface)
-            .on(['LEFT.DBLCLICK/e'], e => this.doBeginEdit())
+        MouseBehavior.for(grid.surface)
+            .on(['LEFT.DBLCLICK/e'], () => this.doBeginEdit())
+        ;
+
+        KeyBehavior.for(grid.surface)
+            .when(() => this.state == State.Idle, x => x
+                .on('BACKSPACE/e/x', () => this.doBeginEdit(''))
+                .on('DELETE', () => this.erase())
+                .on('*.PRESS', e => !!e.char ? this.doBeginEdit(e.char) : false)
+            )
+        ;
+
+        MouseBehavior.for(this.input.elmt)
+            .on(['LEFT', 'MIDDLE', 'RIGHT'], () => this.state = State.EditingPrecise)
         ;
 
         KeyBehavior.for(this.input.elmt)
@@ -49,16 +60,18 @@ export class EditingExtension
             .on('ENTER/e/x', () => this.endEditToNeighbor(Vectors.e))
             .on('TAB/e/x', () => this.endEditToNeighbor(Vectors.e))
             .on('SHIFT+TAB/e/x', () => this.endEditToNeighbor(Vectors.w))
-            .on('UP_ARROW/e/x', () => this.endEditToNeighbor(Vectors.n))
-            .on('DOWN_ARROW/e/x', () => this.endEditToNeighbor(Vectors.s))
-            .on('RIGHT_ARROW/e/x', () => this.endEditToNeighbor(Vectors.e))
-            .on('LEFT_ARROW/e/x', () => this.endEditToNeighbor(Vectors.w))
+            .when(() => this.state == State.Editing, x => x
+                .on('UP_ARROW/e/x', () => this.endEditToNeighbor(Vectors.n))
+                .on('DOWN_ARROW/e/x', () => this.endEditToNeighbor(Vectors.s))
+                .on('RIGHT_ARROW/e/x', () => this.endEditToNeighbor(Vectors.e))
+                .on('LEFT_ARROW/e/x', () => this.endEditToNeighbor(Vectors.w))
+            )          
             .on([
                 'SHIFT+UP_ARROW/e', 'CTRL+UP_ARROW/e',
                 'SHIFT+DOWN_ARROW/e', 'CTRL+DOWN_ARROW/e',
                 'SHIFT+RIGHT_ARROW/e', 'CTRL+RIGHT_ARROW/e',
                 'SHIFT+LEFT_ARROW/e', 'CTRL+LEFT_ARROW/e',
-            ], () => this.state = State.EditingDetailed)
+            ], () => this.state = State.EditingPrecise)
         ;
 
         //Before select commit pending edit
@@ -68,6 +81,11 @@ export class EditingExtension
     private get primarySelection():Selection
     {
         return this.grid.kernel.variables.get('primarySelection');
+    }
+
+    private get selections():Selection[]
+    {
+        return this.grid.kernel.variables.get('selections');
     }
 
     @Command()
@@ -150,15 +168,22 @@ export class EditingExtension
     @Command()
     private erase():void
     {
-        let { grid, primarySelection } = this;
+        let { grid, selections } = this;
 
-        if (this.state != State.Idle || !primarySelection)
+        if (this.state != State.Idle)
             return;
 
-        let range = GridRange.fromRefs(grid.model, [primarySelection.from, primarySelection.to]);
-        let cells = range.ltr.filter(x => !is_readonly(x));
+        let changes = new GridChangeSet();
+        
+        for (let s of selections)
+        {
+            let range = GridRange.fromRefs(grid.model, [s.from, s.to]);
+            let cells = range.ltr.filter(x => !is_readonly(x));    
 
-        this.commitUniform(cells.map(x => x.ref), '');
+            cells.forEach(c => changes.set(c.ref, '', false));
+        }
+
+        this.commit(changes);
     }
 
     @Routine()
@@ -169,12 +194,12 @@ export class EditingExtension
         if (changes.length)
         {
             grid.emit(new GridChangeEvent(changes));
-        }        
 
-        if (autoApply)
-        {
-            changes.apply(grid.model);
-            grid.forceUpdate();
+            if (autoApply)
+            {
+                changes.apply(grid.model);
+                grid.forceUpdate();
+            }
         }
     }
 

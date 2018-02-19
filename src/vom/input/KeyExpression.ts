@@ -1,4 +1,4 @@
-import { VisualKeyboardEvent } from '../events/VisualKeyboardEvent';
+import { VisualKeyboardEvent, VisualKeyboardEventTypes } from '../events/VisualKeyboardEvent';
 import { Keys } from './Keys';
 import { Modifiers } from './Modifiers';
 
@@ -13,7 +13,7 @@ export class KeyExpression
             if (e.ctrlKey) keys.push(Keys.CTRL);
             if (e.altKey) keys.push(Keys.ALT);
             if (e.shiftKey) keys.push(Keys.SHIFT);
-            return new KeyExpression(keys);
+            return new KeyExpression(e.type, keys);
         }
         else 
         {
@@ -21,29 +21,32 @@ export class KeyExpression
             if (e.modifiers.ctrl) keys.push(Keys.CTRL);
             if (e.modifiers.alt) keys.push(Keys.ALT);
             if (e.modifiers.shift) keys.push(Keys.SHIFT);
-            return new KeyExpression(keys);
+            return new KeyExpression(e.type, keys);
         }
     }
 
     public static parse(input:string):KeyExpression
-    {
-        let [keys, ...tags] = (input || '').split('/');
+    {   
+        let [expr, ...tags] = input.split('/');
+        let [keys, event] = extract_event(expr);        
 
         let sequence = keys
             .split(/[\s\-\+]+/)
             .filter(x => !!x)
-            .map(x => Keys.parse(x));
+            .map(x =>  Keys.parse(x));
 
-        return new KeyExpression(sequence, tags);
+        return new KeyExpression(event, sequence, tags);
     }
 
-    public readonly exclusive:boolean;
+    public readonly event:string;
     public readonly key:number;
     public readonly modifiers:Modifiers;
     public readonly exact:boolean;
+    public readonly exclusive:boolean;
 
-    private constructor(keys:number[], tags:string[] = [])
+    private constructor(event:string, keys:number[], tags:string[] = [])
     {
+        this.event = event;
         this.key = keys.filter(x => x !== Keys.CTRL && x !== Keys.ALT && x !== Keys.SHIFT)[0] || null;
         this.exact = !!~tags.indexOf('e');
         this.exclusive = !!~tags.indexOf('x');
@@ -58,7 +61,7 @@ export class KeyExpression
     {
         const expr = norm(input);
 
-        if (this.key != expr.key)
+        if (this.key != Keys.WILDCARD && this.key != expr.key)
             return false;
 
         if (this.exact && !this.modifiers.matchesExact(expr.modifiers))
@@ -85,4 +88,33 @@ function norm(x:KeyExpression|KeyboardEvent|VisualKeyboardEvent):KeyExpression
     return (x instanceof KeyboardEvent || x instanceof VisualKeyboardEvent)
         ? KeyExpression.create(x)
         : x;
+}
+
+function extract_event(expr:string):string[]
+{
+    let event = 'keydown';
+
+    if (expr.indexOf('.') >= 0)
+    {
+        event = expr.match(/\.([\w*]+)\+?/)[1];
+        expr = expr.replace(`.${event}`, '');
+        event = event.toLowerCase();
+
+        switch (event)
+        {
+            case 'down':
+            case 'press':
+            case 'up':
+                event = 'key' + event;
+                break;
+            case 'keydown':
+            case 'keypress':
+            case 'keyup':
+                break;
+            default:
+                throw 'Invalid KeyEventType: ' + event;
+        }
+    }
+
+    return [expr, event];
 }

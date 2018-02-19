@@ -64,24 +64,25 @@ export class GridRange implements GridRangeLike
         if (!cellRefs.length)
             return GridRange.empty();
 
-        let lo = cellRefs[0];
-        let hi = cellRefs[0];
+        let [loCol, loRow] = GridCell.unmakeRefToArray(cellRefs[0]);
+        let [hiCol, hiRow] = [loCol, loRow];
 
         for (let cr of cellRefs)
         {
-            if (cr < lo) lo = cr;
-            if (cr > hi) hi = cr;
-        }
+            let [col, row] = GridCell.unmakeRefToArray(cr);
 
-        let loRp = GridCell.unmakeRef(lo);
-        let hiRp = GridCell.unmakeRef(hi);
+            if (loCol > col) loCol = col;
+            if (hiCol < col) hiCol = col;
+            if (loRow > row) loRow = row;
+            if (hiRow < row) hiRow = row;
+        }
 
         let cells = [] as GridCell[];
         let tracker = {} as any; //Track to prevent dupes when row/col span > 1
 
-        for (let col = loRp.col; col < (hiRp.col + 1); col++)
+        for (let col = loCol; col < (hiCol + 1); col++)
         {
-            for (let row = loRp.row; row < (hiRp.row + 1); row++)
+            for (let row = loRow; row < (hiRow + 1); row++)
             {
                 let cell = model.locateCell(col, row);
 
