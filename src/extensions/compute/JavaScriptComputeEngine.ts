@@ -255,7 +255,7 @@ export class JavaScriptComputeEngine implements ComputeEngine
         {
             if (v !== undefined)
             {
-                return parseFloat(v.replace(/,/g, '')) || 0;
+                return parseFloat(v) || 0;
             }
         }
 
