@@ -79,7 +79,6 @@ export * from './vom/layout/Tether';
 export * from './vom/styling/Animate';
 export * from './vom/styling/Border';
 export * from './vom/styling/Color';
-export * from './vom/styling/DefaultTheme';
 export * from './vom/styling/Font';
 export * from './vom/styling/Styleable';
 export * from './vom/styling/Theme';

@@ -1,10 +1,10 @@
-import { DragHelper } from './input/DragHelper';
 import { Event } from '../base/Event';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
+import * as u from '../misc/Util';
 import { BufferManager } from './BufferManager';
 import { CameraManager } from './CameraManager';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
@@ -12,18 +12,19 @@ import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
 import { VisualMouseDragEvent } from './events/VisualMouseDragEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
+import { DragHelper } from './input/DragHelper';
+import { Modifiers } from './input/Modifiers';
 import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
 import { RootVisual } from './RootVisual';
-import { DefaultTheme } from './styling/DefaultTheme';
 import { Theme } from './styling/Theme';
 import { Visual, VisualPredicate } from './Visual';
+import * as vq from './VisualQuery';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
-import * as u from '../misc/Util';
-import * as vq from './VisualQuery';
-import { Modifiers } from './input/Modifiers';
-import { perf } from '../perf';
+import { BufferCache } from './BufferCache';
+import { InternalCamera } from '../index';
+import { Camera } from './Camera';
 
 
 /**
@@ -55,11 +56,13 @@ export class Surface extends SimpleEventEmitter
     @Observable()
     public height:number;
 
-    @Observable(new DefaultTheme())
+    @Observable(new Theme('Default'))
     public theme:Theme;
 
     private readonly sequence:VisualSequence;
     private readonly buffers:BufferManager;
+    private readonly buffers2:BufferCache;
+    private readonly dirtySinceLastRender:{[id:number]:boolean};
 
     private dirtyRender:boolean;
     private dirtySequence:boolean;
@@ -77,9 +80,10 @@ export class Surface extends SimpleEventEmitter
         this.cameras = this.createCameraManager();        
         this.buffers = this.createBufferManager();
 
+        this.dirtySinceLastRender = {};
+        this.buffers2 = new BufferCache();
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
-        this.theme = new DefaultTheme();
  
         this.ticker = new RefreshLoop(60);
         this.ticker.add(() => this.render());
@@ -158,7 +162,7 @@ export class Surface extends SimpleEventEmitter
             let visGfx = visBuf.getContext('2d');
 
             visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
-            set_transform(visGfx, Matrix.identity.translate(5, 5));
+            setTransform(visGfx, Matrix.identity.translate(5, 5));
             visual.render(visGfx);
 
             for (let cam of cameras) 
@@ -179,31 +183,114 @@ export class Surface extends SimpleEventEmitter
         });
 
         let viewGfx = view.getContext('2d');
-        set_transform(viewGfx, Matrix.identity);
+        setTransform(viewGfx, Matrix.identity);
         viewGfx.clearRect(0, 0, view.width, view.height);
 
         for (let cam of cameras)  
         {
             let camBuf = buffers.getFor('camera', cam);
             let camGfx = camBuf.getContext('2d');
-            set_transform(camGfx, Matrix.identity);
+            setTransform(camGfx, Matrix.identity);
             camGfx.fillStyle = 'red';
             camGfx.fillText('Cam ' + cam.id, 3, 12);
             
-            set_transform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
+            setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
             viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
         }
 
         buffers.endRender();
     }
 
+    private performRender2():void 
+    {
+        let { buffers2, sequence, view, dirtySinceLastRender } = this;
+        let buffersNext = new BufferCache();
+
+        //Only render to cameras with valid bounds
+        let cameras = this.cameras.toArray()
+            .filter(x => !!x.bounds.width && !!x.bounds.height)
+     
+        interface Render { (gfx:CanvasRenderingContext2D) };
+
+        let viewGfx = view.getContext('2d');
+        setTransform(viewGfx, Matrix.identity);
+        viewGfx.clearRect(0, 0, view.width, view.height);
+
+        for (let cam of cameras)  
+        {
+            // has camera changed?
+            //     ??? discard buffer
+
+            const camBuf = createCameraBuffer(cam);
+            const camBatch = [];
+            const camGfx = camBuf.getContext('2d');
+            const cMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse()
+                
+            // setTransform(camGfx, Matrix.identity);
+            // camGfx.fillStyle = 'red';
+            // camGfx.fillText('Cam ' + cam.id, 3, 12);
+            
+            setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
+            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+
+            // for each visual
+            
+            sequence.climb(visual => {
+
+                //if not in view; continue
+                if (!cam.area.intersects(visual.absoluteBounds))
+                {
+                    return true;
+                }
+
+                //if visual is dirty, trash buffer
+                if (dirtySinceLastRender[visual.id])
+                {
+                    buffers2.delete(visual);
+                    delete dirtySinceLastRender[visual.id];
+                }
+
+                let visBuf = buffers2.get(visual);
+                
+                //     if no cached buffer
+                //         create buffer
+                //         paint to buffer
+
+                if (!visBuf)
+                {
+                    buffers2.put(visual, visBuf = createVisualBuffer(visual));
+
+                    let visGfx = visBuf.getContext('2d');
+                    visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
+                    setTransform(visGfx, Matrix.identity.translate(5, 5));
+                    visual.render(visGfx);
+                }
+
+                const cvMat = visual.transform.translate(-5, -5).multiply(cMat); //camera+visual transform
+
+                camGfx.setTransform(cvMat.a, cvMat.b, cvMat.c, cvMat.d, cvMat.e, cvMat.f);
+                camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
+
+                buffersNext.put(visual, visBuf);
+
+                return true;
+            });
+
+
+            //     paint buffer to camera
+
+            //     if have cached buffer
+            //         paint with this
+
+            setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
+            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+        }
+    }
+
     private createCameraManager():InternalCameraManager
     {
         let cm = new InternalCameraManager();
         cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
-        // cm.create('main2', 2, new Rect(this.width / 2, 0, this.width / 2, this.height / 2), Point.empty);
-        // cm.create('main3', 3, new Rect(0, this.height / 2, this.width / 2, this.height / 2), Point.empty);
-        // cm.create('main4', 4, new Rect(this.width / 2, this.height / 2, this.width / 2, this.height / 2), Point.empty);
 
         let callback = () => this.dirtyRender = true;
         cm.on('create', callback);
@@ -239,6 +326,7 @@ export class Surface extends SimpleEventEmitter
     private createView():HTMLCanvasElement
     {
         let view = document.createElement('canvas');
+        view.style.display = 'block';
         view.width = this.width;
         view.height = this.height;
         view.tabIndex = -1;
@@ -391,6 +479,7 @@ export class Surface extends SimpleEventEmitter
     private onVisualChange(e:VisualChangeEvent)
     {
         this.dirtyRender = true;
+        this.dirtySinceLastRender[e.target.id];
 
         if (e.property == 'classes' || e.property == 'traits')
         {
@@ -437,7 +526,23 @@ function cumulative_offset(element:HTMLElement):Point
     return new Point(left, top);
 };
 
-function set_transform(gfx:CanvasRenderingContext2D, mt:Matrix)
+function setTransform(gfx:CanvasRenderingContext2D, mt:Matrix)
 {
     gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
+}
+
+function createCameraBuffer(camera:Camera):HTMLCanvasElement
+{
+    const buffer = document.createElement('canvas');
+    buffer.width = camera.bounds.width;
+    buffer.height = camera.bounds.height;
+    return buffer;
+}
+
+function createVisualBuffer(visual:Visual):HTMLCanvasElement
+{
+    const buffer = document.createElement('canvas');
+    buffer.width = visual.width + 10;
+    buffer.height = visual.height + 10;
+    return buffer;
 }

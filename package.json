@@ -16,7 +16,8 @@
     "@types/bases": "^0.2.2",
     "bases": "^0.2.1",
     "parse-color": "^1.0.0",
-    "reflect-metadata": "^0.1.12"
+    "reflect-metadata": "^0.1.12",
+    "resize-observer-polyfill": "^1.5.0"
   },
   "devDependencies": {
     "browserify": "^14.5.0",

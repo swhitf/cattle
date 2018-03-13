@@ -17,6 +17,7 @@ import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
 import { GridView } from './GridView';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
+import * as ResizeObserver from 'resize-observer-polyfill';
 
 
 export class GridElement extends SimpleEventEmitter
@@ -36,6 +37,7 @@ export class GridElement extends SimpleEventEmitter
     {
         let surface = new Surface(container.clientWidth, container.clientHeight);
         container.appendChild(surface.view);
+        enableAutoResize(container, surface);
 
         let grid = new GridElement(container, surface, initialModel || GridModel.dim(26, 100));
         return grid;
@@ -182,7 +184,8 @@ export class GridElement extends SimpleEventEmitter
     private initSurface():void
     {
         let { surface } = this;
-
+        
+        surface.on('resize', () => this.updateCameras());
         surface.on('resize', () => this.updateSurface());
         surface.ticker.add(() => this.updateSurface());
     }
@@ -396,4 +399,26 @@ export class CameraBufferEntry
                 public cycle?:number)
     {
     }
+}
+
+function enableAutoResize(container:HTMLElement, surface:Surface) {
+
+    //TypeScript not liking this for some reason...
+    const RO = ResizeObserver as any;
+
+    let t = { id: null as any };
+
+    (new RO((entries, observer) => {
+        const {left, top, width, height} = entries[0].contentRect;
+        
+        const apply = () => {
+            console.log('apply-size');
+            surface.width = width;
+            surface.height = height;
+        };
+
+        clearTimeout(t.id);
+        t.id = setTimeout(apply, 100);
+    }))
+    .observe(container);
 }
