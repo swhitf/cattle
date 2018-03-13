@@ -47,6 +47,8 @@ export * from './model/GridRange';
 export * from './model/GridRow';
 export * from './model/GridWalk';
 
+export * from './themes/GoogleSheetsTheme';
+
 export * from './vom/BufferManager';
 export * from './vom/Camera';
 export * from './vom/CameraManager';

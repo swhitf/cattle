@@ -15,10 +15,15 @@ export class Theme
 
     public dtv:number = 0;
 
-    constructor(name:string)
+    constructor(name:string, styles?:{[selector:string]:any})
     {
         this.name = name;
         this.styles = [];
+
+        if (styles) 
+        {
+            this.extend(styles);
+        }
     }
 
     public extend(style:{[selector:string]:any}):Theme

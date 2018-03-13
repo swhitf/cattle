@@ -1,4 +1,4 @@
-import { EditingExtension, NetExtension, SelectorExtension } from '..';
+import { EditingExtension, NetExtension, SelectorExtension, Theme } from '..';
 import { AbstractDestroyable } from '../base/AbstractDestroyable';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
@@ -16,6 +16,7 @@ import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
 import { GridView } from './GridView';
+import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 
 
 export class GridElement extends SimpleEventEmitter
@@ -46,6 +47,7 @@ export class GridElement extends SimpleEventEmitter
             .extend(new NetExtension())
             .extend(new SelectorExtension())
             .extend(new EditingExtension())
+            .useTheme(GoogleSheetsTheme)
         ;
     }
 
@@ -113,6 +115,12 @@ export class GridElement extends SimpleEventEmitter
         }
 
         return this;
+    }
+
+    public useTheme(theme:Theme):GridElement 
+    {
+        this.surface.theme = theme;
+        return this;        
     }
 
     public exec(command:string, ...args:any[]):void
