@@ -19,7 +19,7 @@ export function safely(d:Destroyable):boolean
 }
 
 /**
- * elper function that destroys a Destroyable after the specified callback has been executed.
+ * Helper function that destroys a Destroyable after the specified callback has been executed.
  *
  * @param d the destroyable
  * @param callback the callback

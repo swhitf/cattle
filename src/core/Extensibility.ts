@@ -2,8 +2,6 @@ import { GridElement } from './GridElement';
 import { GridKernel } from './GridKernel';
 import { Rect } from '../geom/Rect';
 
-declare var Reflect:any;
-
 
 export interface GridExtension
 {

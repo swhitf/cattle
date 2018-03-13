@@ -1,4 +1,4 @@
-import { GridView } from './GridView';
+import { EditingExtension, NetExtension, SelectorExtension } from '..';
 import { AbstractDestroyable } from '../base/AbstractDestroyable';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
@@ -15,6 +15,7 @@ import { CellVisual } from './CellVisual';
 import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
+import { GridView } from './GridView';
 
 
 export class GridElement extends SimpleEventEmitter
@@ -37,6 +38,15 @@ export class GridElement extends SimpleEventEmitter
 
         let grid = new GridElement(container, surface, initialModel || GridModel.dim(26, 100));
         return grid;
+    }
+
+    public static createDefault(container:HTMLElement, initialModel?:GridModel):GridElement
+    {
+        return this.create(container, initialModel)
+            .extend(new NetExtension())
+            .extend(new SelectorExtension())
+            .extend(new EditingExtension())
+        ;
     }
 
     private constructor(container:HTMLElement, surface:Surface, model:GridModel)

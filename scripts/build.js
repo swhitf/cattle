@@ -1,13 +1,15 @@
 'use strict'
 
+const argv = require('optimist').argv;
 const browserify = require('browserify');
 const tsify = require('tsify');
 const watchify = require('watchify');
 const fs = require('fs-extra');
 const gaze = require('gaze');
 
-const shouldLog = !process.argv.some(x => x == '-s');
-const shouldWatch = process.argv.some(x => x == '-w');
+const shouldLog = !argv.s || !argv.silent;
+const shouldWatch = !!argv.w || !!argv.watch;
+const targetTask = argv.t || argv.task || false;
 
 const log = shouldLog ? console.log : () => {};
 
@@ -18,58 +20,73 @@ function delayed(callback) {
         t = setTimeout(callback.bind(this, arguments), 100);
     }
 }
+
+const tasks = {
     
-function task_clean() {
-    log('Cleaning...');
-    fs.emptyDirSync('./dist/dev');
+    clean: function () {
+        log('Cleaning...');
+        fs.removeSync('./build');
+        fs.removeSync('./dist');
+    },
+
+    js: function () {
+
+        fs.ensureDirSync('./dist/dev');
+
+        let b = browserify({
+            cache: {},
+            debug: true,
+            entries: ['./src/@dev/main.ts'],
+            packageCache: {},
+        });
+
+        b.plugin(tsify);
+        
+        if (shouldWatch) {
+            b.plugin(watchify);
+        }
+
+        const bundle = () => {
+            b.bundle()
+            .on('end', () => log('Built js at', new Date()))
+            .on('error', e => console.error(e.toString()))
+            .pipe(fs.createWriteStream('./dist/dev/app.js'));
+        };
+
+        b.on('update', bundle);
+        bundle();
+    },
+
+    resources: function () {
+        fs.ensureDirSync('./dist/dev');
+        fs.copySync('./res', './dist/dev');
+        log('Built resources at', new Date());
+    },
 }
 
-function task_js() {
+if (targetTask) {
 
-    let b = browserify({
-        cache: {},
-        debug: true,
-        entries: ['./src/@dev/main.ts'],
-        packageCache: {},
-    });
-
-    b.plugin(tsify);
-    
-    if (shouldWatch) {
-        b.plugin(watchify);
-    }
-
-    const bundle = () => {
-        b.bundle()
-         .on('end', () => log('Built js at', new Date()))
-         .on('error', e => console.error(e.toString()))
-         .pipe(fs.createWriteStream('./dist/dev/app.js'));
-    };
-
-    b.on('update', bundle);
-    bundle();
-}
-
-function task_resources() {
-    fs.copySync('./res', './dist/dev');
-    log('Built resources at', new Date());
-}
-
-task_clean();
-
-if (shouldWatch) {
-    console.log('Building & watching...')
-
-    task_js();
-    task_resources();
-
-    gaze('./res/**/*', function()  {
-        this.on('all', delayed(task_resources));
-    });
+    if (tasks[targetTask]) tasks[targetTask]();
+    else throw new Error('No such task: ' + targetTask);
 }
 else {
-    console.log('Building...')
-    
-    task_js();
-    task_resources();
+
+    tasks.clean();
+
+    if (shouldWatch) {
+        console.log('Building & watching...')
+
+        tasks.js();
+        tasks.resources();
+
+        gaze('./res/**/*', function()  {
+            this.on('all', delayed(tasks.resources));
+        });
+    }
+    else {
+        console.log('Building...')
+        
+        tasks.js();
+        tasks.resources();
+    }
 }

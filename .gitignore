@@ -355,5 +355,4 @@ jspm_packages
 
 # Extras
 build/
-dev/
-export/
+dist/dev

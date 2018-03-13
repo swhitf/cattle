@@ -11,18 +11,8 @@ import { KeyBehavior } from '../../vom/input/KeyBehavior';
 import { MouseBehavior } from '../../vom/input/MouseBehavior';
 import { select } from '../../vom/VisualQuery';
 import { NetManager } from '../nets/NetManager';
+import { Vectors } from '../../misc/Vectors';
 
-
-let Vectors = {
-    nw: new Point(-1, -1),
-    n: new Point(0, -1),
-    ne: new Point(1, -1),
-    e: new Point(1, 0),
-    se: new Point(1, 1),
-    s: new Point(0, 1),
-    sw: new Point(-1, 1),
-    w: new Point(-1, 0),
-};
 
 export interface SelectorExtensionExports
 {
@@ -147,34 +137,6 @@ export class SelectorExtension
     {
         return u.last(this.selections) || null;
     }
-
-    // private createElements(target:HTMLElement):void
-    // {
-    //     let layer = document.createElement('div');
-    //     layer.className = 'grid-layer';
-    //     Dom.css(layer, { pointerEvents: 'none', overflow: 'hidden', });
-    //     target.parentElement.insertBefore(layer, target);
-
-    //     let t = new Tether({
-    //         element: layer,
-    //         target: target,
-    //         attachment: 'middle center',
-    //         targetAttachment: 'middle center',
-    //     });
-
-    //     let onBash = () => {
-    //         Dom.fit(layer, target);
-    //         t.position();
-    //     };
-
-    //     this.grid.on('bash', onBash);
-    //     onBash();
-
-    //     this.layer = layer;
-
-    //     this.primarySelector = Selector.create(layer, true);
-    //     this.captureSelector = Selector.create(layer, false);
-    // }
 
     private select(from:string, to:string, mode?:SelectMode):void;
     private select(cell:string, mode?:SelectMode):void;
@@ -495,70 +457,7 @@ export class SelectorExtension
 
         throw 'What is this type: ' + target;
     }
-
-    // private alignSelectors(animate:boolean):void
-    // {
-    //     let { grid, selection, primarySelector, captureSelector } = this;
-
-    //     if (selection.length)
-    //     {
-    //         let primaryRect = grid.getCellViewRect(selection[0]);
-    //         primarySelector.goto(primaryRect, animate);
-
-    //         //TODO: Improve the shit out of this:
-    //         let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
-    //         captureSelector.goto(captureRect, animate);
-    //         captureSelector.toggle(selection.length > 1);
-    //     }
-    //     else
-    //     {
-    //         primarySelector.hide();
-    //         captureSelector.hide();
-    //     }
-
-        // let { grid, selection, primarySelector, captureSelector } = this;
-        
-        // if (selection.length)
-        // {
-        //     let primaryRect = grid.getCellViewRect(selection[0]);
-        //     primarySelector.goto(primaryRect, animate);
-
-        //     //TODO: Improve the shit out of this:
-        //     let captureRect = Rect.fromMany(selection.map(x => grid.getCellViewRect(x)));
-        //     captureSelector.goto(captureRect, animate);
-        //     captureSelector.toggle(selection.length > 1);
-        // }
-        // else
-        // {
-        //     primarySelector.hide();
-        //     captureSelector.hide();
-        // }
-
-
-
-
-
-    // }
 }
-
-// class Selector extends AbsWidgetBase<HTMLDivElement>
-// {
-//     public static create(container:HTMLElement, primary:boolean = false):Selector
-//     {
-//         let root = document.createElement('div');
-//         root.className = 'grid-selector ' + (primary ? 'grid-selector-primary' : '');
-//         container.appendChild(root);
-
-//         Dom.css(root, {
-//             position: 'absolute',
-//             left: '0px',
-//             top: '0px',
-//             display: 'none',
-//         });
-
-//         return new Selector(root);
-//     }
-// }
 
 class SelectionImpl implements Selection
 {

@@ -2,11 +2,15 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es5",
+        "lib": [
+            "dom",
+            "es6"
+        ],
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "declaration": true,
         "rootDir": "src",
-        "outDir": "build",
+        "outDir": "dist/lib",
         "sourceMap": true
     },
     "exclude": [
@@ -14,9 +18,7 @@
         "export",
         "dist",
         "node_modules",
-        "play",
-        "test",
-        "typings/browser.d.ts",
-        "typings/browser"
+        "src/browser.ts",
+        "src/_dev"
     ]
 }

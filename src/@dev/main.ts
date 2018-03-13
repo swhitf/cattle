@@ -1,3 +1,5 @@
+import 'es5-shim';
+import 'es6-shim';
 import 'reflect-metadata';
 
 import { debug_events } from '../base/EventEmitter';
