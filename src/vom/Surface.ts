@@ -96,6 +96,8 @@ export class Surface extends SimpleEventEmitter
 
     public render():void
     {
+        console.time('render');
+
         let didRender = false;
 
         if (this.dirtySequence)
@@ -118,6 +120,8 @@ export class Surface extends SimpleEventEmitter
         {
             this.propagateEvent(new Event('render'), []);
         }
+
+        console.timeEnd('render');
     }
 
     public query(selector:string):Visual[]
@@ -209,21 +213,26 @@ export class Surface extends SimpleEventEmitter
         let { buffers2, sequence, view } = this;
         let buffersNext = new BufferCache();
 
+        const resolveBuffer = (type, id, factory) => {
+            let key = `${type}/${id}`;
+            let buf = buffers2.get(key);
+            if (!buf) buffers2.put(key, buf = factory());
+            return buf;
+        };
+
         //Only render to cameras with valid bounds
         let cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
      
         interface Instruction { ():void; };
 
+        resolveBuffer()
+
         let viewGfx = view.getContext('2d');
         setTransform(viewGfx, Matrix.identity);
         viewGfx.clearRect(0, 0, view.width, view.height);
 
-        const resolveBuffer = (obj, factory) => {
-            let buf = buffers2.get(obj);
-            if (!buf) buffers2.put(obj, buf = factory(obj));
-            return buf;
-        };
+        
         
         for (let cam of cameras)  
         {
@@ -241,11 +250,11 @@ export class Surface extends SimpleEventEmitter
 
             camBatch.push(() => {
                 setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-                viewGfx.drawImage(camBuf.data, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+                viewGfx.drawImage(camBuf.data, 0, 0)//, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
             });
 
             // for each visual
-            
+ 
             sequence.climb(visual => {
 
                 //if not in view; continue
@@ -274,7 +283,7 @@ export class Surface extends SimpleEventEmitter
                 camBatch.push(() => {
                     const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
                     setTransform(camGfx, camVisMat);
-                    camGfx.drawImage(visBuf.data, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
+                    camGfx.drawImage(visBuf.data, 0, 0)//, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
                 });
                 
                 buffersNext.put(visual, visBuf);
@@ -296,7 +305,7 @@ export class Surface extends SimpleEventEmitter
             buffersNext.put(cam, camBuf);
 
             setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-            viewGfx.drawImage(camBuf.data, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+            viewGfx.drawImage(camBuf.data, 0, 0)//, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
 
             //console.timeEnd(`performRender2/${cam.id}`);
         }
@@ -551,6 +560,14 @@ function cumulative_offset(element:HTMLElement):Point
 function setTransform(gfx:CanvasRenderingContext2D, mt:Matrix)
 {
     gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
+}
+
+function createViewBuffer(surface:Surface):Buffer
+{
+    const buffer = new Buffer('v/surface');
+    buffer.width = surface.width;
+    buffer.height = surface.height;
+    return buffer;
 }
 
 function createCameraBuffer(camera:Camera):Buffer
