@@ -2,6 +2,7 @@ import { ObjectMap } from '../common';
 import { Point } from '../geom/Point';
 import { Camera } from './Camera';
 import { Visual } from './Visual';
+import { Buffer } from './Buffer';
 
 
 interface BufferableObjectInfo
@@ -14,9 +15,9 @@ export type Bufferable = Camera|Visual;
 
 export class BufferCache
 {
-    private buffers:ObjectMap<HTMLCanvasElement> = {};
+    private buffers:ObjectMap<Buffer> = {};
 
-    public get(object:Bufferable):HTMLCanvasElement
+    public get(object:Bufferable):Buffer
     {
         const info = this.inspect(object);
         const key = `${info.type}/${info.id}`;
@@ -24,7 +25,7 @@ export class BufferCache
         return this.buffers[key] || null;
     }
 
-    public put(object:Bufferable, buf:HTMLCanvasElement):void
+    public put(object:Bufferable, buf:Buffer):void
     {
         const info = this.inspect(object);
         const key = `${info.type}/${info.id}`;
@@ -40,6 +41,15 @@ export class BufferCache
         const key = `${info.type}/${info.id}`;
 
         delete buffers[key];     
+    }
+
+    public invalidate(object:Bufferable):boolean
+    {
+        const item = this.get(object);
+        if (item) {
+            item.valid = false;
+        }
+        return true;
     }
 
     private inspect(object:Bufferable):BufferableObjectInfo

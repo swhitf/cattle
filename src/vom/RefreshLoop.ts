@@ -13,7 +13,7 @@ export interface RefreshTicker
 export class RefreshLoop
 {
     private destroyed:boolean = false;
-    private tickers:RefreshTick[] = [];
+    private tickers = [] as Array<{ name:string, tick:RefreshTick }>;
 
     constructor(private fps:number = 60)
     {
@@ -24,11 +24,15 @@ export class RefreshLoop
         this.destroyed = true;
     }
 
-    public add(ticker:RefreshTick):RefreshLoop;
-    public add(ticker:RefreshTicker):RefreshLoop;
-    public add(ticker:any)
+    public add(name:string, ticker:RefreshTick):RefreshLoop;
+    public add(name:string, ticker:RefreshTicker):RefreshLoop;
+    public add(name:string, ticker:any)
     {
-        this.tickers.push(ticker.tick ? ticker.tick.bind(ticker) : ticker);
+        this.tickers.push({
+            name: name,
+            tick: ticker.tick ? ticker.tick.bind(ticker) : ticker
+        });
+
         return this;
     }
 
@@ -36,7 +40,7 @@ export class RefreshLoop
     public remove(ticker:RefreshTicker):RefreshLoop;
     public remove(ticker:any)
     {
-        this.tickers = this.tickers.filter(x => x != ticker);
+        this.tickers = this.tickers.filter(x => x.tick != ticker);
         return this;
     }
 
@@ -72,10 +76,14 @@ export class RefreshLoop
                 let dt = delta / 1000;
                 this.tickers.forEach(x => 
                 {
-                    if (x(dt) === false)
+                    //console.time(`tick/${x.name}`);
+
+                    if (x.tick(dt) === false)
                     {
                         remove.push(x);
                     }
+
+                    //console.timeEnd(`tick/${x.name}`);
                 });
 
                 // Just `then = now` is not enough.

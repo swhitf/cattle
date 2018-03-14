@@ -23,8 +23,9 @@ import * as vq from './VisualQuery';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
 import { BufferCache } from './BufferCache';
-import { InternalCamera } from '../index';
+import { InternalCamera, CameraEvent } from '../index';
 import { Camera } from './Camera';
+import { Buffer } from './Buffer';
 
 
 /**
@@ -61,9 +62,8 @@ export class Surface extends SimpleEventEmitter
 
     private readonly sequence:VisualSequence;
     private readonly buffers:BufferManager;
-    private readonly buffers2:BufferCache;
-    private readonly dirtySinceLastRender:{[id:number]:boolean};
 
+    private buffers2:BufferCache;
     private dirtyRender:boolean;
     private dirtySequence:boolean;
     private tracker:VisualTracker;
@@ -80,13 +80,12 @@ export class Surface extends SimpleEventEmitter
         this.cameras = this.createCameraManager();        
         this.buffers = this.createBufferManager();
 
-        this.dirtySinceLastRender = {};
         this.buffers2 = new BufferCache();
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
  
         this.ticker = new RefreshLoop(60);
-        this.ticker.add(() => this.render());
+        this.ticker.add('render', () => this.render());
         this.ticker.start();
     }
 
@@ -101,13 +100,15 @@ export class Surface extends SimpleEventEmitter
 
         if (this.dirtySequence)
         {
+            console.time('sequence:update');
             this.sequence.update();
             this.dirtyRender = true;
+            console.timeEnd('sequence:update');
         }   
 
         if (this.dirtyRender)
         {
-            this.performRender();
+            this.performRender2();
             didRender = true;
         }
 
@@ -146,92 +147,102 @@ export class Surface extends SimpleEventEmitter
         return collected;
     }
 
-    private performRender()
-    {
-        let { buffers, sequence, view } = this;
+    // private performRender()
+    // {
+    //     let { buffers, sequence, view } = this;
         
-        //Only render to cameras with valid bounds
-        let cameras = this.cameras.toArray()
-            .filter(x => !!x.bounds.width && !!x.bounds.height)
+    //     //Only render to cameras with valid bounds
+    //     let cameras = this.cameras.toArray()
+    //         .filter(x => !!x.bounds.width && !!x.bounds.height)
 
-        buffers.beginRender();
+    //     buffers.beginRender();
 
-        sequence.climb(visual =>
-        {
-            let visBuf = buffers.getFor('visual', visual);
-            let visGfx = visBuf.getContext('2d');
+    //     sequence.climb(visual =>
+    //     {
+    //         let visBuf = buffers.getFor('visual', visual);
+    //         let visGfx = visBuf.getContext('2d');
 
-            visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
-            setTransform(visGfx, Matrix.identity.translate(5, 5));
-            visual.render(visGfx);
+    //         visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
+    //         setTransform(visGfx, Matrix.identity.translate(5, 5));
+    //         visual.render(visGfx);
 
-            for (let cam of cameras) 
-            {
-                if (!cam.bounds.width || !cam.bounds.height)
-                    continue;
+    //         for (let cam of cameras) 
+    //         {
+    //             if (!cam.bounds.width || !cam.bounds.height)
+    //                 continue;
 
-                let camBuf = buffers.getFor('camera', cam);
-                let camGfx = camBuf.getContext('2d');
-                let camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse()
-                let cvt = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
+    //             let camBuf = buffers.getFor('camera', cam);
+    //             let camGfx = camBuf.getContext('2d');
+    //             let camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse()
+    //             let cvt = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
 
-                camGfx.setTransform(cvt.a, cvt.b, cvt.c, cvt.d, cvt.e, cvt.f);
-                camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
-            }
+    //             camGfx.setTransform(cvt.a, cvt.b, cvt.c, cvt.d, cvt.e, cvt.f);
+    //             camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
+    //         }
 
-            return true;
-        });
+    //         return true;
+    //     });
 
-        let viewGfx = view.getContext('2d');
-        setTransform(viewGfx, Matrix.identity);
-        viewGfx.clearRect(0, 0, view.width, view.height);
+    //     let viewGfx = view.getContext('2d');
+    //     setTransform(viewGfx, Matrix.identity);
+    //     viewGfx.clearRect(0, 0, view.width, view.height);
 
-        for (let cam of cameras)  
-        {
-            let camBuf = buffers.getFor('camera', cam);
-            let camGfx = camBuf.getContext('2d');
-            setTransform(camGfx, Matrix.identity);
-            camGfx.fillStyle = 'red';
-            camGfx.fillText('Cam ' + cam.id, 3, 12);
+    //     for (let cam of cameras)  
+    //     {
+    //         let camBuf = buffers.getFor('camera', cam);
+    //         let camGfx = camBuf.getContext('2d');
+    //         setTransform(camGfx, Matrix.identity);
+    //         camGfx.fillStyle = 'red';
+    //         camGfx.fillText('Cam ' + cam.id, 3, 12);
             
-            setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
-        }
+    //         setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
+    //         viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+    //     }
 
-        buffers.endRender();
-    }
+    //     buffers.endRender();
+    // }
 
     private performRender2():void 
     {
-        let { buffers2, sequence, view, dirtySinceLastRender } = this;
+        console.time('begin:performRender2');
+
+        let { buffers2, sequence, view } = this;
         let buffersNext = new BufferCache();
 
         //Only render to cameras with valid bounds
         let cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
      
-        interface Render { (gfx:CanvasRenderingContext2D) };
+        interface Instruction { ():void; };
 
         let viewGfx = view.getContext('2d');
         setTransform(viewGfx, Matrix.identity);
         viewGfx.clearRect(0, 0, view.width, view.height);
 
+        const resolveBuffer = (obj, factory) => {
+            let buf = buffers2.get(obj);
+            if (!buf) buffers2.put(obj, buf = factory(obj));
+            return buf;
+        };
+        
         for (let cam of cameras)  
         {
+            //console.profile(`performRender2/${cam.id}`);
+
             // has camera changed?
             //     ??? discard buffer
 
-            const camBuf = createCameraBuffer(cam);
-            const camBatch = [];
-            const camGfx = camBuf.getContext('2d');
-            const cMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse()
-                
-            // setTransform(camGfx, Matrix.identity);
-            // camGfx.fillStyle = 'red';
-            // camGfx.fillText('Cam ' + cam.id, 3, 12);
-            
-            setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+            const camBatch = [] as Instruction[];            
+            const camBuf = resolveBuffer(cam, createCameraBuffer);
+            const camGfx = camBuf.context;
+            const camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
+
+            let shouldCamRender = !camBuf.valid;
+
+            camBatch.push(() => {
+                setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
+                viewGfx.drawImage(camBuf.data, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+            });
 
             // for each visual
             
@@ -243,48 +254,55 @@ export class Surface extends SimpleEventEmitter
                     return true;
                 }
 
-                //if visual is dirty, trash buffer
-                if (dirtySinceLastRender[visual.id])
+                const visBuf = resolveBuffer(visual, createVisualBuffer);
+
+                if (!visBuf.valid)
                 {
-                    buffers2.delete(visual);
-                    delete dirtySinceLastRender[visual.id];
-                }
+                    //console.time(`performRender2/${cam.id}/${visual.id}`);
 
-                let visBuf = buffers2.get(visual);
-                
-                //     if no cached buffer
-                //         create buffer
-                //         paint to buffer
-
-                if (!visBuf)
-                {
-                    buffers2.put(visual, visBuf = createVisualBuffer(visual));
-
-                    let visGfx = visBuf.getContext('2d');
+                    let visGfx = visBuf.context;
                     visGfx.clearRect(0, 0, visBuf.width, visBuf.height);
                     setTransform(visGfx, Matrix.identity.translate(5, 5));
                     visual.render(visGfx);
+                    visBuf.valid = true;
+
+                    shouldCamRender = true;
+
+                    //console.timeEnd(`performRender2/${cam.id}/${visual.id}`);
                 }
 
-                const cvMat = visual.transform.translate(-5, -5).multiply(cMat); //camera+visual transform
-
-                camGfx.setTransform(cvMat.a, cvMat.b, cvMat.c, cvMat.d, cvMat.e, cvMat.f);
-                camGfx.drawImage(visBuf, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
-
+                camBatch.push(() => {
+                    const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
+                    setTransform(camGfx, camVisMat);
+                    camGfx.drawImage(visBuf.data, 0, 0, visBuf.width, visBuf.height, 0, 0, visBuf.width, visBuf.height);
+                });
+                
                 buffersNext.put(visual, visBuf);
-
                 return true;
             });
-
 
             //     paint buffer to camera
 
             //     if have cached buffer
             //         paint with this
 
+            if (shouldCamRender) {
+                //console.time(`performRender2/${cam.id}/render`);
+                camBatch.forEach(x => x());
+                camBuf.valid = true;
+                //console.timeEnd(`performRender2/${cam.id}/render`);
+            }
+
+            buffersNext.put(cam, camBuf);
+
             setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-            viewGfx.drawImage(camBuf, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+            viewGfx.drawImage(camBuf.data, 0, 0, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+
+            //console.timeEnd(`performRender2/${cam.id}`);
         }
+
+        this.buffers2 = buffersNext;
+        console.log('end:performRender2');
     }
 
     private createCameraManager():InternalCameraManager
@@ -292,7 +310,11 @@ export class Surface extends SimpleEventEmitter
         let cm = new InternalCameraManager();
         cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
 
-        let callback = () => this.dirtyRender = true;
+        let callback = (e:CameraEvent) => {
+            this.buffers2.invalidate(e.target);
+            this.dirtyRender = true
+        };
+
         cm.on('create', callback);
         cm.on('destroy', callback);
         cm.on('change', callback);
@@ -472,19 +494,19 @@ export class Surface extends SimpleEventEmitter
         this.dirtySequence = true;
         this.sequence.invalidate(e.target);
 
-        let visuals = [ e.target ].concat(e.target.toArray(true));
-        this.applyTheme(this.theme, visuals);
+        //let visuals = [ e.target ].concat(e.target.toArray(true));
+        //this.applyTheme(this.theme, visuals);
     }
 
     private onVisualChange(e:VisualChangeEvent)
     {
+        this.buffers2.invalidate(e.target);
         this.dirtyRender = true;
-        this.dirtySinceLastRender[e.target.id];
 
         if (e.property == 'classes' || e.property == 'traits')
         {
-            let visuals = [ e.target ].concat(e.target.toArray(true));
-            this.applyTheme(this.theme, visuals);
+            // let visuals = [ e.target ].concat(e.target.toArray(true));
+            // this.applyTheme(this.theme, visuals);
         }
     }
 
@@ -531,17 +553,17 @@ function setTransform(gfx:CanvasRenderingContext2D, mt:Matrix)
     gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
 }
 
-function createCameraBuffer(camera:Camera):HTMLCanvasElement
+function createCameraBuffer(camera:Camera):Buffer
 {
-    const buffer = document.createElement('canvas');
+    const buffer = new Buffer('c/' + camera.id);
     buffer.width = camera.bounds.width;
     buffer.height = camera.bounds.height;
     return buffer;
 }
 
-function createVisualBuffer(visual:Visual):HTMLCanvasElement
+function createVisualBuffer(visual:Visual):Buffer
 {
-    const buffer = document.createElement('canvas');
+    const buffer = new Buffer('v/' + visual.id);
     buffer.width = visual.width + 10;
     buffer.height = visual.height + 10;
     return buffer;

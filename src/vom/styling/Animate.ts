@@ -57,7 +57,7 @@ class AnimationBuilderImpl<T extends Visual> implements AnimationBuilder<T>
         }
 
         this.animation = new Animation(visual);
-        setTimeout(() => visual.surface.ticker.add(this.animation), 0);
+        setTimeout(() => visual.surface.ticker.add('animation', this.animation), 0);
     }
 
     public every(intervalTime:number, callback:ContinuousAnimationCallback<T>):ContinuousAnimationBuilder<T>

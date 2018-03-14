@@ -187,7 +187,7 @@ export class GridElement extends SimpleEventEmitter
         
         surface.on('resize', () => this.updateCameras());
         surface.on('resize', () => this.updateSurface());
-        surface.ticker.add(() => this.updateSurface());
+        surface.ticker.add('updateSurface', () => this.updateSurface());
     }
     
     private updateCameras():void
@@ -412,9 +412,11 @@ function enableAutoResize(container:HTMLElement, surface:Surface) {
         const {left, top, width, height} = entries[0].contentRect;
         
         const apply = () => {
-            console.log('apply-size');
-            surface.width = width;
-            surface.height = height;
+            if (surface.width != width || surface.height != height) {
+                console.log('apply-size');
+                surface.width = width;
+                surface.height = height;
+            }
         };
 
         clearTimeout(t.id);
