@@ -2,19 +2,19 @@ import { Border } from '../vom/styling/Border';
 import { Theme } from '../vom/styling/Theme';
 
 
-export const GoogleSheetsTheme = new Theme('GoogleSheets', {
+export const MicrosoftExcelTheme = new Theme('MicrosoftExcel', {
 
     'cell': {
         zIndex: -1,
     },
 
     'net.input': {
-        border: new Border(2, '#4285f4'),
+        border: new Border(2, '#217346'),
         zIndex: 2000,
     },
 
     'net.selection': {
-        background: 'rgba(160, 195, 255, 0.2)',
+        background: 'rgba(255, 255, 255, 0.2)',
         zIndex: 1000,
     },
 

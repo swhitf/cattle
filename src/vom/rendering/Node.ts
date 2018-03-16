@@ -1,15 +1,17 @@
 import { Buffer } from "./Buffer";
+import { KeyedSet } from "../../base/KeyedSet";
 
 
 export abstract class Node
 {
     public readonly key:string;
     public readonly parent:Node;
+    public readonly children = new KeyedSet<Node>(x => x.key);
 
     public buffer:Buffer;
-    public cycle:number = 0;
+    public accessed:boolean;
 
-    private changedVal:boolean = true;
+    private dirtyVal:boolean;
 
     constructor(key:string, parent?:Node) {
         this.key = key;
@@ -17,22 +19,35 @@ export abstract class Node
         this.parent = parent;
     }
 
-    public get changed():boolean
+    public get dirty():boolean
     {
-        return this.changedVal;
+        return this.dirtyVal;
     }
 
-    public set changed(value:boolean)
+    public set dirty(value:boolean)
     {
-        if (!!value && this.parent && !this.parent.changedVal)
+        if (!!value && this.parent && !this.parent.dirty)
         {
-            this.parent.changed = value;
+            this.parent.dirty = value;
         }
 
-        this.changedVal = value;
+        this.dirtyVal = value;
+    }
+
+    public beginUpdate():void
+    {
+        this.accessed = false;
+        this.dirty = false;
+
+        this.children.forEach(x => x.beginUpdate());
+    }
+
+    public endUpdate():void
+    {
+        this.children.forEach(x => x.beginUpdate());
     }
 
     public abstract get type():string;
 
-    public abstract render(cycle:number, gfx:CanvasRenderingContext2D):void;
+    public abstract render(gfx:CanvasRenderingContext2D):void;
 }

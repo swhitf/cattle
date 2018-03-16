@@ -1,18 +1,15 @@
 import { Element } from "./Element";
 import { Node } from "./Node";
-import { NodeSet } from "./NodeSet";
 import { CompositionRegion, CompositionElement } from "./Composition";
 
 import { RectLike } from "../../geom/Rect";
 import { Matrix } from "../../geom/Matrix";
+import { KeyedSet } from "../../base/KeyedSet";
 
 
 export class Region extends Node implements CompositionRegion
 {
-    public readonly children = new NodeSet();
     public readonly type = 'region';
-
-    public changed = true;
 
     public left:number;
     public top:number;
@@ -32,75 +29,68 @@ export class Region extends Node implements CompositionRegion
         if (this.left != leftOrRect) 
         {
             this.left = leftOrRect as number;
-            this.changed = true;
+            this.dirty = true;
         }
         if (this.top != top) 
         {
             this.top = top;
-            this.changed = true;
+            this.dirty = true;
         }
         if (this.width != width) 
         {
             this.width = width;
-            this.changed = true;
+            this.dirty = true;
         }
         if (this.height != height) 
         {
             this.height = height;
-            this.changed = true;
+            this.dirty = true;
         }
     }
 
     public getElement(key:string):CompositionElement 
     {
-        return this.getNode(key, key => new Element(key)) as Element;
+        return this.getNode(key, key => new Element(key, this)) as Element;
     }
         
     public getRegion(key:string):CompositionRegion 
     {
-        return this.getNode(key, key => new Region(key)) as Region;
+        return this.getNode(key, key => new Region(key, this)) as Region;
     }
 
-    private getNode(key:string, factory:(k:string) => Node):Node
+    public endUpdate():void
     {
-        let node = this.children.get(key);
-        if (node)
+        //When an update has finished, we must prune any nodes that were not "accessed" 
+        //during the update.
+        const count = this.children.removeWhere(x => !x.accessed);
+
+        if (count > 0)
         {
-            node.cycle++;
-        }
-        else
-        {
-            node = factory(key);
-            node.cycle = this.cycle;
-            this.children.add(node);
-            this.changed = true;
+            this.dirty = true;
         }
 
-        return node;
+        this.children.forEach(x => x.endUpdate());
     }
 
-    public render(cycle:number, gfx:CanvasRenderingContext2D):void {
-        const { buffer, children } = this;
+    public render(gfx:CanvasRenderingContext2D):void {
+
+        if (this.key != this.buffer.id)
+        {
+            throw 'WTF';
+        }
 
         //Here we need to figure out if the buffer we have is reusable and if it is
         //we should just render the buffer to the gfx using the region info to set
-        //the transform.
+        //the transform.  If we are "dirty" then we need to regenerate the buffer.  
 
-        //If we are "dirty" then we need to regenerate the buffer.  We are "dirty" if
-        //our changed flag is set, or a child is dirty, or a child has not been "touched"
-        //during this cycle.
-
-        if (this.checkDirty(cycle))
+        if (this.dirty)
         {
-            //Prune any invalid children before we draw
-            children.prune(cycle);
-
             //Clear and resize our buffer
-            buffer.invalidate(this.width, this.height);
+            this.buffer.invalidate(this.width, this.height);
 
             for (let node of this.children.array) 
             {
-                node.render(cycle, buffer.context);
+                node.render(this.buffer.context);
             }
         }
 
@@ -111,23 +101,38 @@ export class Region extends Node implements CompositionRegion
         //Draw...
         this.buffer.drawTo(gfx);
 
-        this.changed = false;
+        this.dirty = false;
     }
 
-    private checkDirty(cycle:number):boolean 
+    private getNode(key:string, factory:(k:string) => Node):Node
     {
-        if (this.changed)
-            return true;
+        let node = this.children.get(key);
 
-        for (let node of this.children.array) 
+        if (!node)
         {
-            if (node.changed)
-                return true;
-
-            if (node.cycle != cycle)
-                return true;
+            node = factory(key);
+            this.children.add(node);
+            this.dirty = true;
         }
 
-        return false;
+        node.accessed = true;
+        return node;
     }
+
+    // private checkDirty(cycle:number):boolean 
+    // {
+    //     if (this.changed)
+    //         return true;
+
+    //     for (let node of this.children.array) 
+    //     {
+    //         if (node.changed)
+    //             return true;
+
+    //         if (node.cycle != cycle)
+    //             return true;
+    //     }
+
+    //     return false;
+    // }
 }

@@ -6,6 +6,7 @@ import { Matrix } from "../../geom/Matrix";
 export class Element extends Node implements CompositionElement {
 
     public readonly type = 'element';
+    public debug:string;
 
     public width:number;
     public height:number;
@@ -16,12 +17,12 @@ export class Element extends Node implements CompositionElement {
         if (this.width != width) 
         {
             this.width = width;
-            this.changed = true;
+            this.dirty = true;
         }
         if (this.height != height) 
         {
             this.height = height;
-            this.changed = true;
+            this.dirty = true;
         }
 
         return this;
@@ -33,7 +34,7 @@ export class Element extends Node implements CompositionElement {
 
         buffer.invalidate(this.width, this.height);
         buffer.update(callback);
-        this.changed = true;
+        this.dirty = true;
 
         return this;
     }
@@ -43,13 +44,13 @@ export class Element extends Node implements CompositionElement {
         if (!this.mt || !this.mt.equals(mt))
         {
             this.mt = mt;
-            this.changed = true;
+            this.dirty = true;
         }
 
         return this;
     }
 
-    public render(cycle:number, gfx:CanvasRenderingContext2D):void
+    public render(gfx:CanvasRenderingContext2D):void
     {
         const { buffer, mt } = this;
         
@@ -63,6 +64,6 @@ export class Element extends Node implements CompositionElement {
         //Draw...
         this.buffer.drawTo(gfx);  
 
-        this.changed = false;
+        this.dirty = false;
     }
 }

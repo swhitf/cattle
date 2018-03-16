@@ -7,7 +7,7 @@ import { Region } from "./Region";
 
 export interface CompositionElement 
 {
-    readonly changed:boolean;
+    readonly dirty:boolean;
 
     dim(width:number, height:number):CompositionElement;
 
@@ -35,19 +35,21 @@ export class Composition
         return this.rootRegion;
     }
 
-    public beginUpdate()
+    public beginUpdate():void
     {
-        this.rootRegion.cycle++;
-        return this.rootRegion;
+        this.rootRegion.beginUpdate();
     }
 
     public endUpdate():void
     {
-        //YOLO
+        this.rootRegion.endUpdate();
     }
 
-    public render(gfx:CanvasRenderingContext2D):void 
+    public render(to:HTMLCanvasElement):void 
     {
-        this.rootRegion.render(this.rootRegion.cycle, gfx);
+        const gfx = to.getContext('2d');
+        gfx.clearRect(0, 0, to.width, to.height);
+
+        this.rootRegion.render(gfx);
     }
 }

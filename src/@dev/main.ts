@@ -13,6 +13,10 @@ import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
 import { Border } from '../vom/styling/Border';
 import { Theme } from '../vom/styling/Theme';
+import { GoogleSheetsTheme } from '..';
+import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
+
+const click = (x, h) => document.getElementById(x).addEventListener('click', h);
 
 
 // const seq = {
@@ -33,7 +37,7 @@ import { Theme } from '../vom/styling/Theme';
 
 // console.log(expr.matches(evt));
 
-let model = GridModel.dim(26, 50);
+let model = GridModel.dim(26 * 5, 50 * 10);
 model.cells.forEach(x => x.value = x.ref);
 
 let grid = GridElement
@@ -50,15 +54,17 @@ let grid = GridElement
    .mergeInterface()
 ;
 
-debug_events(grid);
+//debug_events(grid);
 //debug_events(grid.surface);
-// debug_events(grid.surface.cameras);
+//debug_events(grid.surface.cameras);
 
 //grid.surface.on('keydown', (e:VisualKeyboardEvent) => console.log(KeyExpression.create(e)));
 
 window['grid'] = grid;
 window['surface'] = grid.surface;
 window['pt'] = Point.create;
+
+
 
 grid.model.cells[0].style = GridCellStyle.get('test');
 grid.model.cells[0].value = 'Test';
@@ -80,3 +86,5 @@ let nets = grid.get('nets') as NetManager;
 
 grid.freezeMargin = new Point(2, 2);
 
+click('useExcel', () => grid.useTheme(MicrosoftExcelTheme));
+click('useGoogle', () => grid.useTheme(GoogleSheetsTheme));
