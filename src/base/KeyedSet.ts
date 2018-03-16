@@ -11,7 +11,7 @@ export interface KeySetItemReduceCallback<T, R = T> {
 export class KeyedSet<T> {
 
     protected list = [] as T[];    
-    protected index = {} as any;
+    protected index = {} as {[key:string]:T};
 
     constructor(protected indexer:(t:T) => string) {
     }
@@ -26,11 +26,11 @@ export class KeyedSet<T> {
 
     public add(value:T):boolean {
         let key = this.indexer(value);
-        if (this.index.has(key)) {
+        if (this.index[key]) {
             return false;
         }
         else {
-            this.index.set(key, value);
+            this.index[key] = value;
             this.list.push(value);
             return true;
         }
@@ -41,15 +41,15 @@ export class KeyedSet<T> {
     }
 
     public clear():void {
-        this.index.clear();
-        this.list.splice(0, this.list.length);
+        this.index = {};
+        this.list = [];
     }
 
     public delete(key:string):boolean {
         let value = this.get(key);
         if (value) {
             let i = this.list.indexOf(value);
-            this.index.delete(key);
+            delete this.index[key];
             this.list.splice(i, 1);
             return true;
         }
@@ -68,11 +68,11 @@ export class KeyedSet<T> {
 
     public has(value:T):boolean {
         let key = this.indexer(value);
-        return !!this.index.has(key);
+        return !!this.index[key];
     }    
 
     public get(key:string):T {
-        return this.index.get(key) || null;
+        return this.index[key] || null;
     }
     
     public first():T {

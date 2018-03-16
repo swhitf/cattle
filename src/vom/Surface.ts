@@ -22,10 +22,9 @@ import { Visual, VisualPredicate } from './Visual';
 import * as vq from './VisualQuery';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
-import { BufferCache } from './BufferCache';
 import { InternalCamera, CameraEvent } from '../index';
 import { Camera } from './Camera';
-import { Buffer } from './Buffer';
+import { Composition } from './rendering/Composition';
 
 
 /**
@@ -62,8 +61,9 @@ export class Surface extends SimpleEventEmitter
 
     private readonly sequence:VisualSequence;
     private readonly buffers:BufferManager;
+    private readonly composition:Composition;
 
-    private buffers2:BufferCache;
+    private dirtySinceLastRender:{ [id:number]:boolean };
     private dirtyRender:boolean;
     private dirtySequence:boolean;
     private tracker:VisualTracker;
@@ -80,7 +80,7 @@ export class Surface extends SimpleEventEmitter
         this.cameras = this.createCameraManager();        
         this.buffers = this.createBufferManager();
 
-        this.buffers2 = new BufferCache();
+        this.composition = new Composition();
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
  
@@ -208,6 +208,56 @@ export class Surface extends SimpleEventEmitter
 
     private performRender2():void 
     {
+        const { composition, sequence, view, dirtySinceLastRender } = this;
+
+        console.time('begin:performRender2');
+
+        //Only render to cameras with valid bounds
+        const cameras = this.cameras.toArray()
+            .filter(x => !!x.bounds.width && !!x.bounds.height)
+
+        const rootRegion = composition.root;
+        rootRegion.arrange(0, 0, this.width, this.height);
+
+        for (const cam of cameras) 
+        { 
+            const camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
+            const camRegion = rootRegion.getRegion(`camera/${cam.id}`);
+            camRegion.arrange(cam.bounds);
+
+            sequence.climb(visual => {
+
+                //If visual is not visible to the camera, clip out
+                if (!cam.area.intersects(visual.absoluteBounds))
+                {
+                    return true;
+                }
+
+                const zLayer = camRegion.getRegion(`zIndex/${visual.zIndex}`);
+                zLayer.arrange(0, 0, cam.bounds.width, cam.bounds.height);
+
+                const visElmt = zLayer.getElement(`visual/${visual.id}`);
+                
+                //If the visual is dirty, or element is new we need to update its element
+                if (visElmt.changed || dirtySinceLastRender[visual.id])
+                {
+                    const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
+                    visElmt.dim(visual.width + 10, visual.height + 10);
+                    visElmt.transform(camVisMat);
+                    visElmt.draw(gfx => visual.render(gfx));
+                }
+            });
+        }
+
+        composition.endUpdate();
+        composition.render(view.getContext('2d'));
+
+        this.dirtySinceLastRender = {};
+    }
+
+    /*
+    private performRender2():void 
+    {
         console.time('begin:performRender2');
 
         let { buffers2, sequence, view } = this;
@@ -226,31 +276,23 @@ export class Surface extends SimpleEventEmitter
      
         interface Instruction { ():void; };
 
-        resolveBuffer()
+        const viewBuffer = resolveBuffer('view', 'main', () => createViewBuffer(this));
 
         let viewGfx = view.getContext('2d');
         setTransform(viewGfx, Matrix.identity);
         viewGfx.clearRect(0, 0, view.width, view.height);
 
-        
-        
         for (let cam of cameras)  
         {
-            //console.profile(`performRender2/${cam.id}`);
-
-            // has camera changed?
-            //     ??? discard buffer
-
             const camBatch = [] as Instruction[];            
-            const camBuf = resolveBuffer(cam, createCameraBuffer);
-            const camGfx = camBuf.context;
+            const camBuffer = resolveBuffer('camera', cam.id, () => createCameraBuffer(cam));
             const camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
 
-            let shouldCamRender = !camBuf.valid;
+            
 
             camBatch.push(() => {
                 setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-                viewGfx.drawImage(camBuf.data, 0, 0)//, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+                viewGfx.drawImage(camBuffer.data, 0, 0)//, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
             });
 
             // for each visual
@@ -298,14 +340,14 @@ export class Surface extends SimpleEventEmitter
             if (shouldCamRender) {
                 //console.time(`performRender2/${cam.id}/render`);
                 camBatch.forEach(x => x());
-                camBuf.valid = true;
+                camBuffer.valid = true;
                 //console.timeEnd(`performRender2/${cam.id}/render`);
             }
 
-            buffersNext.put(cam, camBuf);
+            buffersNext.put(cam, camBuffer);
 
             setTransform(viewGfx, Matrix.identity.translate(cam.bounds.left, cam.bounds.top));
-            viewGfx.drawImage(camBuf.data, 0, 0)//, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
+            viewGfx.drawImage(camBuffer.data, 0, 0)//, camBuf.width, camBuf.height, 0, 0, camBuf.width, camBuf.height);
 
             //console.timeEnd(`performRender2/${cam.id}`);
         }
@@ -313,6 +355,7 @@ export class Surface extends SimpleEventEmitter
         this.buffers2 = buffersNext;
         console.log('end:performRender2');
     }
+    */
 
     private createCameraManager():InternalCameraManager
     {
@@ -320,7 +363,7 @@ export class Surface extends SimpleEventEmitter
         cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
 
         let callback = (e:CameraEvent) => {
-            this.buffers2.invalidate(e.target);
+            //this.buffers2.invalidate(e.target);
             this.dirtyRender = true
         };
 
@@ -509,7 +552,7 @@ export class Surface extends SimpleEventEmitter
 
     private onVisualChange(e:VisualChangeEvent)
     {
-        this.buffers2.invalidate(e.target);
+        this.dirtySinceLastRender[e.target.id] = true;
         this.dirtyRender = true;
 
         if (e.property == 'classes' || e.property == 'traits')
@@ -560,28 +603,4 @@ function cumulative_offset(element:HTMLElement):Point
 function setTransform(gfx:CanvasRenderingContext2D, mt:Matrix)
 {
     gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
-}
-
-function createViewBuffer(surface:Surface):Buffer
-{
-    const buffer = new Buffer('v/surface');
-    buffer.width = surface.width;
-    buffer.height = surface.height;
-    return buffer;
-}
-
-function createCameraBuffer(camera:Camera):Buffer
-{
-    const buffer = new Buffer('c/' + camera.id);
-    buffer.width = camera.bounds.width;
-    buffer.height = camera.bounds.height;
-    return buffer;
-}
-
-function createVisualBuffer(visual:Visual):Buffer
-{
-    const buffer = new Buffer('v/' + visual.id);
-    buffer.width = visual.width + 10;
-    buffer.height = visual.height + 10;
-    return buffer;
 }
