@@ -2,19 +2,18 @@ import 'es5-shim';
 import 'es6-shim';
 import 'reflect-metadata';
 
-import { debug_events } from '../base/EventEmitter';
 import { GridElement } from '../core/GridElement';
 import { EditingExtension } from '../extensions/editing/EditingExtension';
 import { NetExtension } from '../extensions/nets/NetExtension';
 import { NetManager } from '../extensions/nets/NetManager';
+import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
 import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
-import { Border } from '../vom/styling/Border';
-import { Theme } from '../vom/styling/Theme';
-import { GoogleSheetsTheme } from '..';
+import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
+import * as vq from '../vom/VisualQuery';
 
 const click = (x, h) => document.getElementById(x).addEventListener('click', h);
 
@@ -45,13 +44,15 @@ let grid = GridElement
     .extend(new NetExtension())
     .extend(new SelectorExtension())
     .extend(new EditingExtension())
+    .extend(new ScrollerExtension())
 //    .extend(new ClipboardExtension())
 //    .extend(new HistoryExtension(history))
 //    .extend(new ComputeExtension())
 //    .extend(new ClickZoneExtension())
 //    .extend(new ComputeExtension())
 //    .extend(new ClickZoneExtension())
-   .mergeInterface()
+    .useTheme(GoogleSheetsTheme)
+    .mergeInterface()
 ;
 
 //debug_events(grid);
@@ -63,28 +64,15 @@ let grid = GridElement
 window['grid'] = grid;
 window['surface'] = grid.surface;
 window['pt'] = Point.create;
-
-
+window['vq'] = s => vq.select(grid.surface.root, s);
 
 grid.model.cells[0].style = GridCellStyle.get('test');
 grid.model.cells[0].value = 'Test';
 
-let theme = new Theme('Test');
-theme.extend('net.input', {
-    border: new Border(2, '#4285f4'),
-    zIndex: 2000,
-});
-theme.extend('net.selection', {
-    background: 'rgba(160, 195, 255, 0.2)',
-    zIndex: 1000,
-});
-
-grid.surface.theme = theme;
-
 let nets = grid.get('nets') as NetManager;
 // nets.create('test', 'default', 'B2', 'E4');
 
-grid.freezeMargin = new Point(2, 2);
+grid.freezeMargin = new Point(0, 0);
 
 click('useExcel', () => grid.useTheme(MicrosoftExcelTheme));
 click('useGoogle', () => grid.useTheme(GoogleSheetsTheme));

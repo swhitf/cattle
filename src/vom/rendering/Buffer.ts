@@ -12,6 +12,7 @@ export class Buffer {
 
     constructor(id:string) {
         this.id = id;
+        this.canvas = document.createElement('canvas');
     }
 
     public get valid():boolean {
@@ -43,10 +44,11 @@ export class Buffer {
     }
 
     public invalidate(width:number, height:number):void {
-        delete this.canvas;
-        this.canvas = document.createElement('canvas');
         this.canvas.width = width;
         this.canvas.height = height;
+        const gfx = this.canvas.getContext('2d');
+        gfx.setTransform(1, 0, 0, 1, 0, 0);
+        gfx.clearRect(0, 0, width, height);
     }
 
     public update(callback:BufferUpdateCallback):void {

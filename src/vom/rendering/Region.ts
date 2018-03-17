@@ -1,10 +1,9 @@
-import { Element } from "./Element";
-import { Node } from "./Node";
-import { CompositionRegion, CompositionElement } from "./Composition";
-
-import { RectLike } from "../../geom/Rect";
-import { Matrix } from "../../geom/Matrix";
-import { KeyedSet } from "../../base/KeyedSet";
+import { Matrix } from '../../geom/Matrix';
+import { RectLike } from '../../geom/Rect';
+import { CompositionElement, CompositionRegion } from './Composition';
+import { Element } from './Element';
+import { Key } from './Key';
+import { Node } from './Node';
 
 
 export class Region extends Node implements CompositionRegion
@@ -48,14 +47,14 @@ export class Region extends Node implements CompositionRegion
         }
     }
 
-    public getElement(key:string):CompositionElement 
+    public getElement(id:string, z:number):CompositionElement 
     {
-        return this.getNode(key, key => new Element(key, this)) as Element;
+        return this.getNode(new Key(id, z), key => new Element(key, this)) as Element;
     }
         
-    public getRegion(key:string):CompositionRegion 
+    public getRegion(id:string, z:number):CompositionRegion 
     {
-        return this.getNode(key, key => new Region(key, this)) as Region;
+        return this.getNode(new Key(id, z), key => new Region(key, this)) as Region;
     }
 
     public endUpdate():void
@@ -72,12 +71,11 @@ export class Region extends Node implements CompositionRegion
         this.children.forEach(x => x.endUpdate());
     }
 
-    public render(gfx:CanvasRenderingContext2D):void {
+    public invalidate():void
+    {
+    }
 
-        if (this.key != this.buffer.id)
-        {
-            throw 'WTF';
-        }
+    public render(gfx:CanvasRenderingContext2D):void {
 
         //Here we need to figure out if the buffer we have is reusable and if it is
         //we should just render the buffer to the gfx using the region info to set
@@ -88,10 +86,10 @@ export class Region extends Node implements CompositionRegion
             //Clear and resize our buffer
             this.buffer.invalidate(this.width, this.height);
 
-            for (let node of this.children.array) 
+            this.children.forEach(node =>
             {
                 node.render(this.buffer.context);
-            }
+            });
         }
 
         //Apply transform so we draw in the right spot on parent
@@ -104,15 +102,14 @@ export class Region extends Node implements CompositionRegion
         this.dirty = false;
     }
 
-    private getNode(key:string, factory:(k:string) => Node):Node
+    private getNode(key:Key, factory:(k:Key) => Node):Node
     {
         let node = this.children.get(key);
 
         if (!node)
         {
-            node = factory(key);
-            this.children.add(node);
-            this.dirty = true;
+            this.children.add(node = factory(key));
+            node.dirty = true;
         }
 
         node.accessed = true;

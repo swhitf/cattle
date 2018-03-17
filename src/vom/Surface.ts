@@ -1,13 +1,15 @@
-import { CameraEvent } from '..';
 import { Event } from '../base/Event';
+import { KeyedSet } from '../base/KeyedSet';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
+import { cumulativeOffset } from '../misc/Dom';
 import * as u from '../misc/Util';
 import { BufferManager } from './BufferManager';
 import { CameraManager } from './CameraManager';
+import { CameraEvent } from './events/CameraEvent';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
@@ -24,7 +26,6 @@ import { Visual, VisualPredicate } from './Visual';
 import * as vq from './VisualQuery';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
-import { KeyedSet } from '../base/KeyedSet';
 
 
 /**
@@ -164,8 +165,6 @@ export class Surface extends SimpleEventEmitter
         const { composition, sequence, view, dirtyStates } = this;
         const visuals = new KeyedSet<Visual>(x => x.id);
 
-        console.time('performThemeUpdates');
-
         dirtyStates.forEach(st => 
         {
             if (st.theme)
@@ -175,8 +174,6 @@ export class Surface extends SimpleEventEmitter
         });
 
         this.applyTheme(this.theme, visuals.array);
-
-        console.timeEnd('performThemeUpdates');
     }
 
     private performCompositionUpdates():void 
@@ -195,7 +192,7 @@ export class Surface extends SimpleEventEmitter
         for (const cam of cameras) 
         { 
             const camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
-            const camRegion = rootRegion.getRegion(`camera/${cam.id}`);
+            const camRegion = rootRegion.getRegion(`camera/${cam.id}`, 0);
             camRegion.arrange(cam.bounds);
 
             sequence.climb(visual => 
@@ -206,20 +203,29 @@ export class Surface extends SimpleEventEmitter
                     return true;
                 }
 
-                const zLayer = camRegion.getRegion(`zIndex/${visual.zIndex}`);
+                if (visual.zIndex == 1)
+                    return true;
+
+                const zLayer = camRegion.getRegion(`zIndex/${visual.zIndex}`, visual.zIndex);
                 zLayer.arrange(0, 0, cam.bounds.width, cam.bounds.height);
 
-                const visElmt = zLayer.getElement(`visual/${visual.id}`);
+                const visElmt = zLayer.getElement(`visual/${visual.id}`, visual.zIndex);
+                visElmt.debug = `${visual.type}/${visual.id}`;
                 
                 //If the visual is dirty, or element is new we need to update its element
                 const state = dirtyStates.get(visual.id);
 
+                const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
+                visElmt.transform(camVisMat);
+                visElmt.dim(visual.width + 10, visual.height + 10);
+
                 if (visElmt.dirty || (!!state && state.render))
                 {
-                    const camVisMat = visual.transform.translate(-0, -0).multiply(camMat); //camera+visual transform
-                    visElmt.dim(visual.width + 10, visual.height + 10);
-                    visElmt.transform(camVisMat);
-                    visElmt.draw(gfx => visual.render(gfx));
+                    visElmt.draw(gfx => {
+                        console.log('visual.draw');
+                        gfx.translate(5, 5);
+                        visual.render(gfx);
+                    });
                 }
 
                 return true;
@@ -330,7 +336,7 @@ export class Surface extends SimpleEventEmitter
 
     private onViewMouseEvent(type:VisualMouseEventTypes, me:MouseEvent):void
     {
-        let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
+        let viewPt = new Point(me.clientX, me.clientY).subtract(cumulativeOffset(this.view));
         
         let camera = this.cameras.test(viewPt);
         if (!camera) return;
@@ -363,7 +369,7 @@ export class Surface extends SimpleEventEmitter
 
     private onViewMouseDragEvent(me:MouseEvent, distance:Point):void
     {
-        let viewPt = new Point(me.clientX, me.clientY).subtract(cumulative_offset(this.view));
+        let viewPt = new Point(me.clientX, me.clientY).subtract(cumulativeOffset(this.view));
         
         let camera = this.cameras.test(viewPt);
         if (!camera) return;
@@ -442,20 +448,6 @@ function clamp(value:number):number
 {
     return Math.round(value * 100) / 100;
 }
-
-function cumulative_offset(element:HTMLElement):Point
-{
-    let top = 0, left = 0;
-    do 
-    {
-        left += element.offsetLeft || 0;
-        top += element.offsetTop  || 0;
-        element = element.offsetParent as HTMLElement;
-    } 
-    while(element);
-
-    return new Point(left, top);
-};
 
 function setTransform(gfx:CanvasRenderingContext2D, mt:Matrix)
 {

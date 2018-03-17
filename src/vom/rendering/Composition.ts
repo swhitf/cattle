@@ -1,12 +1,13 @@
-import { Buffer } from "./Buffer";
-import { KeyedSet } from "../../base/KeyedSet";
-import { RectLike } from "../../geom/Rect";
-import { Matrix } from "../../geom/Matrix";
-import { Region } from "./Region";
+import { Matrix } from '../../geom/Matrix';
+import { RectLike } from '../../geom/Rect';
+import { Key } from './Key';
+import { Region } from './Region';
 
 
 export interface CompositionElement 
 {
+    debug:string;
+    
     readonly dirty:boolean;
 
     dim(width:number, height:number):CompositionElement;
@@ -21,14 +22,16 @@ export interface CompositionRegion
     arrange(left:number, top:number, width:number, height:number);
     arrange(leftOrRect:number|RectLike, top?:number, width?:number, height?:number);
 
-    getElement(key:string):CompositionElement;
+    getElement(id:string, z:number):CompositionElement;
 
-    getRegion(key:string):CompositionRegion;
+    getRegion(id:string, z:number):CompositionRegion;
+
+    invalidate():void;
 }
 
 export class Composition 
 {
-    private rootRegion = new Region('root');
+    private rootRegion = new Region(new Key('root'));
 
     public get root():CompositionRegion
     {

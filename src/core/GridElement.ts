@@ -1,23 +1,28 @@
-import { EditingExtension, NetExtension, SelectorExtension, Theme } from '..';
+import * as ResizeObserver from 'resize-observer-polyfill';
+
 import { AbstractDestroyable } from '../base/AbstractDestroyable';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { ObjectMap } from '../common';
+import { EditingExtension } from '../extensions/editing/EditingExtension';
+import { NetExtension } from '../extensions/nets/NetExtension';
+import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Padding } from '../geom/Padding';
 import { Point } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
+import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { Camera } from '../vom/Camera';
 import { CameraEvent } from '../vom/events/CameraEvent';
+import { Theme } from '../vom/styling/Theme';
 import { Surface } from '../vom/Surface';
 import { CellVisual } from './CellVisual';
+import { GridChangeEvent } from './events/GridChangeEvent';
 import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
 import { GridView } from './GridView';
-import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
-import * as ResizeObserver from 'resize-observer-polyfill';
 
 
 export class GridElement extends SimpleEventEmitter
@@ -308,6 +313,8 @@ export class GridElement extends SimpleEventEmitter
                 this.updateCameras();
                 break;
         }   
+
+        this.emit(new GridChangeEvent(this, property));
     }
 }
 

@@ -69,6 +69,16 @@ export class Point implements PointLike
         }
     }
 
+    public get left():number 
+    {
+        return this.x;
+    }
+
+    public get top():number 
+    {
+        return this.y;
+    }
+
     //region Geometry
 
     public angle():number

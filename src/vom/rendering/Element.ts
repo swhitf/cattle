@@ -1,6 +1,6 @@
-import { Node } from "./Node";
-import { CompositionElement } from "./Composition";
-import { Matrix } from "../../geom/Matrix";
+import { Matrix } from '../../geom/Matrix';
+import { CompositionElement } from './Composition';
+import { Node } from './Node';
 
 
 export class Element extends Node implements CompositionElement {
@@ -44,7 +44,7 @@ export class Element extends Node implements CompositionElement {
         if (!this.mt || !this.mt.equals(mt))
         {
             this.mt = mt;
-            this.dirty = true;
+            this.parent.dirty = true;
         }
 
         return this;

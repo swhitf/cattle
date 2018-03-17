@@ -1,6 +1,13 @@
-import { Point } from '../geom/Point';
 import { ObjectMap } from '../common';
+import { Point } from '../geom/Point';
 
+
+/** General **/
+
+export function create(elementName:string, style:ObjectMap<string>):HTMLElement
+{
+    return css(parse(`<${elementName}>`), style);
+}
 
 export function parse(html:string):HTMLElement
 {
@@ -12,21 +19,6 @@ export function parse(html:string):HTMLElement
     return <HTMLElement>body.firstElementChild;
 }
 
-export function cumulativeOffset(element:HTMLElement):Point
-{
-    let top = 0, left = 0;
-    do 
-    {
-        left += element.offsetLeft || 0;
-        top += element.offsetTop  || 0;
-        element = element.offsetParent as HTMLElement;
-    } 
-    while(element);
-
-    return new Point(left, top);
-};
-
-
 export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
 {
     for (let prop in styles)
@@ -37,6 +29,21 @@ export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
     return e;
 }
 
+/** Events **/
+
+export function on(e:HTMLElement, event:string, callback:EventListenerOrEventListenerObject):() => void 
+{
+    e.addEventListener(event, callback);
+    return () => e.removeEventListener(event, callback);
+}
+
+/** Location **/
+
+export function cumulativeOffset(element:HTMLElement):Point
+{
+    return Point.create(element.getBoundingClientRect());
+};
+
 export function fit(e:HTMLElement, target:HTMLElement):HTMLElement
 {
     return css(e, {
@@ -44,6 +51,8 @@ export function fit(e:HTMLElement, target:HTMLElement):HTMLElement
         height: target.clientHeight + 'px',
     });
 }
+
+/** Visibility **/
 
 export function hide(e:HTMLElement):HTMLElement
 {
@@ -58,11 +67,4 @@ export function show(e:HTMLElement):HTMLElement
 export function toggle(e:HTMLElement, visible:boolean):HTMLElement
 {
     return visible ? show(e) : hide(e);
-}
-
-export function singleTransition(e:HTMLElement, prop:string, millis:number, ease:string = 'linear'):void
-{
-    e.style.transition = `${prop} ${millis}ms ${ease}`;
-    console.log(e.style.transition);
-    setTimeout(() => e.style.transition = '', millis);
 }

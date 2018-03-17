@@ -9,12 +9,11 @@ import { Vectors } from '../../misc/Vectors';
 import { GridCell } from '../../model/GridCell';
 import { GridRange } from '../../model/GridRange';
 import { KeyBehavior } from '../../vom/input/KeyBehavior';
+import { MouseBehavior } from '../../vom/input/MouseBehavior';
 import { NetVisual } from '../nets/NetVisual';
 import { Selection } from '../selector/SelectorExtension';
-import { GridChangeEvent } from './GridChangeEvent';
 import { GridChangeSet } from './GridChangeSet';
-import { when } from '../../common';
-import { MouseBehavior } from '../../vom/input/MouseBehavior';
+import { GridCommitEvent } from './GridCommitEvent';
 
 
 enum State
@@ -193,7 +192,7 @@ export class EditingExtension
 
         if (changes.length)
         {
-            grid.emit(new GridChangeEvent(changes));
+            grid.emit(new GridCommitEvent(grid, changes));
 
             if (autoApply)
             {

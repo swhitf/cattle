@@ -1,21 +1,22 @@
-import { Buffer } from "./Buffer";
-import { KeyedSet } from "../../base/KeyedSet";
+import { Buffer } from './Buffer';
+import { Key } from './Key';
+import { NodeList } from './NodeList';
 
 
 export abstract class Node
 {
-    public readonly key:string;
+    public readonly key:Key;
     public readonly parent:Node;
-    public readonly children = new KeyedSet<Node>(x => x.key);
+    public readonly children = new NodeList();
 
     public buffer:Buffer;
     public accessed:boolean;
 
     private dirtyVal:boolean;
 
-    constructor(key:string, parent?:Node) {
+    constructor(key:Key, parent?:Node) {
         this.key = key;
-        this.buffer = new Buffer(key);
+        this.buffer = new Buffer(key.id);
         this.parent = parent;
     }
 
