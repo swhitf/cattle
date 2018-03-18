@@ -14,7 +14,8 @@ export const MicrosoftExcelTheme = new Theme('MicrosoftExcel', {
     },
 
     'net.selection': {
-        background: 'rgba(255, 255, 255, 0.2)',
+        background: 'rgba(0, 0, 0, 0.20)',
+        border: new Border(1, '#217346'),
         zIndex: 1000,
     },
 

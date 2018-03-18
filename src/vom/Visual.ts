@@ -1,10 +1,10 @@
-import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Matrix } from '../geom/Matrix';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { toggle } from '../misc/Dom';
 import { index, values } from '../misc/Util';
+import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { Animate, AnimationBuilder } from './styling/Animate';
 import { Styleable } from './styling/Styleable';
@@ -233,9 +233,13 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         }
 
         for (let v of visuals)
-        {
+        {   
+            v.visualWillMount();
+
             this.children.push(v);
             v.parentVisual = this;
+
+            v.visualDidMount();
         }
     
         this.notifyCompose();
@@ -248,6 +252,8 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         {
             return false;
         }
+
+        child.visualWillUnmount();
         
         this.children.splice(idx, 1);
         child.parentVisual = null;
@@ -306,6 +312,21 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
     protected clearCache():void
     {
         this.cacheData = {};
+    }
+
+    protected visualWillMount():void
+    {
+
+    }
+
+    protected visualDidMount():void
+    {
+
+    }
+
+    protected visualWillUnmount():void
+    {
+
     }
 
     protected notify(evt:VisualEvent, bubble:boolean = true):void

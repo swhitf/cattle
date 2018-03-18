@@ -14,10 +14,13 @@
   "license": "MIT",
   "dependencies": {
     "@types/bases": "^0.2.2",
+    "@types/papaparse": "^4.1.33",
     "bases": "^0.2.1",
+    "papaparse": "^4.3.7",
     "parse-color": "^1.0.0",
     "reflect-metadata": "^0.1.12",
-    "resize-observer-polyfill": "^1.5.0"
+    "resize-observer-polyfill": "^1.5.0",
+    "tiny-sha256": "^1.0.2"
   },
   "devDependencies": {
     "browserify": "^14.5.0",

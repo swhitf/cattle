@@ -2,38 +2,17 @@ import { GridEvent } from '../../core/events/GridEvent';
 import { Command, Routine, Variable } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-import { Point, PointInput } from '../../geom/Point';
+import { PointInput } from '../../geom/Point';
 import * as u from '../../misc/Util';
+import { Vectors } from '../../misc/Vectors';
 import { GridCell } from '../../model/GridCell';
+import { GridRef } from '../../model/GridRef';
 import { GridWalk } from '../../model/GridWalk';
 import { VisualMouseEvent } from '../../vom/events/VisualMouseEvent';
 import { KeyBehavior } from '../../vom/input/KeyBehavior';
 import { MouseBehavior } from '../../vom/input/MouseBehavior';
-import { select } from '../../vom/VisualQuery';
 import { NetManager } from '../nets/NetManager';
-import { Vectors } from '../../misc/Vectors';
 
-
-export interface SelectorExtensionExports
-{
-    canSelect:boolean;
-
-    readonly selections:string[][];
-
-    readonly primarySelection:string[]
-
-    select(cells:string[], autoScroll?:boolean):void;
-
-    selectAll():void;
-
-    selectBorder(vector:Point, autoScroll?:boolean):void;
-
-    selectEdge(vector:Point, autoScroll?:boolean):void;
-
-    selectLine(gridPt:Point, autoScroll?:boolean):void;
-
-    selectNeighbor(vector:Point, autoScroll?:boolean):void;
-}
 
 export type SelectNextTargetType = 'cell'|'dataPoint'|'edge';
 
@@ -117,6 +96,7 @@ export class SelectorExtension
             .on('END/e', () => this.selectNext('edge', Vectors.e))
             .on('CTRL+HOME/e', () => this.selectNext('edge', Vectors.nw))
             .on('CTRL+END/e', () => this.selectNext('edge', Vectors.se))
+            .on('CTRL+A/e', () => this.selectAll())
         ;
 
         // grid.on('invalidate', () => this.reselect(false));
@@ -260,7 +240,7 @@ export class SelectorExtension
     @Command()
     private selectNext(type:SelectNextTargetType, vector:PointInput, mode?:SelectMode):void
     {
-        let { grid, primarySelection } = this;
+        const { grid, primarySelection } = this;
 
         if (primarySelection)
         {
@@ -273,6 +253,17 @@ export class SelectorExtension
         }
     }
 
+    @Command()
+    private selectAll():void
+    {
+        const { grid } = this;
+
+        const from = 'A1';
+        const to = GridRef.make(grid.model.width, grid.model.height);
+        
+        this.select(from, to);
+    }
+
     // private reselect(autoScroll:boolean = true):void
     // {
     //     let { grid, selection } = this;
@@ -282,56 +273,6 @@ export class SelectorExtension
     //     {
     //         this.select(remaining, autoScroll);
     //     }
-    // }
-
-    // private beginSelectGesture(gridX:number, gridY:number):void
-    // {
-    //     let pt = new Point(gridX, gridY);
-    //     let cell = this.grid.getCellAtViewPoint(pt);
-
-    //     if (!cell)
-    //         return;
-
-    //     this.selectGesture = {
-    //         start: cell.ref,
-    //         end: cell.ref,
-    //     };
-
-    //     this.select([ cell.ref ]);
-    // }
-
-    // private updateSelectGesture(gridX:number, gridY:number):void
-    // {
-    //     let { grid, selectGesture } = this;
-
-    //     let pt = new Point(gridX, gridY);
-    //     let cell = grid.getCellAtViewPoint(pt);
-
-    //     if (!cell || selectGesture.end === cell.ref)
-    //         return;
-
-    //     selectGesture.end = cell.ref;
-
-    //     let region = Rect.fromMany([
-    //         grid.getCellGridRect(selectGesture.start),
-    //         grid.getCellGridRect(selectGesture.end)
-    //     ]);
-
-    //     let cellRefs = grid.getCellsInGridRect(region)
-    //         .map(x =>x.ref);
-
-    //     if (cellRefs.length > 1)
-    //     {
-    //         cellRefs.splice(cellRefs.indexOf(selectGesture.start), 1);
-    //         cellRefs.splice(0, 0, selectGesture.start);
-    //     }
-
-    //     this.select(cellRefs, cellRefs.length == 1);
-    // }
-
-    // private endSelectGesture():void 
-    // {
-    //     this.selectGesture = null;
     // }
 
     private doSelect(from:string, to:string, mode?:SelectMode):void;
@@ -346,8 +287,8 @@ export class SelectorExtension
             return;
 
         let from = args[0];
-        let to = GridCell.isRef(args[0]) ? args[0] : from;
-        let mode = !GridCell.isRef(u.last(args)) ? u.last(args) : SelectMode.Default;
+        let to = GridRef.valid(args[1]) ? args[1] : from;
+        let mode = !GridRef.valid(u.last(args)) ? u.last(args) : SelectMode.Default;
 
         let { grid, selections } = this;
         let model = grid.model;

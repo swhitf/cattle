@@ -1,8 +1,7 @@
-import { Base26 } from '../misc/Base26';
-import { GridCellStyle } from './GridCellStyle';
 import { Observable } from '../base/Observable';
+import { GridCellStyle } from './GridCellStyle';
 import { GridObject } from './GridObject';
-import * as u from '../misc/Util';
+import { GridRef } from './GridRef';
 
 
 /**
@@ -30,64 +29,6 @@ export interface GridCellRefParts
  */
 export class GridCell extends GridObject
 {
-    /**
-     * Determines whether or not the specified string is a valid cell reference.
-     * 
-     * @param str 
-     */
-    public static isRef(str:string):boolean
-    {
-        return !!str.match(/[A-Za-z]+\d+/);
-    }
-
-    /**
-     * Creates a cell reference string from the specified column and row references.
-     * 
-     * @param col 
-     * @param row 
-     */
-    public static makeRef(col:number, row:number):string
-    {
-        return Base26.num(col).str + (row + 1).toString()
-    }
-
-    /**
-     * Reads a cell reference string and returns the column and row reference values.
-     * 
-     * @param cellRef 
-     */
-    public static unmakeRef(cellRef:string):GridCellRefParts
-    {
-        let b26cr = '';
-        let b10rr = '';
-
-        for (let i = 0; i < cellRef.length; i++)
-        {
-            let c = cellRef.charAt(i);
-            
-            if (!isNaN(+c))
-            {
-                b26cr = cellRef.slice(0, i);
-                b10rr = cellRef.slice(i, cellRef.length);
-                break;
-            }
-        }
-
-        return { col: Base26.str(b26cr).num, row: parseInt(b10rr) - 1, };
-    }
-
-    /**
-     * Reads a cell reference string and returns the column and row as the first and 
-     * second values in an array.
-     * 
-     * @param cellRef 
-     */
-    public static unmakeRefToArray(cellRef:string):number[]
-    {
-        let parts = this.unmakeRef(cellRef);
-        return [parts.col, parts.row];
-    }
-
     /**
      * The cell ref, an excel-like reference to the location of the cell.
      */
@@ -140,7 +81,7 @@ export class GridCell extends GridObject
     {
         super();
 
-        this.ref = GridCell.makeRef(params.colRef, params.rowRef);
+        this.ref = GridRef.make(params.colRef, params.rowRef);
         this.type = params.type || 'default';
         this.colRef = params.colRef;
         this.colSpan = params.colSpan || 1;

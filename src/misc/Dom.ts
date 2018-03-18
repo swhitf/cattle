@@ -31,7 +31,7 @@ export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
 
 /** Events **/
 
-export function on(e:HTMLElement, event:string, callback:EventListenerOrEventListenerObject):() => void 
+export function on(e:EventTarget, event:string, callback:EventListenerOrEventListenerObject):() => void 
 {
     e.addEventListener(event, callback);
     return () => e.removeEventListener(event, callback);

@@ -18,4 +18,8 @@ export const GoogleSheetsTheme = new Theme('GoogleSheets', {
         zIndex: 1000,
     },
 
+    'net.copy': {
+        border: new Border(2, '#4285f4', [6, 4]),
+    }
+
 });

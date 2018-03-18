@@ -25,8 +25,6 @@ export interface CompositionRegion
     getElement(id:string, z:number):CompositionElement;
 
     getRegion(id:string, z:number):CompositionRegion;
-
-    invalidate():void;
 }
 
 export class Composition 
@@ -46,6 +44,11 @@ export class Composition
     public endUpdate():void
     {
         this.rootRegion.endUpdate();
+    }
+
+    public invalidate():void
+    {
+        this.rootRegion = new Region(new Key('root'));
     }
 
     public render(to:HTMLCanvasElement):void 

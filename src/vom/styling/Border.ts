@@ -9,12 +9,11 @@ export class Border
     public readonly dash:number[];
     public readonly offset:number;
 
-    constructor(width?:number, color?:string, dash?:number[], offset?:number)
+    constructor(width?:number, color?:string, dash?:number[])
     {
         this.width = (width !== undefined) ? width : 1;
         this.color = color || 'gainsboro';
         this.dash = dash || []; 
-        this.offset = offset || 0;
     }
 
     public copy(changes?:Partial<Border>):Border
@@ -25,7 +24,6 @@ export class Border
             (changes.width !== undefined) ? changes.width : this.width,
             changes.color || this.color,
             changes.dash || this.dash,
-            (changes.offset !== undefined) ? changes.offset : this.offset
         )
     }
 }

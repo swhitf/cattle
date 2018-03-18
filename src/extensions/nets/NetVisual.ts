@@ -1,3 +1,4 @@
+import { Observable } from '../../base/Observable';
 import { Border } from '../../vom/styling/Border';
 import { Color } from '../../vom/styling/Color';
 import { Styleable } from '../../vom/styling/Styleable';
@@ -15,6 +16,12 @@ export class NetVisual extends Visual
     @Styleable(new Border(1, '#4285f4'))
     public border:Border;
 
+    @Styleable(false)
+    public animateBorder:boolean;
+
+    @Observable(0)
+    protected borderOffset;
+
     public render(gfx:CanvasRenderingContext2D):void
     {
         let { border } = this;
@@ -28,13 +35,9 @@ export class NetVisual extends Visual
         if (border.dash.length >= 2)
         {
             gfx.setLineDash(border.dash.slice(0, 2));
+            gfx.lineDashOffset = this.borderOffset;
         }
         
-        if (border.dash.length >= 3)
-        {
-            gfx.lineDashOffset = border.dash[2];
-        }
-
         if (this.background)
         {
             gfx.fillStyle = this.background;
@@ -53,5 +56,16 @@ export class NetVisual extends Visual
             gfx.rect(offset + deflate, offset + deflate, this.width, this.height);
         gfx.fill();
         gfx.stroke();
+    }
+
+    protected visualDidMount():void
+    {
+        if (this.animateBorder)
+        {
+            this.animate()
+                .every(100, x => {
+                    x.borderOffset += 3;
+                });
+        }
     }
 }

@@ -1,13 +1,12 @@
-import { index } from '../../misc/Util';
-import { NetVisual } from './NetVisual';
-import { GridElement } from '../../core/GridElement';
-import { Surface } from '../../vom/Surface';
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
-import { ObjectMap, Predicate } from '../../common';
-import { Rect, RectLike } from '../../geom/Rect';
 import { Observable } from '../../base/Observable';
+import { ObjectMap, Predicate } from '../../common';
+import { GridElement } from '../../core/GridElement';
+import { Rect, RectLike } from '../../geom/Rect';
+import { index } from '../../misc/Util';
 import { NetHandle } from './NetHandle';
 import { NetManager } from './NetManager';
+import { NetVisual } from './NetVisual';
 
 
 export class DefaultNetManager implements NetManager 
@@ -140,14 +139,19 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
 
     public move(from:string, to?:string):void
     {
-        let { grid, visual } = this;
+        to = to || from;
 
-        let fromRect = grid.layout.measureCell(from);
-        let toRect = grid.layout.measureCell((to || from));
+        const { grid, visual } = this;
 
-        let bounds = Rect.fromMany([fromRect, toRect]);
+        const fromRect = grid.layout.measureCell(from);
+        const toRect = grid.layout.measureCell(to || from);
+
+        const bounds = Rect.fromMany([fromRect, toRect]);
         visual.topLeft = bounds.topLeft();
         visual.size = bounds.size();
+
+        this.fromRef = from;
+        this.toRef = to;
     }
 
     private notifyChange(property:string):void 

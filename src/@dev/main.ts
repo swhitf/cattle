@@ -3,11 +3,7 @@ import 'es6-shim';
 import 'reflect-metadata';
 
 import { GridElement } from '../core/GridElement';
-import { EditingExtension } from '../extensions/editing/EditingExtension';
-import { NetExtension } from '../extensions/nets/NetExtension';
 import { NetManager } from '../extensions/nets/NetManager';
-import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
-import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
@@ -40,18 +36,7 @@ let model = GridModel.dim(26 * 5, 50 * 10);
 model.cells.forEach(x => x.value = x.ref);
 
 let grid = GridElement
-    .create(document.getElementById('x'), model)
-    .extend(new NetExtension())
-    .extend(new SelectorExtension())
-    .extend(new EditingExtension())
-    .extend(new ScrollerExtension())
-//    .extend(new ClipboardExtension())
-//    .extend(new HistoryExtension(history))
-//    .extend(new ComputeExtension())
-//    .extend(new ClickZoneExtension())
-//    .extend(new ComputeExtension())
-//    .extend(new ClickZoneExtension())
-    .useTheme(GoogleSheetsTheme)
+    .createDefault(document.getElementById('x'), model)
     .mergeInterface()
 ;
 

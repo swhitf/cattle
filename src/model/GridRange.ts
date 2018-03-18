@@ -1,10 +1,9 @@
 import { ObjectMap } from '../common';
-import { Base26 } from '../misc/Base26';
+import { Point } from '../geom/Point';
+import * as u from '../misc/Util';
 import { GridCell } from './GridCell';
 import { GridModel } from './GridModel';
-import { Point } from '../geom/Point';
-import { Rect } from '../geom/Rect';
-import * as u from '../misc/Util';
+import { GridRef } from './GridRef';
 
 
 /**
@@ -40,8 +39,6 @@ export interface GridRangeLike
  */
 export class GridRange implements GridRangeLike
 {
-    public 
-
     /**
      * Creates a new GridRange object from the specified cellRefs by expanding the list to 
      * include those that fall within the rectangle of the upper left most and lower right 
@@ -64,12 +61,12 @@ export class GridRange implements GridRangeLike
         if (!cellRefs.length)
             return GridRange.empty();
 
-        let [loCol, loRow] = GridCell.unmakeRefToArray(cellRefs[0]);
+        let [loCol, loRow] = GridRef.unmakeToArray(cellRefs[0]);
         let [hiCol, hiRow] = [loCol, loRow];
 
         for (let cr of cellRefs)
         {
-            let [col, row] = GridCell.unmakeRefToArray(cr);
+            let [col, row] = GridRef.unmakeToArray(cr);
 
             if (loCol > col) loCol = col;
             if (hiCol < col) hiCol = col;
@@ -106,7 +103,7 @@ export class GridRange implements GridRangeLike
      */
     public static fromPoints(model:GridModel, points:Point[])
     {
-        let refs = points.map(p => GridCell.makeRef(p.x, p.y));
+        let refs = points.map(p => GridRef.make(p.x, p.y));
         return GridRange.fromRefs(model, refs);
     }
     
@@ -150,15 +147,15 @@ export class GridRange implements GridRangeLike
             return GridRange.empty();
         }
 
-        cells = cells.sort((a, b) => a.ref < b.ref ? -1 : 1);
+        cells = cells.sort((a, b) => GridRef.compare(a.ref, b.ref));
         
-        let [lc, lr] = GridCell.unmakeRefToArray(cells[0].ref);
-        let [hc, hr] = GridCell.unmakeRefToArray(u.last(cells).ref);
+        let [lc, lr] = GridRef.unmakeToArray(cells[0].ref);
+        let [hc, hr] = GridRef.unmakeToArray(u.last(cells).ref);
 
         return new GridRange({
             ltr: cells,
-            width: hc - lc,
-            height: hr - lr,
+            width: (hc - lc) + 1,
+            height: (hr - lr) + 1,
             length: (hc - lc) * (hr - lr),
         });
     }
@@ -209,5 +206,21 @@ export class GridRange implements GridRangeLike
     public refs():string[]
     {
         return this.ltr.map(x => x.ref);
+    }
+    
+    /**
+     * Returns the first cell in the range.
+     */
+    public first():GridCell
+    {
+        return this.ltr[0] || null;
+    }
+    
+    /**
+     * Returns the last cell in the range.
+     */
+    public last():GridCell
+    {
+        return this.ltr[this.ltr.length - 1] || null;
     }
 }

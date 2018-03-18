@@ -222,7 +222,6 @@ export class Surface extends SimpleEventEmitter
                 if (visElmt.dirty || (!!state && state.render))
                 {
                     visElmt.draw(gfx => {
-                        console.log('visual.draw');
                         gfx.translate(5, 5);
                         visual.render(gfx);
                     });
@@ -330,6 +329,7 @@ export class Surface extends SimpleEventEmitter
             case 'theme':
                 this.applyTheme(this.theme);
                 this.dirtyRender = true;
+                this.composition.invalidate();
                 break;
         }
     }
