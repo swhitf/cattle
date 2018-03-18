@@ -1,5 +1,5 @@
-import {GridCell} from '../../model/GridCell';
-import { GridModel } from "../../model/GridModel";
+import { GridCell } from '../../model/GridCell';
+import { GridModel } from '../../model/GridModel';
 
 
 export interface GridChangeSetEntry
@@ -9,9 +9,14 @@ export interface GridChangeSetEntry
     readonly cascaded?:boolean;
 }
 
+export interface GridChangeSetCallback<R = void>
+{
+    (entry:GridChangeSetEntry):R;
+}
+
 export class GridChangeSet
 {
-    private readonly map = {} as { [ref:string]:GridChangeSetEntry };
+    private readonly index = {} as { [ref:string]:GridChangeSetEntry };
     private readonly list = [] as GridChangeSetEntry[];
 
     public get length():number
@@ -21,12 +26,12 @@ export class GridChangeSet
 
     public has(ref:string):boolean
     {
-        return !!this.map[ref];
+        return !!this.index[ref];
     }
 
     public get(ref:string):GridChangeSetEntry
     {
-        return this.map[ref];
+        return this.index[ref];
     }
 
     public set(ref:string, value:string, cascaded?:boolean):void
@@ -35,7 +40,7 @@ export class GridChangeSet
 
         let entry = { ref, value, cascaded: !!cascaded };
 
-        this.map[ref] = entry;
+        this.index[ref] = entry;
         this.list.push(entry);
     }
 
@@ -43,10 +48,10 @@ export class GridChangeSet
     {
         if (this.has(ref))
         {
-            let entry = this.map[ref];
+            let entry = this.index[ref];
             let idx = this.list.indexOf(entry);            
 
-            delete this.map[ref];
+            delete this.index[ref];
             this.list.splice(idx, 1);
 
             return true;
@@ -57,20 +62,20 @@ export class GridChangeSet
 
     public value(ref:string):string
     {
-        let entry = this.map[ref];
+        let entry = this.index[ref];
         return !!entry ? entry.value : undefined;
     }
 
     public refs():string[]
     {
-        return Object.keys(this.map);
+        return Object.keys(this.index);
     }
 
     public apply(model:GridModel):void
     {
-        for (let ref in this.map)
+        for (let ref in this.index)
         {
-            let tm = this.map[ref];
+            let tm = this.index[ref];
             let cell = model.findCell(ref);
 
             //Do not apply a non-cascaded readonly cell
@@ -79,6 +84,21 @@ export class GridChangeSet
 
             cell.value = tm.value;
         }
+    }
+
+    public forEach(callback:GridChangeSetCallback):void
+    {
+        this.list.forEach(callback);
+    }
+
+    public filter(callback:GridChangeSetCallback<boolean>):GridChangeSetEntry[]
+    {
+        return this.list.filter(x => callback(x));
+    }
+
+    public map<T>(callback:GridChangeSetCallback<T>):T[]
+    {
+        return this.list.map(callback);
     }
 }
 

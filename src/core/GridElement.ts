@@ -6,6 +6,7 @@ import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { ObjectMap } from '../common';
 import { ClipboardExtension } from '../extensions/clipboard/ClipboardExtension';
 import { EditingExtension } from '../extensions/editing/EditingExtension';
+import { HistoryExtension } from '../extensions/history/HistoryExtension';
 import { NetExtension } from '../extensions/nets/NetExtension';
 import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
 import { SelectorExtension } from '../extensions/selector/SelectorExtension';
@@ -58,6 +59,7 @@ export class GridElement extends SimpleEventEmitter
             .extend(new EditingExtension())
             .extend(new ScrollerExtension())
             .extend(new ClipboardExtension())
+            .extend(new HistoryExtension())
             .useTheme(GoogleSheetsTheme)
         ;
     }

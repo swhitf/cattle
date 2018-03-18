@@ -32,6 +32,11 @@ export class Modifiers
         this.ctrl = ctrl;
         this.shift = shift;
     }
+
+    public get any():boolean
+    {
+        return this.alt || this.ctrl || this.shift;
+    }
     
     public matches(other:Modifiers):boolean {
         
