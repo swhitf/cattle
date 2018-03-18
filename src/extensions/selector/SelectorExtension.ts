@@ -99,9 +99,6 @@ export class SelectorExtension
             .on('CTRL+A/e', () => this.selectAll())
         ;
 
-        // grid.on('invalidate', () => this.reselect(false));
-        // grid.on('scroll', () => this.alignSelectors(false));
-
         //On select visualize selection
         grid.on('select', () => this.doVisualizeSelection());
 
@@ -126,12 +123,6 @@ export class SelectorExtension
     {
         this.doSelect.apply(this, args);
     }
-
-    // @command()
-    // private selectAll():void
-    // {
-    //     this.select(this.grid.model.cells.map(x => x.ref));
-    // }
 
     // @command()
     // private selectBorder(vector:Point, autoScroll = true):void
@@ -259,7 +250,7 @@ export class SelectorExtension
         const { grid } = this;
 
         const from = 'A1';
-        const to = GridRef.make(grid.model.width, grid.model.height);
+        const to = GridRef.make(grid.model.width - 1, grid.model.height - 1);
         
         this.select(from, to);
     }

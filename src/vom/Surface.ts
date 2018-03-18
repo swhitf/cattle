@@ -6,7 +6,6 @@ import { Matrix } from '../geom/Matrix';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { cumulativeOffset } from '../misc/Dom';
-import * as u from '../misc/Util';
 import { BufferManager } from './BufferManager';
 import { CameraManager } from './CameraManager';
 import { CameraEvent } from './events/CameraEvent';
@@ -16,6 +15,7 @@ import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKe
 import { VisualMouseDragEvent } from './events/VisualMouseDragEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
 import { DragHelper } from './input/DragHelper';
+import { Keys } from './input/Keys';
 import { Modifiers } from './input/Modifiers';
 import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
@@ -50,6 +50,14 @@ interface VisualDirtyState
     render?:boolean;
     theme?:boolean;
 }
+
+const PreventKeyList = [
+    Keys.LEFT_ARROW,
+    Keys.RIGHT_ARROW,
+    Keys.UP_ARROW,
+    Keys.DOWN_ARROW,
+    Keys.TAB,
+];
 
 export class Surface extends SimpleEventEmitter
 {
@@ -307,9 +315,12 @@ export class Surface extends SimpleEventEmitter
 
                     visualStyle[key] = style.props[key];
                 }
-
-                visualStyle = u.extend(visualStyle, style.props);
             }
+        }
+
+        for (let v of visuals)
+        {
+            v['visualStyleDidChange']();
         }
     }
 
@@ -384,7 +395,10 @@ export class Surface extends SimpleEventEmitter
 
     private onViewKeyEvent(type:VisualKeyboardEventTypes, ke:KeyboardEvent):void
     {
-        //ke.preventDefault();
+        if (!!~PreventKeyList.indexOf(ke.keyCode))
+        {
+            ke.preventDefault();
+        }
 
         let key = ke.keyCode;
         let char = !!ke.which ? String.fromCharCode(ke.which) : null;

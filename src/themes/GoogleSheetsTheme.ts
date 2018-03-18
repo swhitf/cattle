@@ -19,6 +19,7 @@ export const GoogleSheetsTheme = new Theme('GoogleSheets', {
     },
 
     'net.copy': {
+        animateBorder: true,
         border: new Border(2, '#4285f4', [6, 4]),
     }
 

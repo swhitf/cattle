@@ -1,4 +1,4 @@
-import { HistoryAction, HistoryManager } from './HistoryExtension';
+import { HistoryAction, HistoryManager } from './HistoryManager';
 
 
 export class DefaultHistoryManager implements HistoryManager

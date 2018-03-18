@@ -1,4 +1,5 @@
 import { Observable } from '../../base/Observable';
+import { Animation } from '../../vom/styling/Animate';
 import { Border } from '../../vom/styling/Border';
 import { Color } from '../../vom/styling/Color';
 import { Styleable } from '../../vom/styling/Styleable';
@@ -22,8 +23,12 @@ export class NetVisual extends Visual
     @Observable(0)
     protected borderOffset;
 
+    private borderAnimation:Animation;
+
     public render(gfx:CanvasRenderingContext2D):void
     {
+        console.log(this.type, this['__style']);
+        
         let { border } = this;
 
         let offset = (border.width % 2) / 2; 
@@ -58,14 +63,35 @@ export class NetVisual extends Visual
         gfx.stroke();
     }
 
-    protected visualDidMount():void
+    protected visualStyleDidChange():void
     {
-        if (this.animateBorder)
+        this.doAnimateBorder();
+    }
+
+    protected notifyChange(property:string)
+    {
+        if (property == 'animateBorder')
         {
-            this.animate()
-                .every(100, x => {
-                    x.borderOffset += 3;
-                });
+            this.doAnimateBorder();
+        }
+
+        super.notifyChange(property);
+    }
+
+    private doAnimateBorder()
+    {
+        console.log(this.type, this['__style']);
+
+        if (this.animateBorder && !this.borderAnimation)
+        {
+            this.borderAnimation = this.animate()
+                .every(50, x => x.borderOffset += 1.5)
+                .get();
+        }
+        else if (!this.animateBorder && this.borderAnimation)
+        {
+            this.borderAnimation.cancel();
+            delete this.borderAnimation;
         }
     }
 }

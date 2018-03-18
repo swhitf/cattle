@@ -7,6 +7,7 @@ import { NetManager } from '../extensions/nets/NetManager';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
+import { GridRef } from '../model/GridRef';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
 import * as vq from '../vom/VisualQuery';
@@ -50,6 +51,8 @@ window['grid'] = grid;
 window['surface'] = grid.surface;
 window['pt'] = Point.create;
 window['vq'] = s => vq.select(grid.surface.root, s);
+
+console.dir(GridRef.unmake('BF250'));
 
 grid.model.cells[0].style = GridCellStyle.get('test');
 grid.model.cells[0].value = 'Test';

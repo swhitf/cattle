@@ -329,6 +329,11 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
     }
 
+    protected visualStyleDidChange():void
+    {
+
+    }
+
     protected notify(evt:VisualEvent, bubble:boolean = true):void
     {
         if (!this.isMounted())

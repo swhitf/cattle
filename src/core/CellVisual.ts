@@ -1,6 +1,6 @@
 import { Observable } from '../base/Observable';
-import { GridCell } from '../model/GridCell';
 import { Padding } from '../geom/Padding';
+import { GridCell } from '../model/GridCell';
 import { Border } from '../vom/styling/Border';
 import { Font } from '../vom/styling/Font';
 import { Styleable } from '../vom/styling/Styleable';
@@ -31,6 +31,9 @@ export class CellVisual extends Visual
 
     @Styleable(Padding.hv(5, 0))
     public padding:Padding;
+
+    @Styleable('crop')
+    public textMode:'crop'|'fit';
 
     @Observable()
     public text:string;
@@ -71,6 +74,11 @@ export class CellVisual extends Visual
         gfx.fillStyle = this.color;
         gfx.font = this.font.toString();
         gfx.textBaseline = 'middle';
-        gfx.fillText(this.text, this.padding.left, ((this.height - this.padding.vertical) / 2) + this.padding.top, this.width - this.padding.horizontal);
+        gfx.fillText(
+            this.text, 
+            this.padding.left, 
+            ((this.height - this.padding.vertical) / 2) + this.padding.top, 
+            this.textMode == 'fit' ? this.width - this.padding.horizontal : undefined
+        );
     }
 }

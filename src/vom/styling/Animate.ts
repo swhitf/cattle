@@ -1,3 +1,4 @@
+import { Destroyable } from '../../base/Destroyable';
 import { RefreshTicker } from '../RefreshLoop';
 import { Visual } from '../Visual';
 
@@ -14,6 +15,8 @@ export interface AnimationBuilder<T extends Visual>
 export interface ContinuousAnimationBuilder<T extends Visual>
 {
     every(interval:number, callback:ContinuousAnimationCallback<T>):ContinuousAnimationBuilder<T>;    
+
+    get():Animation;
 }
 
 export interface ContinuousAnimationCallback<T extends Visual>
@@ -26,11 +29,18 @@ export interface TweenAnimationBuilder<T extends Visual>
     tween(from:number, to:number, callback:TweenAnimationCallback<T>):TweenAnimationBuilder<T>;    
 
     then():AnimationBuilder<T>;
+
+    get():Animation;
 }
 
 export interface TweenAnimationCallback<T extends Visual>
 {
     (visual:T, value:number):void;
+}
+
+export interface Animation
+{
+    cancel():void;
 }
 
 export abstract class Animate
@@ -47,7 +57,7 @@ export abstract class Animate
 
 class AnimationBuilderImpl<T extends Visual> implements AnimationBuilder<T>
 {
-    private animation:Animation;
+    private animation:AnimationImpl;
 
     constructor(private visual:T)
     {
@@ -56,7 +66,7 @@ class AnimationBuilderImpl<T extends Visual> implements AnimationBuilder<T>
             throw 'Visual must be mounted before being animated.';   
         }
 
-        this.animation = new Animation(visual);
+        this.animation = new AnimationImpl(visual);
         setTimeout(() => visual.surface.ticker.add('animation', this.animation), 0);
     }
 
@@ -83,6 +93,11 @@ class AnimationBuilderImpl<T extends Visual> implements AnimationBuilder<T>
     {
         throw 'Not implemented';
     }
+
+    public get():Animation
+    {
+        return this.animation;
+    }
 }
 
 interface AnimationFunction
@@ -90,10 +105,12 @@ interface AnimationFunction
     (dt:number):void|boolean;
 }
 
-class Animation implements RefreshTicker
+class AnimationImpl implements RefreshTicker
 {
     public functions:AnimationFunction[] = [];
-    public stop:boolean = false;
+
+    private stop:boolean = false;
+    private visualSub:Destroyable;
 
     constructor(public visual:Visual)
     {
@@ -101,8 +118,7 @@ class Animation implements RefreshTicker
         {
             if (!visual.isMounted())
             {
-                es.destroy();
-                this.stop = true;
+                this.cancel();
             }
         });
     }
@@ -121,5 +137,16 @@ class Animation implements RefreshTicker
                 return false;
             }
         }
+    }
+
+    public cancel():void
+    {
+        if (this.visualSub)
+        {
+            this.visualSub.destroy();
+            delete this.visualSub;
+        }
+
+        this.stop = true;
     }
 }
