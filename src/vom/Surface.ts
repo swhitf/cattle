@@ -6,7 +6,6 @@ import { Matrix } from '../geom/Matrix';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { cumulativeOffset } from '../misc/Dom';
-import { BufferManager } from './BufferManager';
 import { CameraManager } from './CameraManager';
 import { CameraEvent } from './events/CameraEvent';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
@@ -76,7 +75,6 @@ export class Surface extends SimpleEventEmitter
     public theme:Theme;
 
     private readonly sequence:VisualSequence;
-    private readonly buffers:BufferManager;
     private readonly composition:Composition;
 
     private dirtyTheming:boolean;

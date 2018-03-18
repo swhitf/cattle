@@ -1,10 +1,11 @@
 "use strict";
+//@no-export
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Originally take from https://github.com/lgarron/clipboard-polyfill
  *
  * Unchanged; just couldn't get npm include to work...
  */
-Object.defineProperty(exports, "__esModule", { value: true });
 var dataTypes = ["text/plain", "text/html"];
 // TODO: Dedup with main file?
 var warnOrLog = function () {

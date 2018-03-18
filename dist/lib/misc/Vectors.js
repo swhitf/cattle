@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+//@no-export
 var Point_1 = require("../geom/Point");
 exports.Vectors = {
     nw: new Point_1.Point(-1, -1),

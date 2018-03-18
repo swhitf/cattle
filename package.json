@@ -5,7 +5,7 @@
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
   "scripts": {
-    "export-lib": "tsc --pretty",
+    "export-lib": "node scripts/index.js && tsc --pretty",
     "build": "node scripts/build.js",
     "clean": "node scripts/build.js --task=clean",
     "start": "concurrently -k \"node scripts/build.js -w \" \"http-server ./dist/dev -s -c-1\""

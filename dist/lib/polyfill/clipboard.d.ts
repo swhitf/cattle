@@ -1,8 +1,3 @@
-/**
- * Originally take from https://github.com/lgarron/clipboard-polyfill
- *
- * Unchanged; just couldn't get npm include to work...
- */
 import { DT } from './DT';
 declare global  {
     interface Navigator {

@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+//@no-export
+var DT_1 = require("./DT");
 /**
  * Originally take from https://github.com/lgarron/clipboard-polyfill
  *
  * Unchanged; just couldn't get npm include to work...
  */
-var DT_1 = require("./DT");
 // Debug log strings should be short, since they are copmiled into the production build.
 // TODO: Compile debug logging code out of production builds?
 var debugLog = function (s) { };

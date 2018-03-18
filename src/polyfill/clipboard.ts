@@ -1,10 +1,12 @@
+//@no-export
+import { DT, suppressDTWarnings } from './DT';
+
+
 /**
  * Originally take from https://github.com/lgarron/clipboard-polyfill
  *
  * Unchanged; just couldn't get npm include to work...
  */
-import { DT, suppressDTWarnings } from './DT';
-
 
 // Debug log strings should be short, since they are copmiled into the production build.
 // TODO: Compile debug logging code out of production builds?

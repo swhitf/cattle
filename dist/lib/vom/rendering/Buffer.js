@@ -1,4 +1,5 @@
 "use strict";
+//@no-export
 Object.defineProperty(exports, "__esModule", { value: true });
 var Buffer = /** @class */ (function () {
     function Buffer(id) {

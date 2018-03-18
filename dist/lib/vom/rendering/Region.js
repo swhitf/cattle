@@ -10,6 +10,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+//@no-export
 var Matrix_1 = require("../../geom/Matrix");
 var Element_1 = require("./Element");
 var Key_1 = require("./Key");

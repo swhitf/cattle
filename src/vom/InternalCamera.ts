@@ -1,12 +1,10 @@
-import { CameraChangeEvent } from './events/CameraChangeEvent';
-import { CameraEvent } from './events/CameraEvent';
+//@no-export
 import { EventEmitter } from '../base/EventEmitter';
 import { Observable } from '../base/Observable';
-import { Rect } from '../geom/Rect';
 import { Point, PointInput } from '../geom/Point';
-import { Visual, VisualPredicate } from './Visual';
-import { Matrix } from '../geom/Matrix';
+import { Rect } from '../geom/Rect';
 import { Camera } from './Camera';
+import { CameraChangeEvent } from './events/CameraChangeEvent';
 
 
 export class InternalCamera implements Camera

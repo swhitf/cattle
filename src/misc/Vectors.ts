@@ -1,4 +1,5 @@
-import {Point} from '../geom/Point';
+//@no-export
+import { Point } from '../geom/Point';
 
 
 export const Vectors =

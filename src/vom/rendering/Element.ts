@@ -1,3 +1,4 @@
+//@no-export
 import { Matrix } from '../../geom/Matrix';
 import { CompositionElement } from './Composition';
 import { Node } from './Node';

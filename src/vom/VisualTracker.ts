@@ -1,3 +1,4 @@
+//@no-export
 import { Visual } from './Visual';
 
 

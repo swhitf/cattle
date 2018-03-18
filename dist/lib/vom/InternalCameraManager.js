@@ -10,10 +10,11 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var CameraEvent_1 = require("./events/CameraEvent");
+//@no-export
 var SimpleEventEmitter_1 = require("../base/SimpleEventEmitter");
 var Point_1 = require("../geom/Point");
 var Rect_1 = require("../geom/Rect");
+var CameraEvent_1 = require("./events/CameraEvent");
 var InternalCamera_1 = require("./InternalCamera");
 var InternalCameraManager = /** @class */ (function (_super) {
     __extends(InternalCameraManager, _super);

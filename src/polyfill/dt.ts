@@ -1,3 +1,5 @@
+//@no-export
+
 /**
  * Originally take from https://github.com/lgarron/clipboard-polyfill
  *

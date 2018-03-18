@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+//@no-export
 var Buffer_1 = require("./Buffer");
 var NodeList_1 = require("./NodeList");
 var Node = /** @class */ (function () {

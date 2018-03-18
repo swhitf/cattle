@@ -1,4 +1,5 @@
 "use strict";
+//@no-export
 Object.defineProperty(exports, "__esModule", { value: true });
 var tracker = {};
 exports.perf = window['perf'] = {

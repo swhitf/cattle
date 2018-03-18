@@ -1,3 +1,4 @@
+//@no-export
 import { Matrix } from '../../geom/Matrix';
 import { RectLike } from '../../geom/Rect';
 import { CompositionElement, CompositionRegion } from './Composition';

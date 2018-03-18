@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+//@no-export
 require("es5-shim");
 require("es6-shim");
 require("reflect-metadata");

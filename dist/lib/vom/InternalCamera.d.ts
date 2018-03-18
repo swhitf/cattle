@@ -1,6 +1,6 @@
 import { EventEmitter } from '../base/EventEmitter';
-import { Rect } from '../geom/Rect';
 import { Point, PointInput } from '../geom/Point';
+import { Rect } from '../geom/Rect';
 import { Camera } from './Camera';
 export declare class InternalCamera implements Camera {
     private emitter;

@@ -1,3 +1,4 @@
+//@no-export
 import { Buffer } from './Buffer';
 import { Key } from './Key';
 import { NodeList } from './NodeList';

@@ -13,7 +13,6 @@ export declare class Surface extends SimpleEventEmitter {
     height: number;
     theme: Theme;
     private readonly sequence;
-    private readonly buffers;
     private readonly composition;
     private dirtyTheming;
     private dirtyRender;

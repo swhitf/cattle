@@ -1,10 +1,10 @@
-import { CameraEvent } from './events/CameraEvent';
-import { Event } from '../base/Event';
+//@no-export
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { Camera } from './Camera';
 import { CameraManager } from './CameraManager';
+import { CameraEvent } from './events/CameraEvent';
 import { InternalCamera } from './InternalCamera';
 
 

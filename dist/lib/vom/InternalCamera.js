@@ -9,10 +9,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var CameraChangeEvent_1 = require("./events/CameraChangeEvent");
 var Observable_1 = require("../base/Observable");
-var Rect_1 = require("../geom/Rect");
 var Point_1 = require("../geom/Point");
+var Rect_1 = require("../geom/Rect");
+var CameraChangeEvent_1 = require("./events/CameraChangeEvent");
 var InternalCamera = /** @class */ (function () {
     function InternalCamera(id, order, bounds, vector, emitter) {
         this.emitter = emitter;
