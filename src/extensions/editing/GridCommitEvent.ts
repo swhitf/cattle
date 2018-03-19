@@ -7,6 +7,6 @@ export class GridCommitEvent extends GridEvent
 {
     constructor(public grid:GridElement, public changes:GridChangeSet)
     {
-        super('change', grid);
+        super('commit', grid);
     }
 }
