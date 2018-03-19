@@ -14,7 +14,7 @@ var GridEvent_1 = require("../../core/events/GridEvent");
 var GridCommitEvent = /** @class */ (function (_super) {
     __extends(GridCommitEvent, _super);
     function GridCommitEvent(grid, changes) {
-        var _this = _super.call(this, 'change', grid) || this;
+        var _this = _super.call(this, 'commit', grid) || this;
         _this.grid = grid;
         _this.changes = changes;
         return _this;

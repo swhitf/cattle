@@ -8,10 +8,14 @@ export interface GridCellParams {
     rowRef: number;
     value: string;
     style?: string[];
+    data?: GridData;
     type?: string;
     colSpan?: number;
     rowSpan?: number;
 }
+export declare type GridData = Readonly<{
+    [key: string]: any;
+}>;
 export interface GridCellRefParts {
     readonly col: number;
     readonly row: number;
@@ -45,6 +49,10 @@ export declare class GridCell extends GridObject {
      * The number of rows that this cell spans.
      */
     readonly rowSpan: number;
+    /**
+     * A bag of readonly key value pairs assocated with the cell.
+     */
+    data: GridData;
     /**
      * The style of the cell.
      */

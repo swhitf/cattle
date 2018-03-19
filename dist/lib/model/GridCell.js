@@ -37,6 +37,7 @@ var GridCell = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.ref = GridRef_1.GridRef.make(params.colRef, params.rowRef);
         _this.type = params.type || 'default';
+        _this.data = params.data || {};
         _this.colRef = params.colRef;
         _this.colSpan = params.colSpan || 1;
         _this.rowRef = params.rowRef;
@@ -45,6 +46,10 @@ var GridCell = /** @class */ (function (_super) {
         _this.value = (params.value === undefined || params.value === null) ? '' : params.value;
         return _this;
     }
+    __decorate([
+        Observable_1.Observable(),
+        __metadata("design:type", Object)
+    ], GridCell.prototype, "data", void 0);
     __decorate([
         Observable_1.Observable(),
         __metadata("design:type", GridCellStyle_1.GridCellStyle)
