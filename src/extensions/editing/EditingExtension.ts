@@ -46,7 +46,7 @@ export class EditingExtension
             .when(() => this.state == State.Idle, x => x
                 .on('BACKSPACE/e/x', () => this.doBeginEdit(''))
                 .on('DELETE', () => this.erase())
-                .on('*.PRESS', e => !!e.char && !e.modifiers.any ? this.doBeginEdit(e.char) : false)
+                .on('*.PRESS', e => !!e.char && !e.modifiers.ctrl && !e.modifiers.alt ? this.doBeginEdit(e.char) : false)
             )
         ;
 

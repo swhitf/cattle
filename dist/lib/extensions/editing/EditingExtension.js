@@ -51,7 +51,7 @@ var EditingExtension = /** @class */ (function () {
             .when(function () { return _this.state == State.Idle; }, function (x) { return x
             .on('BACKSPACE/e/x', function () { return _this.doBeginEdit(''); })
             .on('DELETE', function () { return _this.erase(); })
-            .on('*.PRESS', function (e) { return !!e.char && !e.modifiers.any ? _this.doBeginEdit(e.char) : false; }); });
+            .on('*.PRESS', function (e) { return !!e.char && !e.modifiers.ctrl && !e.modifiers.alt ? _this.doBeginEdit(e.char) : false; }); });
         MouseBehavior_1.MouseBehavior.for(this.input.elmt)
             .on(['LEFT', 'MIDDLE', 'RIGHT'], function () { return _this.state = State.EditingPrecise; });
         KeyBehavior_1.KeyBehavior.for(this.input.elmt)
