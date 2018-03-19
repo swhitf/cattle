@@ -13,10 +13,13 @@ export interface GridCellParams
     rowRef:number;
     value:string;
     style?:string[];
+    data?:GridData;
     type?:string;
     colSpan?:number;
     rowSpan?:number;
 }
+
+export type GridData = Readonly<{[key:string]:any}>;
 
 export interface GridCellRefParts
 {
@@ -61,6 +64,12 @@ export class GridCell extends GridObject
     public readonly rowSpan:number;
 
     /**
+     * A bag of readonly key value pairs assocated with the cell.
+     */
+    @Observable()
+    public data:GridData;
+
+    /**
      * The style of the cell.
      */
     @Observable()
@@ -83,6 +92,7 @@ export class GridCell extends GridObject
 
         this.ref = GridRef.make(params.colRef, params.rowRef);
         this.type = params.type || 'default';
+        this.data = params.data || {};
         this.colRef = params.colRef;
         this.colSpan = params.colSpan || 1;
         this.rowRef = params.rowRef;
