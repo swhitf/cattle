@@ -1,7 +1,9 @@
+//@no-export
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { Observable } from '../../base/Observable';
 import { ObjectMap, Predicate } from '../../common';
 import { GridElement } from '../../core/GridElement';
+import { Point } from '../../geom/Point';
 import { Rect, RectLike } from '../../geom/Rect';
 import { index } from '../../misc/Util';
 import { NetHandle } from './NetHandle';
@@ -122,6 +124,9 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
 
     public toRef:string;
 
+    @Observable('')
+    public label:string;
+
     @Observable(true)
     public visible:boolean;
 
@@ -158,6 +163,12 @@ class NetHandleImpl extends AbstractDestroyable implements NetHandle
     {
         let { grid, visual } = this;
 
+        if (property == 'label')
+        {
+            visual.label.text = this.label;
+            visual.label.autoSize();
+            visual.label.topLeft = new Point(0, -visual.label.height);
+        }
         if (property == 'visible')
         {
             if (this.visible)

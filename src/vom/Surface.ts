@@ -130,7 +130,7 @@ export class Surface extends SimpleEventEmitter
             didRender = true;
         }
 
-        this.dirtyRender = this.dirtySequence = false;
+        this.dirtyRender = this.dirtyTheming = this.dirtySequence = false;
         this.dirtyStates.clear();
 
         if (didRender)
@@ -171,13 +171,20 @@ export class Surface extends SimpleEventEmitter
         const { composition, sequence, view, dirtyStates } = this;
         const visuals = new KeyedSet<Visual>(x => x.id);
 
+        // const parents = (v:Visual) => {
+        //     return !!v.parent ? [v.parent].concat(parents(v.parent)): [];
+        // }
+
         dirtyStates.forEach(st => 
         {
             if (st.theme)
             {
-                visuals.addAll(st.visual.toArray());
+                //visuals.addAll(parents(st.visual))
+                visuals.addAll(st.visual.toArray(true));
             }
         });
+
+        console.log('performThemeUpdates', visuals.array);
 
         this.applyTheme(this.theme, visuals.array);
     }

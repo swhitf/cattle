@@ -20,6 +20,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Observable_1 = require("../../base/Observable");
+var LabelVisual_1 = require("../../vom/common/LabelVisual");
 var Border_1 = require("../../vom/styling/Border");
 var Color_1 = require("../../vom/styling/Color");
 var Styleable_1 = require("../../vom/styling/Styleable");
@@ -27,9 +28,11 @@ var Visual_1 = require("../../vom/Visual");
 var NetVisual = /** @class */ (function (_super) {
     __extends(NetVisual, _super);
     function NetVisual() {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.canHost = false;
+        var _this = _super.call(this) || this;
+        _this.canHost = true;
         _this.type = 'net';
+        _this.label = new LabelVisual_1.LabelVisual();
+        _this.mount(_this.label);
         return _this;
     }
     NetVisual.prototype.render = function (gfx) {
@@ -81,6 +84,10 @@ var NetVisual = /** @class */ (function (_super) {
         }
     };
     __decorate([
+        Styleable_1.Styleable(false),
+        __metadata("design:type", Boolean)
+    ], NetVisual.prototype, "animateBorder", void 0);
+    __decorate([
         Styleable_1.Styleable('transparent'),
         __metadata("design:type", String)
     ], NetVisual.prototype, "background", void 0);
@@ -88,10 +95,6 @@ var NetVisual = /** @class */ (function (_super) {
         Styleable_1.Styleable(new Border_1.Border(1, '#4285f4')),
         __metadata("design:type", Border_1.Border)
     ], NetVisual.prototype, "border", void 0);
-    __decorate([
-        Styleable_1.Styleable(false),
-        __metadata("design:type", Boolean)
-    ], NetVisual.prototype, "animateBorder", void 0);
     __decorate([
         Observable_1.Observable(0),
         __metadata("design:type", Object)

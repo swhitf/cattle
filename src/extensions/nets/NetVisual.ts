@@ -1,4 +1,5 @@
 import { Observable } from '../../base/Observable';
+import { LabelVisual } from '../../vom/common/LabelVisual';
 import { Animation } from '../../vom/styling/Animate';
 import { Border } from '../../vom/styling/Border';
 import { Color } from '../../vom/styling/Color';
@@ -8,8 +9,12 @@ import { Visual } from '../../vom/Visual';
 
 export class NetVisual extends Visual
 {
-    public readonly canHost:boolean = false;
+    public readonly canHost:boolean = true;
     public readonly type:string = 'net';
+    public readonly label:LabelVisual = new LabelVisual();
+
+    @Styleable(false)
+    public animateBorder:boolean;
 
     @Styleable('transparent')
     public background:string;
@@ -17,13 +22,15 @@ export class NetVisual extends Visual
     @Styleable(new Border(1, '#4285f4'))
     public border:Border;
 
-    @Styleable(false)
-    public animateBorder:boolean;
-
     @Observable(0)
     protected borderOffset;
 
     private borderAnimation:Animation;
+
+    constructor() {
+        super();
+        this.mount(this.label);
+    }
 
     public render(gfx:CanvasRenderingContext2D):void
     {

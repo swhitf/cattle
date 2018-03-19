@@ -88,7 +88,7 @@ var Surface = /** @class */ (function (_super) {
             this.performCompositionUpdates();
             didRender = true;
         }
-        this.dirtyRender = this.dirtySequence = false;
+        this.dirtyRender = this.dirtyTheming = this.dirtySequence = false;
         this.dirtyStates.clear();
         if (didRender) {
             this.propagateEvent(new Event_1.Event('render'), []);
@@ -113,11 +113,16 @@ var Surface = /** @class */ (function (_super) {
     Surface.prototype.performThemeUpdates = function () {
         var _a = this, composition = _a.composition, sequence = _a.sequence, view = _a.view, dirtyStates = _a.dirtyStates;
         var visuals = new KeyedSet_1.KeyedSet(function (x) { return x.id; });
+        // const parents = (v:Visual) => {
+        //     return !!v.parent ? [v.parent].concat(parents(v.parent)): [];
+        // }
         dirtyStates.forEach(function (st) {
             if (st.theme) {
-                visuals.addAll(st.visual.toArray());
+                //visuals.addAll(parents(st.visual))
+                visuals.addAll(st.visual.toArray(true));
             }
         });
+        console.log('performThemeUpdates', visuals.array);
         this.applyTheme(this.theme, visuals.array);
     };
     Surface.prototype.performCompositionUpdates = function () {

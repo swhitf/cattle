@@ -60,7 +60,8 @@ grid.model.cells[0].style = GridCellStyle.get('test');
 grid.model.cells[0].value = 'Test';
 
 let nets = grid.get('nets') as NetManager;
-// nets.create('test', 'default', 'B2', 'E4');
+let n = nets.create('test', 'default', 'C4', 'E10');
+n.label = 'Whuuuut';
 
 grid.freezeMargin = new Point(0, 0);
 

@@ -6,6 +6,12 @@ exports.GoogleSheetsTheme = new Theme_1.Theme('GoogleSheets', {
     'cell': {
         zIndex: -1,
     },
+    'net ~ label': {
+        background: '#4285f4',
+    },
+    'net ~ label:hover': {
+        background: '#4285f4',
+    },
     'net.input': {
         border: new Border_1.Border(2, '#4285f4'),
         zIndex: 2000,

@@ -8,6 +8,14 @@ export const GoogleSheetsTheme = new Theme('GoogleSheets', {
         zIndex: -1,
     },
 
+    'net ~ label': {
+        background: '#4285f4',
+    },
+
+    'net ~ label:hover': {
+        background: '#4285f4',
+    },
+
     'net.input': {
         border: new Border(2, '#4285f4'),
         zIndex: 2000,

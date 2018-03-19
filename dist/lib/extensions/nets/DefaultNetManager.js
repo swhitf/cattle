@@ -19,8 +19,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+//@no-export
 var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var Observable_1 = require("../../base/Observable");
+var Point_1 = require("../../geom/Point");
 var Rect_1 = require("../../geom/Rect");
 var NetVisual_1 = require("./NetVisual");
 var DefaultNetManager = /** @class */ (function () {
@@ -124,6 +126,11 @@ var NetHandleImpl = /** @class */ (function (_super) {
     };
     NetHandleImpl.prototype.notifyChange = function (property) {
         var _a = this, grid = _a.grid, visual = _a.visual;
+        if (property == 'label') {
+            visual.label.text = this.label;
+            visual.label.autoSize();
+            visual.label.topLeft = new Point_1.Point(0, -visual.label.height);
+        }
         if (property == 'visible') {
             if (this.visible) {
                 visual.mountTo(grid.surface.root);
@@ -133,6 +140,10 @@ var NetHandleImpl = /** @class */ (function (_super) {
             }
         }
     };
+    __decorate([
+        Observable_1.Observable(''),
+        __metadata("design:type", String)
+    ], NetHandleImpl.prototype, "label", void 0);
     __decorate([
         Observable_1.Observable(true),
         __metadata("design:type", Boolean)

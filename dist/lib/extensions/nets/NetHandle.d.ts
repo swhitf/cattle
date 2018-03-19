@@ -1,9 +1,8 @@
 import { RectLike } from '../../geom/Rect';
-import { Destroyable } from '../../base/Destroyable';
 /**
  * Provides an interface with which consumers can manipulate a net instance.
  */
-export interface NetHandle extends Destroyable {
+export interface NetHandle {
     /**
      * The id of the net.
      */
@@ -25,6 +24,10 @@ export interface NetHandle extends Destroyable {
      * will be the same as `fromRef`.
      */
     readonly toRef: string;
+    /**
+     * Sets the optional text label that appears above the net.
+     */
+    label: string;
     /**
      * Controls whether or not the net is visible.
      */
