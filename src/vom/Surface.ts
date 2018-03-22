@@ -19,6 +19,7 @@ import { Modifiers } from './input/Modifiers';
 import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
 import { Composition } from './rendering/Composition';
+import { Report } from './rendering/Report';
 import { RootVisual } from './RootVisual';
 import { Theme } from './styling/Theme';
 import { Visual, VisualPredicate } from './Visual';
@@ -111,6 +112,9 @@ export class Surface extends SimpleEventEmitter
 
     public render():void
     {
+        Report.begin();
+        Report.count('ElementDraw', 0);
+
         if (this.dirtyTheming)
         {
             this.performThemeUpdates();
@@ -133,8 +137,10 @@ export class Surface extends SimpleEventEmitter
         this.dirtyRender = this.dirtySequence = false;
         this.dirtyStates.clear();
 
+
         if (didRender)
         {
+            Report.complete();
             this.propagateEvent(new Event('render'), []);
         }
     }
@@ -168,6 +174,8 @@ export class Surface extends SimpleEventEmitter
 
     private performThemeUpdates():void
     {
+        return; 
+        
         const { composition, sequence, view, dirtyStates } = this;
         const visuals = new KeyedSet<Visual>(x => x.id);
 
@@ -184,13 +192,15 @@ export class Surface extends SimpleEventEmitter
 
     private performCompositionUpdates():void 
     {
+        const cpt = Report.time('Composition.Prepare');
+
         const { composition, sequence, view, dirtyStates } = this;
 
         //Only render to cameras with valid bounds
         const cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
 
-        composition.beginUpdate();
+        Report.time('composition.beginUpdate()', () => composition.beginUpdate())
 
         const rootRegion = composition.root;
         rootRegion.arrange(0, 0, this.width, this.height);
@@ -209,36 +219,44 @@ export class Surface extends SimpleEventEmitter
                     return true;
                 }
 
-                if (visual.zIndex == 1)
-                    return true;
-
-                const zLayer = camRegion.getRegion(`zIndex/${visual.zIndex}`, visual.zIndex);
+                const zLayer = camRegion.getRegion(visual.zIndex.toString(), visual.zIndex);
                 zLayer.arrange(0, 0, cam.bounds.width, cam.bounds.height);
 
-                const visElmt = zLayer.getElement(`visual/${visual.id}`, visual.zIndex);
-                visElmt.debug = `${visual.type}/${visual.id}`;
+                const visElmt = zLayer.getElement(visual.id, visual.zIndex);
                 
                 //If the visual is dirty, or element is new we need to update its element
                 const state = dirtyStates.get(visual.id);
 
-                const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
+                const ept = Report.time('Element.Prepare');
+                const camVisMat = Matrix.identity;// visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
                 visElmt.transform(camVisMat);
                 visElmt.dim(visual.width + 10, visual.height + 10);
+                ept();
 
                 if (visElmt.dirty || (!!state && state.render))
                 {
-                    visElmt.draw(gfx => {
-                        gfx.translate(5, 5);
-                        visual.render(gfx);
+                    Report.time('Element.Draw', () => {
+
+                        // visElmt.draw(gfx => {
+                        //     gfx.translate(5, 5);
+                        //     visual.render(gfx);
+                        // });
+
                     });
+
+                    Report.count('Element.Draw');
                 }
 
                 return true;
             });
         }
 
-        composition.endUpdate();
+        Report.time('composition.endUpdate()', () => composition.endUpdate())
+        cpt();
+
+        const cdt = Report.time('Composition.Draw');
         composition.render(view);
+        cdt();
     }
 
     private createCameraManager():InternalCameraManager

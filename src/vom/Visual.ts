@@ -39,7 +39,7 @@ export interface VisualTagSet
 
 export abstract class Visual extends SimpleEventEmitter implements Visual
 {
-    public readonly id:number = IdSeed++;
+    public readonly id:string = (IdSeed++).toString();
     public readonly classes:VisualTagSet;
     public readonly traits:VisualTagSet;
 

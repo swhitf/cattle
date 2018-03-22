@@ -1,3 +1,5 @@
+import { Report } from './Report';
+
 //@no-export
 
 
@@ -41,7 +43,7 @@ export class Buffer {
     }
 
     public drawTo(gfx:CanvasRenderingContext2D):void {
-        gfx.drawImage(this.canvas, 0, 0);
+        Report.time('buffer.drawTo', () => gfx.drawImage(this.canvas, 0, 0));
     }
 
     public invalidate(width:number, height:number):void {

@@ -66,3 +66,4 @@ grid.freezeMargin = new Point(0, 0);
 
 click('useExcel', () => grid.useTheme(MicrosoftExcelTheme));
 click('useGoogle', () => grid.useTheme(GoogleSheetsTheme));
+click('trashModel', () => grid.model = GridModel.dim(8, 20));

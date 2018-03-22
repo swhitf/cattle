@@ -156,7 +156,7 @@ export class GridRange implements GridRangeLike
             ltr: cells,
             width: (hc - lc) + 1,
             height: (hr - lr) + 1,
-            length: (hc - lc) * (hr - lr),
+            length: ((hc - lc) + 1) * ((hr - lr) + 1),
         });
     }
 

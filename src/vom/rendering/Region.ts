@@ -5,6 +5,7 @@ import { CompositionElement, CompositionRegion } from './Composition';
 import { Element } from './Element';
 import { Key } from './Key';
 import { Node } from './Node';
+import { Report } from './Report';
 
 
 export class Region extends Node implements CompositionRegion
@@ -77,7 +78,7 @@ export class Region extends Node implements CompositionRegion
     }
 
     public render(gfx:CanvasRenderingContext2D):void {
-
+        
         //Here we need to figure out if the buffer we have is reusable and if it is
         //we should just render the buffer to the gfx using the region info to set
         //the transform.  If we are "dirty" then we need to regenerate the buffer.  
@@ -85,7 +86,10 @@ export class Region extends Node implements CompositionRegion
         if (this.dirty)
         {
             //Clear and resize our buffer
+            Report.count('Buffer.Invalidate');
+            const bit = Report.time('Buffer.Invalidate');
             this.buffer.invalidate(this.width, this.height);
+            bit();
 
             this.children.forEach(node =>
             {
@@ -93,12 +97,15 @@ export class Region extends Node implements CompositionRegion
             });
         }
 
+        Report.count('Buffer.Translate');
+        const btt = Report.time('Buffer.Translate');
         //Apply transform so we draw in the right spot on parent
         const mt = Matrix.identity.translate(this.left, this.top);
         gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
-
+        btt();
+        
         //Draw...
-        this.buffer.drawTo(gfx);
+        //Report.time('Region.Draw', () => this.buffer.drawTo(gfx));
 
         this.dirty = false;
     }
