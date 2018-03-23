@@ -1,15 +1,10 @@
 import * as ResizeObserver from 'resize-observer-polyfill';
 
-import { AbstractDestroyable } from '../base/AbstractDestroyable';
+import { AbstractDestroyable, DestroyableCallback } from '../base/AbstractDestroyable';
+import { Burden } from '../base/Burden';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { ObjectMap } from '../common';
-import { ClipboardExtension } from '../extensions/clipboard/ClipboardExtension';
-import { EditingExtension } from '../extensions/editing/EditingExtension';
-import { HistoryExtension } from '../extensions/history/HistoryExtension';
-import { NetExtension } from '../extensions/nets/NetExtension';
-import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
-import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Padding } from '../geom/Padding';
 import { Point } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
@@ -27,13 +22,20 @@ import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
 import { GridView } from './GridView';
 
+// import { ClipboardExtension } from '../extensions/clipboard/ClipboardExtension';
+// import { EditingExtension } from '../extensions/editing/EditingExtension';
+// import { HistoryExtension } from '../extensions/history/HistoryExtension';
+// import { NetExtension } from '../extensions/nets/NetExtension';
+// import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
+// import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 
 export class GridElement extends SimpleEventEmitter
 {
-    private cameraBuffers:ObjectMap<CameraBuffer> = {};
     private autoBufferUpdateEnabled:boolean = true;
-    
-    private readonly internal = {
+    private burden:Burden = new Burden();
+    private cameraBuffers:ObjectMap<CameraBuffer> = {};
+
+    private internal = {
         container: null as HTMLElement,
         layout: null as GridLayout,
         surface: null as Surface,
@@ -44,8 +46,7 @@ export class GridElement extends SimpleEventEmitter
     public static create(container:HTMLElement, initialModel?:GridModel):GridElement
     {
         let surface = new Surface(container.clientWidth, container.clientHeight);
-        container.appendChild(surface.view);
-        enableAutoResize(container, surface);
+        container.appendChild(surface.view);        
 
         let grid = new GridElement(container, surface, initialModel || GridModel.dim(26, 100));
         return grid;
@@ -54,12 +55,12 @@ export class GridElement extends SimpleEventEmitter
     public static createDefault(container:HTMLElement, initialModel?:GridModel):GridElement
     {
         return this.create(container, initialModel)
-            .extend(new NetExtension())
-            .extend(new SelectorExtension())
-            .extend(new EditingExtension())
-            .extend(new ScrollerExtension())
-            .extend(new ClipboardExtension())
-            .extend(new HistoryExtension())
+            // .extend(new NetExtension())
+            // .extend(new SelectorExtension())
+            // .extend(new EditingExtension())
+            // .extend(new ScrollerExtension())
+            // .extend(new ClipboardExtension())
+            // .extend(new HistoryExtension())
             .useTheme(GoogleSheetsTheme)
         ;
     }
@@ -79,6 +80,14 @@ export class GridElement extends SimpleEventEmitter
 
         //Do this last to kick everything in...
         this.model = model;
+
+        this.burden.add(enableAutoResize(container, surface));
+        this.burden.add(() => surface.destroy());
+        this.burden.add(() => {
+            this.cameraBuffers = null;
+            this.internal = null;
+            this.model = null;
+        });
     }
 
     @Observable(GridModel.empty)
@@ -118,9 +127,15 @@ export class GridElement extends SimpleEventEmitter
         return this.internal.view;
     }
 
+    public destroy():void
+    {
+        this.burden.destroy();
+    }
+
     public extend(ext:GridExtension):GridElement
     {
         this.kernel.install(ext);
+        this.burden.add(ext);
 
         if (ext.init)
         {
@@ -307,6 +322,9 @@ export class GridElement extends SimpleEventEmitter
 
     private notifyChange(property:string):void
     {
+        if (this.model == null)
+            return; 
+
         switch (property)
         {
             case 'model':
@@ -414,14 +432,14 @@ export class CameraBufferEntry
     }
 }
 
-function enableAutoResize(container:HTMLElement, surface:Surface) {
+function enableAutoResize(container:HTMLElement, surface:Surface):DestroyableCallback {
 
     //TypeScript not liking this for some reason...
     const RO = ResizeObserver as any;
 
     let t = { id: null as any };
 
-    (new RO((entries, observer) => {
+    const roi = new RO((entries, observer) => {
         const {left, top, width, height} = entries[0].contentRect;
         
         const apply = () => {
@@ -434,6 +452,7 @@ function enableAutoResize(container:HTMLElement, surface:Surface) {
 
         clearTimeout(t.id);
         t.id = setTimeout(apply, 100);
-    }))
-    .observe(container);
+    });
+    roi.observe(container);
+    return () => roi.disconnect();
 }

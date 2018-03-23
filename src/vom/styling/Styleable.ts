@@ -4,8 +4,6 @@ export function Styleable(defaultValue?:any):any
 {
     return function(target:any, propertyKey:string):PropertyDescriptor
     {
-        Reflect.defineMetadata(`cattle:styleable:${propertyKey}`, true, target);
-
         if (!target['notifyChange']) 
         {
             throw 'Cannot mark Styleable property on object that does not provide an notifyChange method.';

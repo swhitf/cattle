@@ -4,8 +4,6 @@ export function Observable(defaultValue?:any):any
 {
     return function(target:any, propertyKey:string):PropertyDescriptor
     {
-        Reflect.defineMetadata(`cattle:observable:${propertyKey}`, true, target);
-
         if (!target['notifyChange']) 
         {
             throw 'Cannot mark Observable property on object that does not provide an notifyChange method.';

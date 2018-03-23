@@ -1,9 +1,9 @@
+import { Destroyable } from '../base/Destroyable';
 import { GridElement } from './GridElement';
 import { GridKernel } from './GridKernel';
-import { Rect } from '../geom/Rect';
 
 
-export interface GridExtension
+export interface GridExtension extends Destroyable
 {
     init(grid:GridElement, kernel:GridKernel):void;
 }

@@ -1,7 +1,7 @@
-import { Event } from "./Event";
-import { EventEmitter, EventCallback } from "./EventEmitter";
-import { Destroyable } from "./Destroyable";
-import { AbstractDestroyable } from "./AbstractDestroyable";
+import { CallbackDestroyable } from './CallbackDestroyable';
+import { Destroyable } from './Destroyable';
+import { Event } from './Event';
+import { EventCallback, EventEmitter } from './EventEmitter';
 
 
 export class SimpleEventEmitter implements EventEmitter
@@ -44,19 +44,5 @@ export class SimpleEventEmitter implements EventEmitter
     private getCallbackList(event:string):EventCallback[]
     {
         return this.buckets[event] || (this.buckets[event] = []);
-    }
-}
-
-class CallbackDestroyable extends AbstractDestroyable
-{
-    constructor(private callback:any)
-    {
-        super();
-    }
-
-    public destroy():void 
-    {
-        this.destroy();
-        this.callback();
     }
 }

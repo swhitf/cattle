@@ -1,13 +1,18 @@
 import { Destroyable } from './Destroyable';
 
 
+export interface DestroyableCallback
+{
+    ():void;
+}
+
 /**
  * Provides an abstract base class for Destroyable implementations.
  */
 export class AbstractDestroyable implements Destroyable
 {
     private isDestroyed:boolean;
-    private destroyables:Destroyable[] = [];
+    private destroyables:DestroyableCallback[] = [];
 
     /**
      * Throws an exception if this object has been destroyed.  Call this before operations that should be prevented
@@ -26,11 +31,15 @@ export class AbstractDestroyable implements Destroyable
      *
      * @param objects the Destroyable objects
      */
-    protected chain(...objects:Destroyable[]):void
+    protected chain(...objects:Array<DestroyableCallback|Destroyable>):void
     {
         for (let i = 0; i < objects.length; i++)
         {
-            this.destroyables.push(objects[i]);
+            this.destroyables.push(
+                typeof(objects[i]) == 'function' 
+                    ? objects[i]
+                    : (objects[i] as Destroyable).destroy.bind(objects[i])
+            );
         }
     }
 
@@ -41,13 +50,9 @@ export class AbstractDestroyable implements Destroyable
     {
         this.guardDestroyed();
 
-        for (let i = 0; i < this.destroyables.length; i++)
-        {
-            this.destroyables[i].destroy();
-        }
-
-        this.isDestroyed = true;
+        this.destroyables.forEach(x => x());
         this.destroyables = null;
+        this.isDestroyed = true;
     }
 
     /**
