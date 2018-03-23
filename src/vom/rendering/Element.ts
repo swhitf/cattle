@@ -18,12 +18,12 @@ export class Element extends Node implements CompositionElement {
         if (this.width != width) 
         {
             this.width = width;
-            //this.dirty = true;
+            this.dirty = true;
         }
         if (this.height != height) 
         {
             this.height = height;
-            //this.dirty = true;
+            this.dirty = true;
         }
 
         return this;
@@ -35,7 +35,7 @@ export class Element extends Node implements CompositionElement {
 
         buffer.invalidate(this.width, this.height);
         buffer.update(callback);
-        //this.dirty = true;
+        this.dirty = true;
 
         return this;
     }
@@ -45,7 +45,7 @@ export class Element extends Node implements CompositionElement {
         if (!this.mt || !this.mt.equals(mt))
         {
             this.mt = mt;
-            //this.parent.dirty = true;
+            this.parent.dirty = true;
         }
 
         return this;
@@ -63,7 +63,7 @@ export class Element extends Node implements CompositionElement {
         gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
 
         //Draw...
-        //this.buffer.drawTo(gfx);  
+        this.buffer.drawTo(gfx);  
 
         this.dirty = false;
     }

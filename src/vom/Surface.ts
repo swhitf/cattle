@@ -1,3 +1,4 @@
+import { CameraChangeEvent } from '..';
 import { Event } from '../base/Event';
 import { KeyedSet } from '../base/KeyedSet';
 import { Observable } from '../base/Observable';
@@ -7,7 +8,6 @@ import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { cumulativeOffset } from '../misc/Dom';
 import { CameraManager } from './CameraManager';
-import { CameraEvent } from './events/CameraEvent';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
@@ -18,7 +18,7 @@ import { Keys } from './input/Keys';
 import { Modifiers } from './input/Modifiers';
 import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
-import { Composition } from './rendering/Composition';
+import { Composition, CompositionRegion } from './rendering/Composition';
 import { Report } from './rendering/Report';
 import { RootVisual } from './RootVisual';
 import { Theme } from './styling/Theme';
@@ -44,9 +44,11 @@ import { VisualTracker } from './VisualTracker';
  * 
  */
 
-interface VisualDirtyState
+interface ObjectDirtyState
 {
-    visual:Visual;
+    object:any;
+    transform?:boolean;
+    size?:boolean;
     render?:boolean;
     theme?:boolean;
 }
@@ -81,7 +83,7 @@ export class Surface extends SimpleEventEmitter
     private dirtyTheming:boolean;
     private dirtyRender:boolean;
     private dirtySequence:boolean;
-    private dirtyStates:KeyedSet<VisualDirtyState>;
+    private dirtyStates:KeyedSet<ObjectDirtyState>;
     private tracker:VisualTracker;
 
     constructor(width:number = 800, height:number = 800)
@@ -97,7 +99,7 @@ export class Surface extends SimpleEventEmitter
 
         this.composition = new Composition();
         this.sequence = new VisualSequence(this.root);
-        this.dirtyStates = new KeyedSet<VisualDirtyState>(x => x.visual.id);
+        this.dirtyStates = new KeyedSet<ObjectDirtyState>(x => x.object.id);
         this.tracker = new VisualTracker();
  
         this.ticker = new RefreshLoop(60);
@@ -113,11 +115,10 @@ export class Surface extends SimpleEventEmitter
     public render():void
     {
         Report.begin();
-        Report.count('ElementDraw', 0);
 
         if (this.dirtyTheming)
         {
-            this.performThemeUpdates();
+            //this.performThemeUpdates();
         }
 
         let didRender = false;
@@ -136,7 +137,6 @@ export class Surface extends SimpleEventEmitter
 
         this.dirtyRender = this.dirtySequence = false;
         this.dirtyStates.clear();
-
 
         if (didRender)
         {
@@ -174,8 +174,6 @@ export class Surface extends SimpleEventEmitter
 
     private performThemeUpdates():void
     {
-        return; 
-        
         const { composition, sequence, view, dirtyStates } = this;
         const visuals = new KeyedSet<Visual>(x => x.id);
 
@@ -183,7 +181,7 @@ export class Surface extends SimpleEventEmitter
         {
             if (st.theme)
             {
-                visuals.addAll(st.visual.toArray());
+                visuals.addAll(st.object.toArray());
             }
         });
 
@@ -208,8 +206,15 @@ export class Surface extends SimpleEventEmitter
         for (const cam of cameras) 
         { 
             const camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
-            const camRegion = rootRegion.getRegion(`camera/${cam.id}`, 0);
+            const camState = dirtyStates.get(cam.id);
+            const camRegion = rootRegion.getRegion(cam.id, 0);
             camRegion.arrange(cam.bounds);
+
+            
+
+            //Rely on the knowledge that visuals will be in zIndex order, so we can get once and
+            //keep until the id does not match
+            let zLayer = null as CompositionRegion;
 
             sequence.climb(visual => 
             {
@@ -219,32 +224,44 @@ export class Surface extends SimpleEventEmitter
                     return true;
                 }
 
-                const zLayer = camRegion.getRegion(visual.zIndex.toString(), visual.zIndex);
-                zLayer.arrange(0, 0, cam.bounds.width, cam.bounds.height);
+                const visualState = dirtyStates.get(visual.id);
 
-                const visElmt = zLayer.getElement(visual.id, visual.zIndex);
+                //If no zLayer or id does not match zIndex, obtain layer
+                if (!zLayer || zLayer.id != visual.zIndex.toString())
+                {
+                    zLayer = camRegion.getRegion(visual.zIndex.toString(), visual.zIndex);
+                    //If new, arrange...
+                    if (zLayer.age == 0)
+                    {
+                        zLayer.arrange(0, 0, cam.bounds.width, cam.bounds.height);
+                    }
+                }
+
+                //Obtain element for visual
+                const elmt = zLayer.getElement(visual.id, visual.zIndex);
+
+                //Update element transform if new, camera has moved or visual has moved
+                if (elmt.age == 0 || (!!visualState && visualState.transform) || (!!camState && camState.transform))
+                {
+                    const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
+                    elmt.transform(camVisMat);
+                }
                 
-                //If the visual is dirty, or element is new we need to update its element
-                const state = dirtyStates.get(visual.id);
+                //Update element size if new or visual has resized
+                if (elmt.age == 0 || (!!camState && camState.transform) || (!!visualState && visualState.transform))
+                {
+                    elmt.dim(visual.width + 10, visual.height + 10);
+                }
 
-                const ept = Report.time('Element.Prepare');
-                const camVisMat = Matrix.identity;// visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
-                visElmt.transform(camVisMat);
-                visElmt.dim(visual.width + 10, visual.height + 10);
-                ept();
-
-                if (visElmt.dirty || (!!state && state.render))
+                //Finally, if our element is dirty or the visual needs redrawing, redraw
+                if (elmt.dirty || (!!visualState && visualState.render))
                 {
                     Report.time('Element.Draw', () => {
-
-                        // visElmt.draw(gfx => {
-                        //     gfx.translate(5, 5);
-                        //     visual.render(gfx);
-                        // });
-
+                        elmt.draw(gfx => {
+                            gfx.translate(5, 5);
+                            visual.render(gfx);
+                        });
                     });
-
-                    Report.count('Element.Draw');
                 }
 
                 return true;
@@ -264,13 +281,25 @@ export class Surface extends SimpleEventEmitter
         let cm = new InternalCameraManager();
         cm.create('main', 1, new Rect(0, 0, this.width, this.height), Point.empty);
 
-        let callback = (e:CameraEvent) => {
-            this.dirtyRender = true
-        };
+        cm.on('create', () => this.dirtyRender);
+        cm.on('destroy', () => this.dirtyRender);
 
-        cm.on('create', callback);
-        cm.on('destroy', callback);
-        cm.on('change', callback);
+        cm.on('change', (e:CameraChangeEvent) => {
+
+            const ds = { object: e.target } as ObjectDirtyState;
+
+            if (e.property == 'vector')
+            {
+                ds.transform = true;
+            }
+            else if (e.property == 'bounds')
+            {
+                ds.size = true;
+            }
+
+            this.dirtyStates.merge(ds);
+            this.dirtyRender = true;
+        });
 
         return cm;
     }
@@ -439,20 +468,35 @@ export class Surface extends SimpleEventEmitter
         this.dirtySequence = true;
         this.dirtyTheming = true;
 
-        this.dirtyStates.merge({ visual: e.target, render: true, theme: true });
+        this.dirtyStates.merge({ object: e.target, render: true, theme: true });
         this.sequence.invalidate(e.target);
     }
 
     private onVisualChange(e:VisualChangeEvent)
     {
-        this.dirtyStates.merge({ visual: e.target, render: true });
-        this.dirtyRender = true;
+        const ds = { object: e.target } as ObjectDirtyState;
 
-        if (e.property == 'classes' || e.property == 'traits')
+        if (e.property == 'topLeft')
         {
-            this.dirtyTheming = true;
-            this.dirtyStates.merge({ visual: e.target, theme: true });
+            ds.transform = true;
         }
+        else if (e.property == 'size')
+        {
+            ds.size = true;
+        }
+        else if (e.property == 'classes' || e.property == 'traits')
+        {
+            ds.render = true;
+            ds.theme = true;
+            this.dirtyTheming = true;
+        }
+        else
+        {
+            ds.render = true;
+        }
+
+        this.dirtyStates.merge(ds);
+        this.dirtyRender = true;
     }
 
     private propagateEvent(se:Event, stack:Visual[]):void

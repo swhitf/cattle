@@ -7,7 +7,9 @@ import { Region } from './Region';
 
 export interface CompositionElement 
 {
-    debug:string;
+    readonly id:string;
+
+    readonly age:number;
     
     readonly dirty:boolean;
 
@@ -20,6 +22,10 @@ export interface CompositionElement
 
 export interface CompositionRegion 
 {
+    readonly id:string;
+    
+    readonly age:number;
+    
     arrange(left:number, top:number, width:number, height:number);
     arrange(leftOrRect:number|RectLike, top?:number, width?:number, height?:number);
 

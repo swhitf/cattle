@@ -1,5 +1,4 @@
 //@no-export
-import { Matrix } from '../../geom/Matrix';
 import { RectLike } from '../../geom/Rect';
 import { CompositionElement, CompositionRegion } from './Composition';
 import { Element } from './Element';
@@ -86,10 +85,7 @@ export class Region extends Node implements CompositionRegion
         if (this.dirty)
         {
             //Clear and resize our buffer
-            Report.count('Buffer.Invalidate');
-            const bit = Report.time('Buffer.Invalidate');
             this.buffer.invalidate(this.width, this.height);
-            bit();
 
             this.children.forEach(node =>
             {
@@ -97,15 +93,11 @@ export class Region extends Node implements CompositionRegion
             });
         }
 
-        Report.count('Buffer.Translate');
-        const btt = Report.time('Buffer.Translate');
         //Apply transform so we draw in the right spot on parent
-        const mt = Matrix.identity.translate(this.left, this.top);
-        gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
-        btt();
+        gfx.setTransform(1, 0, 0, 1, this.left, this.top);
         
         //Draw...
-        //Report.time('Region.Draw', () => this.buffer.drawTo(gfx));
+        Report.time('Region.Draw', () => this.buffer.drawTo(gfx));
 
         this.dirty = false;
     }
@@ -119,25 +111,12 @@ export class Region extends Node implements CompositionRegion
             this.children.add(node = factory(key));
             node.dirty = true;
         }
+        else
+        {
+            node.age++;
+        }
 
-        node.accessed = true;
+        node.accessed = true;        
         return node;
     }
-
-    // private checkDirty(cycle:number):boolean 
-    // {
-    //     if (this.changed)
-    //         return true;
-
-    //     for (let node of this.children.array) 
-    //     {
-    //         if (node.changed)
-    //             return true;
-
-    //         if (node.cycle != cycle)
-    //             return true;
-    //     }
-
-    //     return false;
-    // }
 }

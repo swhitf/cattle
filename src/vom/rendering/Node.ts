@@ -12,6 +12,7 @@ export abstract class Node
 
     public buffer:Buffer;
     public accessed:boolean;
+    public age:number = 0;
 
     private dirtyVal:boolean;
 
@@ -19,6 +20,11 @@ export abstract class Node
         this.key = key;
         this.buffer = new Buffer(key.id);
         this.parent = parent;
+    }
+
+    public get id():string
+    {
+        return this.key.id;
     }
 
     public get dirty():boolean

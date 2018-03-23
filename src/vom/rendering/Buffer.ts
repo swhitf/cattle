@@ -43,7 +43,7 @@ export class Buffer {
     }
 
     public drawTo(gfx:CanvasRenderingContext2D):void {
-        Report.time('buffer.drawTo', () => gfx.drawImage(this.canvas, 0, 0));
+        Report.time('Buffer.DrawTo', () => gfx.drawImage(this.canvas, 0, 0));
     }
 
     public invalidate(width:number, height:number):void {

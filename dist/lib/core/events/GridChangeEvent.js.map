@@ -1,1 +1,0 @@
-{"version":3,"file":"GridChangeEvent.js","sourceRoot":"","sources":["../../../../src/core/events/GridChangeEvent.ts"],"names":[],"mappings":";;;;;;;;;;;;AACA,yCAAwC;AAGxC;IAAqC,mCAAS;IAE1C,yBAAmB,IAAgB,EAAS,QAAe;QAA3D,YAEI,kBAAM,QAAQ,EAAE,IAAI,CAAC,SACxB;QAHkB,UAAI,GAAJ,IAAI,CAAY;QAAS,cAAQ,GAAR,QAAQ,CAAO;;IAG3D,CAAC;IACL,sBAAC;AAAD,CAAC,AAND,CAAqC,qBAAS,GAM7C;AANY,0CAAe"}

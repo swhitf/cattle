@@ -4,7 +4,6 @@ var data = {
     start: 0 as number,
     counters: {} as any,
     timers: {} as any,
-    logs: [] as any[],
 };
 
 const Timer = function() {
@@ -22,15 +21,9 @@ export class Report
     public static begin():void
     {
         data.counters = {};
-        data.logs = [];
         data.start = performance.now();
         data.timers = {};
     }   
-
-    public static msg(info:string)
-    {
-        data.logs.push(info);
-    }
 
     public static time(what:string, callback?:any):any
     {
@@ -68,13 +61,8 @@ export class Report
     {
         if (print) 
         {
+            console.clear();
             console.info('Render Report at', new Date().getTime(), 'in', performance.now() - data.start);
-            console.info('  Counters:')
-
-            for (let key in data.counters)
-            {
-                console.info('   ' + key, data.counters[key].toString());
-            }
 
             console.info('  Timers:')
             for (let key in data.timers)
@@ -93,10 +81,16 @@ export class Report
                 }
             }
             
-            console.info('  Messages:')
-            data.logs.forEach(x => console.info('    ' + x));
+            // console.info('  Messages:')
+            // data.logs.forEach(x => console.info('    ' + x));
         }
 
         return data;
     }
 }
+
+function pad(n, width, z) {
+    z = z || '0';
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+  }
