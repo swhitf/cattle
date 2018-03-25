@@ -66,6 +66,11 @@ export class NetVisual extends Visual
         this.doAnimateBorder();
     }
 
+    protected visualWillMount():void 
+    {
+        this.zIndex = 1;
+    }
+
     protected notifyChange(property:string)
     {
         if (property == 'animateBorder')

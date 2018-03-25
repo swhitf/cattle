@@ -1,4 +1,4 @@
-import { Point, PointLike, PointInput } from './Point';
+import { Point, PointInput, PointLike } from './Point';
 
 
 export interface RectLike
@@ -210,6 +210,20 @@ export class Rect
         }
 
         return new Rect(x, y, w, h);
+    }
+
+    public equals(another:RectLike):boolean
+    {
+        if (!another) return false;
+        return (
+            (this == another) ||
+            (
+                this.left == another.left &&
+                this.top == another.top &&
+                this.width == another.width &&
+                this.height == another.height
+            )
+        );
     }
 
     public toString():string

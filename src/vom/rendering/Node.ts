@@ -1,39 +1,48 @@
 //@no-export
+import { Rect, RectLike } from '../../geom/Rect';
 import { Buffer } from './Buffer';
 import { Key } from './Key';
 import { NodeList } from './NodeList';
+import { Region } from './Region';
 
 
 export abstract class Node
 {
     public readonly key:Key;
-    public readonly parent:Node;
+    public readonly parent:Region;
     public readonly children = new NodeList();
+    
+    protected readonly buffer:Buffer;
 
-    public buffer:Buffer;
+    public age:number = 0;
+    public area:Rect;
     public accessed:boolean;
-
-    private dirtyVal:boolean;
-
-    constructor(key:Key, parent?:Node) {
+    public dirty:boolean;
+    
+    constructor(key:Key, parent?:Region) 
+    {
         this.key = key;
         this.buffer = new Buffer(key.id);
         this.parent = parent;
     }
 
-    public get dirty():boolean
+    public get id():string
     {
-        return this.dirtyVal;
+        return this.key.id;
     }
 
-    public set dirty(value:boolean)
+    public arrange(rect:Rect)
     {
-        if (!!value && this.parent && !this.parent.dirty)
+        if (!!this.area && this.area.equals(rect))
+            return;
+
+        if (this.parent && this.area)
         {
-            this.parent.dirty = value;
+            this.parent.invalidate(this.area);
         }
 
-        this.dirtyVal = value;
+        this.area = rect;
+        this.dirty = true;
     }
 
     public beginUpdate():void
@@ -51,5 +60,5 @@ export abstract class Node
 
     public abstract get type():string;
 
-    public abstract render(gfx:CanvasRenderingContext2D):void;
+    public abstract render(gfx:CanvasRenderingContext2D, clip?:RectLike):void;
 }

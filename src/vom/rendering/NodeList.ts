@@ -45,14 +45,15 @@ export class NodeList
         this.delete(node.key);
     }
 
-    public removeWhere(predicate:NodeListCallback<boolean>):number
+    public removeWhere(predicate:NodeListCallback<boolean>):Node[]
     {
-        let before = this.array.length;
+        let output = [];
 
         this.array = this.array.filter((node, i) => 
         {
             if (predicate(node, i))
             {
+                output.push(node);
                 delete this.index[node.key.id];
                 return false;
             }
@@ -60,7 +61,7 @@ export class NodeList
             return true;
         });
 
-        return before - this.array.length;
+        return output;
     }
 
     public get(key:Key):Node

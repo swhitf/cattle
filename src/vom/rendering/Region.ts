@@ -1,52 +1,17 @@
 //@no-export
-import { Matrix } from '../../geom/Matrix';
-import { RectLike } from '../../geom/Rect';
+import { Rect } from '../../geom/Rect';
 import { CompositionElement, CompositionRegion } from './Composition';
 import { Element } from './Element';
 import { Key } from './Key';
 import { Node } from './Node';
+import { Report } from './Report';
 
 
 export class Region extends Node implements CompositionRegion
 {
     public readonly type = 'region';
 
-    public left:number;
-    public top:number;
-    public width:number;
-    public height:number;
-
-    public arrange(rect:RectLike);
-    public arrange(left:number, top:number, width:number, height:number);
-    public arrange(leftOrRect:number|RectLike, top?:number, width?:number, height?:number) 
-    {
-        if ((typeof leftOrRect) === 'object') 
-        {
-            const r = leftOrRect as RectLike;
-            return this.arrange(r.left, r.top, r.width, r.height);
-        }
-
-        if (this.left != leftOrRect) 
-        {
-            this.left = leftOrRect as number;
-            this.dirty = true;
-        }
-        if (this.top != top) 
-        {
-            this.top = top;
-            this.dirty = true;
-        }
-        if (this.width != width) 
-        {
-            this.width = width;
-            this.dirty = true;
-        }
-        if (this.height != height) 
-        {
-            this.height = height;
-            this.dirty = true;
-        }
-    }
+    private dirtyAreas:Rect[] = [];
 
     public getElement(id:string, z:number):CompositionElement 
     {
@@ -62,43 +27,46 @@ export class Region extends Node implements CompositionRegion
     {
         //When an update has finished, we must prune any nodes that were not "accessed" 
         //during the update.
-        const count = this.children.removeWhere(x => !x.accessed);
-
-        if (count > 0)
-        {
-            this.dirty = true;
-        }
-
+        const nodes = this.children.removeWhere(x => !x.accessed);
+        //For each pruned node, mark it's area as invalid
+        nodes.forEach(x => this.invalidate(x.area));
+        
         this.children.forEach(x => x.endUpdate());
     }
 
-    public invalidate():void
+    public invalidate(area:Rect):void
     {
+        if (area.equals(this.dirtyAreas[this.dirtyAreas.length -1]))
+            return;
+
+        this.dirtyAreas.push(area);
+        this.dirty = true;
+
+        if (this.parent)
+        {
+            this.parent.invalidate(this.area);
+        }
     }
 
-    public render(gfx:CanvasRenderingContext2D):void {
-
+    public render(gfx:CanvasRenderingContext2D):void 
+    {   
+        const { area, buffer } = this;
+        
         //Here we need to figure out if the buffer we have is reusable and if it is
         //we should just render the buffer to the gfx using the region info to set
-        //the transform.  If we are "dirty" then we need to regenerate the buffer.  
+        //the transform.  If we are "dirty" then we need to update our buffer with
+        //all required changes.
 
         if (this.dirty)
         {
-            //Clear and resize our buffer
-            this.buffer.invalidate(this.width, this.height);
-
-            this.children.forEach(node =>
-            {
-                node.render(this.buffer.context);
-            });
+            this.updateBuffer();
         }
 
         //Apply transform so we draw in the right spot on parent
-        const mt = Matrix.identity.translate(this.left, this.top);
-        gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
-
+        gfx.setTransform(1, 0, 0, 1, area.left, area.top);
+        
         //Draw...
-        this.buffer.drawTo(gfx);
+        Report.time('Region.Draw', () => this.buffer.drawTo(gfx));
 
         this.dirty = false;
     }
@@ -110,27 +78,116 @@ export class Region extends Node implements CompositionRegion
         if (!node)
         {
             this.children.add(node = factory(key));
+            this.dirty = true;
             node.dirty = true;
         }
+        else
+        {
+            node.age++;
+        }
 
-        node.accessed = true;
+        node.accessed = true;        
         return node;
     }
 
-    // private checkDirty(cycle:number):boolean 
-    // {
-    //     if (this.changed)
-    //         return true;
+    private updateBuffer():void
+    {
+        let { area, buffer, children, dirtyAreas } = this;
 
-    //     for (let node of this.children.array) 
-    //     {
-    //         if (node.changed)
-    //             return true;
+        //Updating the buffer involves drawing child elements to the buffer in the least
+        //steps possible.  Sometimes, our buffer may need to be reshaped due to a change
+        //in the region bounds.  If this is the case we must "prepare" the buffer which
+        //will cause it to be wiped.  In this scenario, we do a full redraw of all children.
+        //Normally, the buffer size will match the bounds, in which case we can do a quick
+        //draw.  When children are arranged they "invalidate" their parent region with a
+        //specified rectangle.  We use this list of "dirtyAreas" to know what we need to
+        //redraw first.  Once these are satisified, we draw any dirty children to complete
+        //the update.
 
-    //         if (node.cycle != cycle)
-    //             return true;
-    //     }
+        //Check to see if we need to do a full draw
+        const canQuickDraw = buffer.width == area.width && buffer.height == area.height;
 
-    //     return false;
-    // }
+        if (canQuickDraw)
+        {
+            //First, consolidate any overlapping dirty areas
+            dirtyAreas = consolidate(dirtyAreas);
+
+            //Clear the dirty areas of the buffer
+            dirtyAreas.forEach(x => buffer.clear(x));
+
+            //Render any children that appear in these areas
+            children.forEach(node =>
+            {
+                //If child is dirty, we need to render anyway...
+                if (node.dirty)
+                {
+                    node.render(buffer.context);
+                }
+                //Otherwise, if the child intersects a dirty area, render with a clip of the area
+                else
+                {
+                    for (let da of dirtyAreas)
+                    {
+                        if (da.intersects(node.area))
+                        {
+                            node.render(buffer.context, da);
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        else
+        {
+            //Prepare (size & clear) our buffer 
+            buffer.prepare(area.width, area.height)
+
+            //Render each child, even if not dirty
+            children.forEach(node => node.render(buffer.context));
+        }
+
+        this.dirty = false;
+        this.dirtyAreas = [];
+    }
+}
+
+function consolidate(rects:Rect[]):Rect[]
+{   
+    if (rects.length < 2)
+    {
+        return rects;
+    }
+
+    let wasChangeMade = true;
+
+    while (wasChangeMade)
+    {
+        wasChangeMade = false;
+
+        for (let a = 0; a < rects.length; a++)
+        {
+            if (!rects[a]) continue;
+
+            for (let b = 0; b < rects.length; b++)
+            {
+                if (!rects[b] || a == b) continue;
+                
+                if (rects[a].intersects(rects[b]))
+                {
+                    rects[a] = Rect.fromMany([rects[a], rects[b]]);
+                    rects[b] = null;
+                    wasChangeMade = true;
+
+                    break;
+                }
+            }
+
+            if (wasChangeMade) 
+            {
+                break;
+            }
+        }
+    }
+
+    return rects.filter(x => !!x);
 }

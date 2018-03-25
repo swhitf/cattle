@@ -1,5 +1,4 @@
 //@no-export
-import { Matrix } from '../../geom/Matrix';
 import { CompositionElement } from './Composition';
 import { Node } from './Node';
 
@@ -7,60 +6,30 @@ import { Node } from './Node';
 export class Element extends Node implements CompositionElement {
 
     public readonly type = 'element';
-    public debug:string;
-
-    public width:number;
-    public height:number;
-    public mt:Matrix;
-
-    public dim(width:number, height:number):CompositionElement 
-    {
-        if (this.width != width) 
-        {
-            this.width = width;
-            this.dirty = true;
-        }
-        if (this.height != height) 
-        {
-            this.height = height;
-            this.dirty = true;
-        }
-
-        return this;
-    }
     
     public draw(callback:(gfx:CanvasRenderingContext2D) => void):CompositionElement 
     {
-        const { buffer } = this;
+        const { area, buffer, parent } = this;
 
-        buffer.invalidate(this.width, this.height);
+        buffer.prepare(area.width, area.height);
         buffer.update(callback);
+        
         this.dirty = true;
+        this.parent.invalidate(area);
 
         return this;
     }
     
-    public transform(mt:Matrix):CompositionElement 
-    {
-        if (!this.mt || !this.mt.equals(mt))
-        {
-            this.mt = mt;
-            this.parent.dirty = true;
-        }
-
-        return this;
-    }
-
     public render(gfx:CanvasRenderingContext2D):void
     {
-        const { buffer, mt } = this;
+        const { area, buffer } = this;
         
         //Elements should always have an up-to-date buffer by the time render is called
         //from consumers calling the draw method.  We just need to paint the buffer
         //to the gfx with the transform provided.
 
         //Apply transform so we draw in the right spot on parent
-        gfx.setTransform(mt.a, mt.b, mt.c, mt.d, mt.e, mt.f);
+        gfx.setTransform(1, 0, 0, 1, area.left, area.top);
 
         //Draw...
         this.buffer.drawTo(gfx);  
