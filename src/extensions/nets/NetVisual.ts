@@ -27,8 +27,6 @@ export class NetVisual extends Visual
 
     public render(gfx:CanvasRenderingContext2D):void
     {
-        console.log(this.type, this['__style']);
-        
         let { border } = this;
 
         let offset = (border.width % 2) / 2; 
@@ -80,8 +78,6 @@ export class NetVisual extends Visual
 
     private doAnimateBorder()
     {
-        console.log(this.type, this['__style']);
-
         if (this.animateBorder && !this.borderAnimation)
         {
             this.borderAnimation = this.animate()

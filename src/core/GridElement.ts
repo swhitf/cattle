@@ -5,6 +5,12 @@ import { Burden } from '../base/Burden';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { ObjectMap } from '../common';
+import { ClipboardExtension } from '../extensions/clipboard/ClipboardExtension';
+import { EditingExtension } from '../extensions/editing/EditingExtension';
+import { HistoryExtension } from '../extensions/history/HistoryExtension';
+import { NetExtension } from '../extensions/nets/NetExtension';
+import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
+import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Padding } from '../geom/Padding';
 import { Point } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
@@ -21,13 +27,6 @@ import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
 import { GridView } from './GridView';
-
-// import { ClipboardExtension } from '../extensions/clipboard/ClipboardExtension';
-// import { EditingExtension } from '../extensions/editing/EditingExtension';
-// import { HistoryExtension } from '../extensions/history/HistoryExtension';
-// import { NetExtension } from '../extensions/nets/NetExtension';
-// import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
-// import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 
 export class GridElement extends SimpleEventEmitter
 {
@@ -55,12 +54,12 @@ export class GridElement extends SimpleEventEmitter
     public static createDefault(container:HTMLElement, initialModel?:GridModel):GridElement
     {
         return this.create(container, initialModel)
-            // .extend(new NetExtension())
-            // .extend(new SelectorExtension())
-            // .extend(new EditingExtension())
-            // .extend(new ScrollerExtension())
-            // .extend(new ClipboardExtension())
-            // .extend(new HistoryExtension())
+            .extend(new NetExtension())
+            .extend(new SelectorExtension())
+            .extend(new EditingExtension())
+            .extend(new ScrollerExtension())
+            .extend(new ClipboardExtension())
+            .extend(new HistoryExtension())
             .useTheme(GoogleSheetsTheme)
         ;
     }

@@ -31,7 +31,7 @@ export function Command(name?:string):any
 {
     return function(ctor:Object, key:string, descriptor:TypedPropertyDescriptor<Function>):void
     {
-        const mdk = 'grid:commands';
+        const mdk = 'cattle:commands';
 
         let list = Reflect.getMetadata(mdk, ctor);
         if (!list)
@@ -88,7 +88,7 @@ export function Variable(name:string|boolean, mutable?:boolean):any
 
     return function(ctor:Object, key:string):void
     {
-        const mdk = 'grid:variables';
+        const mdk = 'cattle:variables';
 
         let list = Reflect.getMetadata(mdk, ctor);
         if (!list)

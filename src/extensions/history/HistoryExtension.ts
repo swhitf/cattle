@@ -1,3 +1,4 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { ObjectMap } from '../../common';
 import { Command } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
@@ -10,7 +11,7 @@ import { DefaultHistoryManager } from './DefaultHistoryManager';
 import { HistoryAction, HistoryManager } from './HistoryManager';
 
 
-export class HistoryExtension
+export class HistoryExtension extends AbstractDestroyable
 {
     private grid:GridElement;
     private manager:HistoryManager;
@@ -21,6 +22,8 @@ export class HistoryExtension
 
     constructor(manager?:HistoryManager)
     {
+        super();
+        
         this.manager = manager || new DefaultHistoryManager();
     }
 

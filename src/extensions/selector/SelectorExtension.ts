@@ -1,3 +1,4 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridEvent } from '../../core/events/GridEvent';
 import { Command, Routine, Variable } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
@@ -30,7 +31,7 @@ export enum SelectMode
     Append = 'append',
 }
 
-export class SelectorExtension
+export class SelectorExtension extends AbstractDestroyable
 {
     private grid:GridElement;
     private kernel:GridKernel;
@@ -45,29 +46,6 @@ export class SelectorExtension
     {
         this.grid = grid;
         this.kernel = kernel;
-
-        /*
-        KeyInput.for(grid)
-            .on('!TAB', () => this.selectNeighbor(Vectors.e))
-            .on('!SHIFT+TAB', () => this.selectNeighbor(Vectors.w))
-            .on('!CTRL+RIGHT_ARROW', () => this.selectEdge(Vectors.e))
-            .on('!CTRL+LEFT_ARROW', () => this.selectEdge(Vectors.w))
-            .on('!CTRL+UP_ARROW', () => this.selectEdge(Vectors.n))
-            .on('!CTRL+DOWN_ARROW', () => this.selectEdge(Vectors.s))
-            .on('!CTRL+A', () => this.selectAll())
-            .on('!HOME', () => this.selectBorder(Vectors.w))
-            .on('!CTRL+HOME', () => this.selectBorder(Vectors.nw))
-            .on('!END', () => this.selectBorder(Vectors.e))
-            .on('!CTRL+END', () => this.selectBorder(Vectors.se))
-        ;
-
-        MouseInput.for(grid)
-            .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
-            .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
-            .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
-            .on('UP:PRIMARY', (e:GridMouseDragEvent) => this.endSelectGesture(e.gridX, e.gridY))
-        ;
-        */
 
         //event.target to cell ref
         const ref = (e:VisualMouseEvent) => {
