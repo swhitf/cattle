@@ -24,7 +24,8 @@ for (let f of files) {
     output.push(`export * from "${f}";`);
 }
 
-fs.unlinkSync(outFile);
+if (fs.existsSync(outFile))
+    fs.unlinkSync(outFile);
 fs.writeFileSync(outFile, output.join('\n'));
 
 console.log('done.');

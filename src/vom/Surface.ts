@@ -1,4 +1,3 @@
-import { CameraChangeEvent } from '..';
 import { Event } from '../base/Event';
 import { KeyedSet } from '../base/KeyedSet';
 import { Observable } from '../base/Observable';
@@ -8,6 +7,7 @@ import { Point } from '../geom/Point';
 import { Rect } from '../geom/Rect';
 import { cumulativeOffset } from '../misc/Dom';
 import { CameraManager } from './CameraManager';
+import { CameraChangeEvent } from './events/CameraChangeEvent';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
@@ -48,7 +48,7 @@ interface ObjectDirtyState
 {
     object:any;
     transform?:boolean;
-    size?:boolean;
+    //size?:boolean;
     render?:boolean;
     theme?:boolean;
 }
@@ -201,7 +201,7 @@ export class Surface extends SimpleEventEmitter
         Report.time('composition.beginUpdate()', () => composition.beginUpdate())
 
         const rootRegion = composition.root;
-        rootRegion.arrange(0, 0, this.width, this.height);
+        rootRegion.arrange(new Rect(0, 0, this.width, this.height));
 
         for (const cam of cameras) 
         { 
@@ -209,8 +209,6 @@ export class Surface extends SimpleEventEmitter
             const camState = dirtyStates.get(cam.id);
             const camRegion = rootRegion.getRegion(cam.id, 0);
             camRegion.arrange(cam.bounds);
-
-            
 
             //Rely on the knowledge that visuals will be in zIndex order, so we can get once and
             //keep until the id does not match
@@ -224,6 +222,9 @@ export class Surface extends SimpleEventEmitter
                     return true;
                 }
 
+                // if (visual.zIndex < 1) return true;
+                // if (visual.classes.has('input')) return true;
+
                 const visualState = dirtyStates.get(visual.id);
 
                 //If no zLayer or id does not match zIndex, obtain layer
@@ -233,7 +234,7 @@ export class Surface extends SimpleEventEmitter
                     //If new, arrange...
                     if (zLayer.age == 0)
                     {
-                        zLayer.arrange(0, 0, cam.bounds.width, cam.bounds.height);
+                        zLayer.arrange(new Rect(0, 0, cam.bounds.width, cam.bounds.height));
                     }
                 }
 
@@ -244,14 +245,16 @@ export class Surface extends SimpleEventEmitter
                 if (elmt.age == 0 || (!!visualState && visualState.transform) || (!!camState && camState.transform))
                 {
                     const camVisMat = visual.transform.translate(-5, -5).multiply(camMat); //camera+visual transform
-                    elmt.transform(camVisMat);
+                    const xy = camVisMat.apply(Point.empty);
+
+                    elmt.arrange(new Rect(xy.left, xy.top, visual.width + 10, visual.height + 10));
                 }
                 
                 //Update element size if new or visual has resized
-                if (elmt.age == 0 || (!!camState && camState.transform) || (!!visualState && visualState.transform))
-                {
-                    elmt.dim(visual.width + 10, visual.height + 10);
-                }
+                // if (elmt.age == 0 || (!!camState && camState.transform) || (!!visualState && visualState.transform))
+                // {
+                //     elmt.dim(visual.width + 10, visual.height + 10);
+                // }
 
                 //Finally, if our element is dirty or the visual needs redrawing, redraw
                 if (elmt.dirty || (!!visualState && visualState.render))
@@ -288,14 +291,14 @@ export class Surface extends SimpleEventEmitter
 
             const ds = { object: e.target } as ObjectDirtyState;
 
-            if (e.property == 'vector')
+            if (e.property == 'vector' || e.property == 'bounds')
             {
                 ds.transform = true;
             }
-            else if (e.property == 'bounds')
-            {
-                ds.size = true;
-            }
+            // else if (e.property == 'bounds')
+            // {
+            //     ds.size = true;
+            // }
 
             this.dirtyStates.merge(ds);
             this.dirtyRender = true;
@@ -476,14 +479,14 @@ export class Surface extends SimpleEventEmitter
     {
         const ds = { object: e.target } as ObjectDirtyState;
 
-        if (e.property == 'topLeft')
+        if (e.property == 'topLeft' || e.property == 'size')
         {
             ds.transform = true;
         }
-        else if (e.property == 'size')
-        {
-            ds.size = true;
-        }
+        // else if (e.property == 'size')
+        // {
+        //     ds.size = true;
+        // }
         else if (e.property == 'classes' || e.property == 'traits')
         {
             ds.render = true;

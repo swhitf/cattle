@@ -1,34 +1,29 @@
 //@no-export
-import { Matrix } from '../../geom/Matrix';
-import { RectLike } from '../../geom/Rect';
+import { Rect } from '../../geom/Rect';
 import { Key } from './Key';
 import { Region } from './Region';
 
 
-export interface CompositionElement 
+export interface CompositionFragment
 {
     readonly id:string;
 
     readonly age:number;
-    
+
+    readonly area:Rect;
+
     readonly dirty:boolean;
 
-    dim(width:number, height:number):CompositionElement;
-
-    draw(callback:(gfx:CanvasRenderingContext2D) => void);
-
-    transform(mt:Matrix):CompositionElement;
+    arrange(area:Rect);
 }
 
-export interface CompositionRegion 
+export interface CompositionElement extends CompositionFragment
 {
-    readonly id:string;
-    
-    readonly age:number;
-    
-    arrange(left:number, top:number, width:number, height:number);
-    arrange(leftOrRect:number|RectLike, top?:number, width?:number, height?:number);
+    draw(callback:(gfx:CanvasRenderingContext2D) => void);
+}
 
+export interface CompositionRegion extends CompositionFragment
+{
     getElement(id:string, z:number):CompositionElement;
 
     getRegion(id:string, z:number):CompositionRegion;

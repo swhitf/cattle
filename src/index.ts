@@ -71,6 +71,7 @@ export * from "./vom/input/MouseBehavior";
 export * from "./vom/input/MouseExpression";
 export * from "./vom/layout/Tether";
 export * from "./vom/RefreshLoop";
+export * from "./vom/rendering/Report";
 export * from "./vom/RootVisual";
 export * from "./vom/styling/Animate";
 export * from "./vom/styling/Border";
