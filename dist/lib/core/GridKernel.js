@@ -28,12 +28,12 @@ var GridKernel = /** @class */ (function () {
             throw 'Extension appears to have already been installed into this or another grid...?';
         }
         ext['__kernel'] = this;
-        var cmds = Reflect.getMetadata('grid:commands', ext) || [];
+        var cmds = Reflect.getMetadata('cattle:commands', ext) || [];
         for (var _i = 0, cmds_1 = cmds; _i < cmds_1.length; _i++) {
             var c = cmds_1[_i];
             commands.define(c.name, c.impl.bind(ext));
         }
-        var vars = Reflect.getMetadata('grid:variables', ext) || [];
+        var vars = Reflect.getMetadata('cattle:variables', ext) || [];
         var _loop_1 = function (v) {
             variables.define(v.name, {
                 get: (function () { return this[v.key]; }).bind(ext),

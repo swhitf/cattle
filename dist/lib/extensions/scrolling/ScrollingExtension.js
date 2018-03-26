@@ -1,13 +1,27 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
+var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var Padding_1 = require("../../geom/Padding");
 var Point_1 = require("../../geom/Point");
 var dom = require("../../misc/Dom");
 var Util_1 = require("../../misc/Util");
-var ScrollerExtension = /** @class */ (function () {
+var ScrollerExtension = /** @class */ (function (_super) {
+    __extends(ScrollerExtension, _super);
     function ScrollerExtension(scrollerWidth) {
-        this.scrollerWidth = scrollerWidth;
-        this.scrollerWidth = Util_1.coalesce(scrollerWidth, detectNativeScrollerWidth());
+        var _this = _super.call(this) || this;
+        _this.scrollerWidth = scrollerWidth;
+        _this.scrollerWidth = Util_1.coalesce(scrollerWidth, detectNativeScrollerWidth());
+        return _this;
     }
     ScrollerExtension.prototype.init = function (grid, kernel) {
         var _this = this;
@@ -25,8 +39,8 @@ var ScrollerExtension = /** @class */ (function () {
         //hold the grid in place while mirroring the scroll property against the container scorll 
         //position. Vuala!
         var container = this.grid.container;
-        dom.on(container, 'scroll', this.onContainerScroll.bind(this));
         dom.css(container, { overflow: 'auto' });
+        this.chain(dom.on(container, 'scroll', this.onContainerScroll.bind(this)));
         var wedge = this.wedge = dom.create('div', { pointerEvents: 'none', });
         container.appendChild(wedge);
         this.alignElements();
@@ -58,7 +72,7 @@ var ScrollerExtension = /** @class */ (function () {
             .clamp(Point_1.Point.empty, maxScroll);
     };
     return ScrollerExtension;
-}());
+}(AbstractDestroyable_1.AbstractDestroyable));
 exports.ScrollerExtension = ScrollerExtension;
 function detectNativeScrollerWidth() {
     var outer = document.createElement("div");

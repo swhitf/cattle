@@ -1,5 +1,4 @@
 import { ObjectMap } from '../common';
-import * as u from '../misc/Util';
 
 
 export interface GridCommand
@@ -116,13 +115,13 @@ export class GridKernel
 
         ext['__kernel'] = this;
 
-        let cmds = Reflect.getMetadata('grid:commands', ext) || [];
+        let cmds = Reflect.getMetadata('cattle:commands', ext) || [];
         for (let c of cmds)
         {
             commands.define(c.name, c.impl.bind(ext));
         }
 
-        let vars = Reflect.getMetadata('grid:variables', ext) || [];
+        let vars = Reflect.getMetadata('cattle:variables', ext) || [];
         for (let v of vars)
         {
             variables.define(v.name, {

@@ -92,7 +92,7 @@ export class NetVisual extends Visual
         else if (!this.animateBorder && this.borderAnimation)
         {
             this.borderAnimation.cancel();
-            delete this.borderAnimation;
+            this.borderAnimation = null;
         }
     }
 }

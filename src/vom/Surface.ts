@@ -86,11 +86,12 @@ export class Surface extends SimpleEventEmitter
 
     private readonly sequence:VisualSequence;
     private readonly composition:Composition;
+    private readonly dragSupport:DragHelper;
 
+    private destroyed:boolean;    
     private dirtyRender:boolean;
     private dirtySequence:boolean;
     private dirtyTheming:boolean;
-
     private themeQueue = new KeyedSet<Visual>(x => x.id);
     private tracker:VisualTracker;
 
@@ -105,6 +106,8 @@ export class Surface extends SimpleEventEmitter
         this.view = this.createView();
         this.cameras = this.createCameraManager();        
 
+        this.dragSupport = new DragHelper(this.view, this.onViewMouseDragEvent.bind(this));
+
         this.composition = new Composition();
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
@@ -117,6 +120,21 @@ export class Surface extends SimpleEventEmitter
     public get renderRequired():boolean
     {
         return this.dirtyRender || this.dirtySequence || this.dirtyTheming;
+    }
+
+    public destroy():void
+    {
+        if (this.destroyed)
+        {
+            throw new Error('Surface already destroyed.');
+        }
+
+        this.ticker.destroy();
+        this.view.parentElement.removeChild(this.view);
+        this.dragSupport.destroy();
+
+        const cleanup = ['cameras', 'root', 'ticker', 'view', 'composition', 'sequence', 'dragSupport'];
+        cleanup.forEach(x => this[x] = null);
     }
 
     public render():void
@@ -345,9 +363,6 @@ export class Surface extends SimpleEventEmitter
         view.addEventListener('keypress', this.onViewKeyEvent.bind(this, 'keypress'));
         view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup'));
 
-        let dragSupport = new DragHelper(
-            view, (me:MouseEvent, distance:Point) => this.onViewMouseDragEvent(me, distance));
-
         return view;
     }
     
@@ -369,10 +384,10 @@ export class Surface extends SimpleEventEmitter
 
                 for (let key in style.props)
                 {
-                    if (!Reflect.getMetadata(`cattle:styleable:${key}`, v))
-                    {
-                        throw `${key} is not styleable on visual type ${v.type}.`;
-                    }
+                    // if (!Reflect.getMetadata(`cattle:styleable:${key}`, v))
+                    // {
+                    //     throw `${key} is not styleable on visual type ${v.type}.`;
+                    // }
 
                     visualStyle[key] = style.props[key];
                 }

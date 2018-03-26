@@ -1,7 +1,8 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
 import { HistoryManager } from './HistoryManager';
-export declare class HistoryExtension {
+export declare class HistoryExtension extends AbstractDestroyable {
     private grid;
     private manager;
     private capture;

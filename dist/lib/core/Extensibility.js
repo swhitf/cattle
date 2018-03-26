@@ -12,7 +12,7 @@ exports.Dependency = Dependency;
  */
 function Command(name) {
     return function (ctor, key, descriptor) {
-        var mdk = 'grid:commands';
+        var mdk = 'cattle:commands';
         var list = Reflect.getMetadata(mdk, ctor);
         if (!list) {
             Reflect.defineMetadata(mdk, (list = []), ctor);
@@ -48,7 +48,7 @@ function Variable(name, mutable) {
         return Variable(undefined, name);
     }
     return function (ctor, key) {
-        var mdk = 'grid:variables';
+        var mdk = 'cattle:variables';
         var list = Reflect.getMetadata(mdk, ctor);
         if (!list) {
             Reflect.defineMetadata(mdk, (list = []), ctor);

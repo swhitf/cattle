@@ -21,6 +21,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var ResizeObserver = require("resize-observer-polyfill");
 var AbstractDestroyable_1 = require("../base/AbstractDestroyable");
+var Burden_1 = require("../base/Burden");
 var Observable_1 = require("../base/Observable");
 var SimpleEventEmitter_1 = require("../base/SimpleEventEmitter");
 var ClipboardExtension_1 = require("../extensions/clipboard/ClipboardExtension");
@@ -46,8 +47,9 @@ var GridElement = /** @class */ (function (_super) {
     __extends(GridElement, _super);
     function GridElement(container, surface, model) {
         var _this = _super.call(this) || this;
-        _this.cameraBuffers = {};
         _this.autoBufferUpdateEnabled = true;
+        _this.burden = new Burden_1.Burden();
+        _this.cameraBuffers = {};
         _this.internal = {
             container: null,
             layout: null,
@@ -64,12 +66,18 @@ var GridElement = /** @class */ (function (_super) {
         _this.initSurface();
         //Do this last to kick everything in...
         _this.model = model;
+        _this.burden.add(enableAutoResize(container, surface));
+        _this.burden.add(function () { return surface.destroy(); });
+        _this.burden.add(function () {
+            _this.cameraBuffers = null;
+            _this.internal = null;
+            _this.model = null;
+        });
         return _this;
     }
     GridElement.create = function (container, initialModel) {
         var surface = new Surface_1.Surface(container.clientWidth, container.clientHeight);
         container.appendChild(surface.view);
-        enableAutoResize(container, surface);
         var grid = new GridElement(container, surface, initialModel || GridModel_1.GridModel.dim(26, 100));
         return grid;
     };
@@ -118,8 +126,12 @@ var GridElement = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    GridElement.prototype.destroy = function () {
+        this.burden.destroy();
+    };
     GridElement.prototype.extend = function (ext) {
         this.kernel.install(ext);
+        this.burden.add(ext);
         if (ext.init) {
             ext.init(this, this.kernel);
         }
@@ -249,6 +261,8 @@ var GridElement = /** @class */ (function (_super) {
         visual.unmountSelf();
     };
     GridElement.prototype.notifyChange = function (property) {
+        if (this.model == null)
+            return;
         switch (property) {
             case 'model':
             case 'freezeMargin':
@@ -366,7 +380,7 @@ function enableAutoResize(container, surface) {
     //TypeScript not liking this for some reason...
     var RO = ResizeObserver;
     var t = { id: null };
-    (new RO(function (entries, observer) {
+    var roi = new RO(function (entries, observer) {
         var _a = entries[0].contentRect, left = _a.left, top = _a.top, width = _a.width, height = _a.height;
         var apply = function () {
             if (surface.width != width || surface.height != height) {
@@ -377,7 +391,8 @@ function enableAutoResize(container, surface) {
         };
         clearTimeout(t.id);
         t.id = setTimeout(apply, 100);
-    }))
-        .observe(container);
+    });
+    roi.observe(container);
+    return function () { return roi.disconnect(); };
 }
 //# sourceMappingURL=GridElement.js.map

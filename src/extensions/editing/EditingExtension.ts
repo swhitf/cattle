@@ -1,3 +1,4 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { SimpleEventEmitter } from '../../base/SimpleEventEmitter';
 import { Command, Routine } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
@@ -23,7 +24,7 @@ enum State
     EditingPrecise = 'editingPrecice',
 }
 
-export class EditingExtension
+export class EditingExtension extends AbstractDestroyable
 {
     private grid:GridElement;
     private input:InputHandle;
@@ -31,6 +32,7 @@ export class EditingExtension
 
     constructor(private autoApply:boolean = true)
     {
+        super();
     }
 
     public init(grid:GridElement, kernel:GridKernel)

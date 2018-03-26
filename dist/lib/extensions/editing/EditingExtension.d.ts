@@ -1,6 +1,7 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-export declare class EditingExtension {
+export declare class EditingExtension extends AbstractDestroyable {
     private autoApply;
     private grid;
     private input;

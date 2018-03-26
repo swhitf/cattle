@@ -14,6 +14,8 @@ export declare class Surface extends SimpleEventEmitter {
     theme: Theme;
     private readonly sequence;
     private readonly composition;
+    private readonly dragSupport;
+    private destroyed;
     private dirtyRender;
     private dirtySequence;
     private dirtyTheming;
@@ -21,6 +23,7 @@ export declare class Surface extends SimpleEventEmitter {
     private tracker;
     constructor(width?: number, height?: number);
     readonly renderRequired: boolean;
+    destroy(): void;
     render(): void;
     query(selector: string): Visual[];
     test(surfacePt: Point, filter?: VisualCallback<boolean>): Visual[];

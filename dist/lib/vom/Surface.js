@@ -61,6 +61,7 @@ var Surface = /** @class */ (function (_super) {
         _this.root = _this.createRoot();
         _this.view = _this.createView();
         _this.cameras = _this.createCameraManager();
+        _this.dragSupport = new DragHelper_1.DragHelper(_this.view, _this.onViewMouseDragEvent.bind(_this));
         _this.composition = new Composition_1.Composition();
         _this.sequence = new VisualSequence_1.VisualSequence(_this.root);
         _this.tracker = new VisualTracker_1.VisualTracker();
@@ -76,6 +77,17 @@ var Surface = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Surface.prototype.destroy = function () {
+        var _this = this;
+        if (this.destroyed) {
+            throw new Error('Surface already destroyed.');
+        }
+        this.ticker.destroy();
+        this.view.parentElement.removeChild(this.view);
+        this.dragSupport.destroy();
+        var cleanup = ['cameras', 'root', 'ticker', 'view', 'composition', 'sequence', 'dragSupport'];
+        cleanup.forEach(function (x) { return _this[x] = null; });
+    };
     Surface.prototype.render = function () {
         Report_1.Report.begin();
         if (this.dirtyTheming) {
@@ -223,7 +235,6 @@ var Surface = /** @class */ (function (_super) {
         return root;
     };
     Surface.prototype.createView = function () {
-        var _this = this;
         var view = document.createElement('canvas');
         view.style.display = 'block';
         view.width = this.width;
@@ -237,7 +248,6 @@ var Surface = /** @class */ (function (_super) {
         view.addEventListener('keydown', this.onViewKeyEvent.bind(this, 'keydown'));
         view.addEventListener('keypress', this.onViewKeyEvent.bind(this, 'keypress'));
         view.addEventListener('keyup', this.onViewKeyEvent.bind(this, 'keyup'));
-        var dragSupport = new DragHelper_1.DragHelper(view, function (me, distance) { return _this.onViewMouseDragEvent(me, distance); });
         return view;
     };
     Surface.prototype.applyTheme = function (theme, visuals) {
@@ -254,9 +264,10 @@ var Surface = /** @class */ (function (_super) {
                 var v = results_1[_c];
                 var visualStyle = v['__style'] || (v['__style'] = {});
                 for (var key in style.props) {
-                    if (!Reflect.getMetadata("cattle:styleable:" + key, v)) {
-                        throw key + " is not styleable on visual type " + v.type + ".";
-                    }
+                    // if (!Reflect.getMetadata(`cattle:styleable:${key}`, v))
+                    // {
+                    //     throw `${key} is not styleable on visual type ${v.type}.`;
+                    // }
                     visualStyle[key] = style.props[key];
                 }
             }

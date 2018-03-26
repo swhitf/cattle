@@ -1,6 +1,6 @@
-import { Event } from "./Event";
-import { EventEmitter, EventCallback } from "./EventEmitter";
-import { Destroyable } from "./Destroyable";
+import { Destroyable } from './Destroyable';
+import { Event } from './Event';
+import { EventCallback, EventEmitter } from './EventEmitter';
 export declare class SimpleEventEmitter implements EventEmitter {
     private buckets;
     on(event: string, callback: EventCallback): Destroyable;

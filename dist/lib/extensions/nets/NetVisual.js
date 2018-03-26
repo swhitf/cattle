@@ -78,7 +78,7 @@ var NetVisual = /** @class */ (function (_super) {
         }
         else if (!this.animateBorder && this.borderAnimation) {
             this.borderAnimation.cancel();
-            delete this.borderAnimation;
+            this.borderAnimation = null;
         }
     };
     __decorate([

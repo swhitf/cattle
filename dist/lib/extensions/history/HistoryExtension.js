@@ -1,4 +1,14 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -9,17 +19,21 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var Extensibility_1 = require("../../core/Extensibility");
 var Util_1 = require("../../misc/Util");
 var GridRange_1 = require("../../model/GridRange");
 var KeyBehavior_1 = require("../../vom/input/KeyBehavior");
 var GridChangeSet_1 = require("../editing/GridChangeSet");
 var DefaultHistoryManager_1 = require("./DefaultHistoryManager");
-var HistoryExtension = /** @class */ (function () {
+var HistoryExtension = /** @class */ (function (_super) {
+    __extends(HistoryExtension, _super);
     function HistoryExtension(manager) {
-        this.noCapture = false;
-        this.suspended = false;
-        this.manager = manager || new DefaultHistoryManager_1.DefaultHistoryManager();
+        var _this = _super.call(this) || this;
+        _this.noCapture = false;
+        _this.suspended = false;
+        _this.manager = manager || new DefaultHistoryManager_1.DefaultHistoryManager();
+        return _this;
     }
     HistoryExtension.prototype.init = function (grid, kernel) {
         var _this = this;
@@ -131,7 +145,7 @@ var HistoryExtension = /** @class */ (function () {
         __metadata("design:returntype", void 0)
     ], HistoryExtension.prototype, "suspend", null);
     return HistoryExtension;
-}());
+}(AbstractDestroyable_1.AbstractDestroyable));
 exports.HistoryExtension = HistoryExtension;
 function createChanges(snapshots, valSelector) {
     var changeSet = new GridChangeSet_1.GridChangeSet();

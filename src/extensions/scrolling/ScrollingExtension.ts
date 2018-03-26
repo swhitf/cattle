@@ -1,3 +1,4 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
 import { Padding } from '../../geom/Padding';
@@ -6,16 +7,17 @@ import * as dom from '../../misc/Dom';
 import { coalesce } from '../../misc/Util';
 
 
-export class ScrollerExtension
+export class ScrollerExtension extends AbstractDestroyable
 {
     private grid:GridElement;
     private wedge:HTMLElement;
 
     constructor(private scrollerWidth?:number) 
     {
+        super();
+
         this.scrollerWidth = coalesce(scrollerWidth, detectNativeScrollerWidth());
     }
-
 
     public init(grid:GridElement, kernel:GridKernel)
     {
@@ -41,9 +43,9 @@ export class ScrollerExtension
         //hold the grid in place while mirroring the scroll property against the container scorll 
         //position. Vuala!
 
-        const container = this.grid.container;
-        dom.on(container, 'scroll', this.onContainerScroll.bind(this));
+        const container = this.grid.container;        
         dom.css(container, { overflow: 'auto' });
+        this.chain(dom.on(container, 'scroll', this.onContainerScroll.bind(this)));
 
         const wedge = this.wedge = dom.create('div', { pointerEvents: 'none', });
         container.appendChild(wedge);

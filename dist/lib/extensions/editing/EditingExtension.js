@@ -19,6 +19,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var SimpleEventEmitter_1 = require("../../base/SimpleEventEmitter");
 var Extensibility_1 = require("../../core/Extensibility");
 var Rect_1 = require("../../geom/Rect");
@@ -35,11 +36,14 @@ var State;
     State["Editing"] = "editing";
     State["EditingPrecise"] = "editingPrecice";
 })(State || (State = {}));
-var EditingExtension = /** @class */ (function () {
+var EditingExtension = /** @class */ (function (_super) {
+    __extends(EditingExtension, _super);
     function EditingExtension(autoApply) {
         if (autoApply === void 0) { autoApply = true; }
-        this.autoApply = autoApply;
-        this.state = State.Idle;
+        var _this = _super.call(this) || this;
+        _this.autoApply = autoApply;
+        _this.state = State.Idle;
+        return _this;
     }
     EditingExtension.prototype.init = function (grid, kernel) {
         var _this = this;
@@ -217,7 +221,7 @@ var EditingExtension = /** @class */ (function () {
         __metadata("design:returntype", void 0)
     ], EditingExtension.prototype, "doCommit", null);
     return EditingExtension;
-}());
+}(AbstractDestroyable_1.AbstractDestroyable));
 exports.EditingExtension = EditingExtension;
 function is_readonly(cell) {
     return cell['readonly'] === true || cell['editable'] === false;

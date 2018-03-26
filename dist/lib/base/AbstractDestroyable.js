@@ -27,7 +27,9 @@ var AbstractDestroyable = /** @class */ (function () {
             objects[_i] = arguments[_i];
         }
         for (var i = 0; i < objects.length; i++) {
-            this.destroyables.push(objects[i]);
+            this.destroyables.push(typeof (objects[i]) == 'function'
+                ? objects[i]
+                : objects[i].destroy.bind(objects[i]));
         }
     };
     /**
@@ -35,11 +37,9 @@ var AbstractDestroyable = /** @class */ (function () {
      */
     AbstractDestroyable.prototype.destroy = function () {
         this.guardDestroyed();
-        for (var i = 0; i < this.destroyables.length; i++) {
-            this.destroyables[i].destroy();
-        }
-        this.isDestroyed = true;
+        this.destroyables.forEach(function (x) { return x(); });
         this.destroyables = null;
+        this.isDestroyed = true;
     };
     /**
      * Indicates whether or not this object has been destroyed.

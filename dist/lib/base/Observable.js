@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function Observable(defaultValue) {
     return function (target, propertyKey) {
-        Reflect.defineMetadata("cattle:observable:" + propertyKey, true, target);
         if (!target['notifyChange']) {
             throw 'Cannot mark Observable property on object that does not provide an notifyChange method.';
         }

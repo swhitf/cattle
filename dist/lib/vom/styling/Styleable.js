@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function Styleable(defaultValue) {
     return function (target, propertyKey) {
-        Reflect.defineMetadata("cattle:styleable:" + propertyKey, true, target);
         if (!target['notifyChange']) {
             throw 'Cannot mark Styleable property on object that does not provide an notifyChange method.';
         }

@@ -1,6 +1,7 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridExtension } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
-export declare class ClipboardExtension implements GridExtension {
+export declare class ClipboardExtension extends AbstractDestroyable implements GridExtension {
     private grid;
     private layer;
     init(grid: GridElement): void;

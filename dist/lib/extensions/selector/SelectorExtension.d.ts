@@ -1,3 +1,4 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
 export declare type SelectNextTargetType = 'cell' | 'dataPoint' | 'edge';
@@ -10,7 +11,7 @@ export declare enum SelectMode {
     Extend = "extend",
     Append = "append",
 }
-export declare class SelectorExtension {
+export declare class SelectorExtension extends AbstractDestroyable {
     private grid;
     private kernel;
     private canSelect;

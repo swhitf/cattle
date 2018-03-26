@@ -5,6 +5,7 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./base/AbstractDestroyable"));
+__export(require("./base/Burden"));
 __export(require("./base/CallbackDestroyable"));
 __export(require("./base/Destroy"));
 __export(require("./base/Event"));
@@ -40,7 +41,6 @@ __export(require("./geom/Point"));
 __export(require("./geom/Rect"));
 __export(require("./misc/Base26"));
 __export(require("./misc/Dom"));
-__export(require("./misc/Polyfill"));
 __export(require("./misc/Util"));
 __export(require("./model/GridCell"));
 __export(require("./model/GridCellStyle"));

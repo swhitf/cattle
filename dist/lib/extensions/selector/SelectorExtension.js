@@ -1,4 +1,14 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -9,6 +19,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var GridEvent_1 = require("../../core/events/GridEvent");
 var Extensibility_1 = require("../../core/Extensibility");
 var u = require("../../misc/Util");
@@ -23,37 +34,18 @@ var SelectMode;
     SelectMode["Extend"] = "extend";
     SelectMode["Append"] = "append";
 })(SelectMode = exports.SelectMode || (exports.SelectMode = {}));
-var SelectorExtension = /** @class */ (function () {
+var SelectorExtension = /** @class */ (function (_super) {
+    __extends(SelectorExtension, _super);
     function SelectorExtension() {
-        this.canSelect = true;
-        this.selections = [];
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.canSelect = true;
+        _this.selections = [];
+        return _this;
     }
     SelectorExtension.prototype.init = function (grid, kernel) {
         var _this = this;
         this.grid = grid;
         this.kernel = kernel;
-        /*
-        KeyInput.for(grid)
-            .on('!TAB', () => this.selectNeighbor(Vectors.e))
-            .on('!SHIFT+TAB', () => this.selectNeighbor(Vectors.w))
-            .on('!CTRL+RIGHT_ARROW', () => this.selectEdge(Vectors.e))
-            .on('!CTRL+LEFT_ARROW', () => this.selectEdge(Vectors.w))
-            .on('!CTRL+UP_ARROW', () => this.selectEdge(Vectors.n))
-            .on('!CTRL+DOWN_ARROW', () => this.selectEdge(Vectors.s))
-            .on('!CTRL+A', () => this.selectAll())
-            .on('!HOME', () => this.selectBorder(Vectors.w))
-            .on('!CTRL+HOME', () => this.selectBorder(Vectors.nw))
-            .on('!END', () => this.selectBorder(Vectors.e))
-            .on('!CTRL+END', () => this.selectBorder(Vectors.se))
-        ;
-
-        MouseInput.for(grid)
-            .on('DOWN:SHIFT+PRIMARY', (e:GridMouseEvent) => this.selectLine(new Point(e.gridX, e.gridY)))
-            .on('DOWN:PRIMARY', (e:GridMouseEvent) => this.beginSelectGesture(e.gridX, e.gridY))
-            .on('DRAG:PRIMARY', (e:GridMouseDragEvent) => this.updateSelectGesture(e.gridX, e.gridY))
-            .on('UP:PRIMARY', (e:GridMouseDragEvent) => this.endSelectGesture(e.gridX, e.gridY))
-        ;
-        */
         //event.target to cell ref
         var ref = function (e) {
             var cell = grid.layout.pickCell(e.surfacePoint);
@@ -326,7 +318,7 @@ var SelectorExtension = /** @class */ (function () {
         __metadata("design:returntype", void 0)
     ], SelectorExtension.prototype, "doVisualizeSelection", null);
     return SelectorExtension;
-}());
+}(AbstractDestroyable_1.AbstractDestroyable));
 exports.SelectorExtension = SelectorExtension;
 var SelectionImpl = /** @class */ (function () {
     function SelectionImpl(from, to) {

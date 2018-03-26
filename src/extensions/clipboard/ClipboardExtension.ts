@@ -1,5 +1,6 @@
 import * as Papa from 'papaparse';
 
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { Command, GridExtension, Routine } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { Point } from '../../geom/Point';
@@ -15,7 +16,7 @@ import { ClipEvent } from './ClipEvent';
 // :(
 const NewLine = '\r\n';// = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
 
-export class ClipboardExtension implements GridExtension
+export class ClipboardExtension extends AbstractDestroyable implements GridExtension
 {
     private grid:GridElement;
     private layer:HTMLElement;
@@ -29,8 +30,10 @@ export class ClipboardExtension implements GridExtension
             .on('CTRL+KEY_X', () => this.doCut())
         ;
 
-        clipboard.on('paste', (e:ClipEvent) => this.onPasteOrCut(e.data, false));
-        clipboard.on('cut', (e:ClipEvent) => this.onPasteOrCut(e.data, true));
+        this.chain(
+            clipboard.on('paste', (e:ClipEvent) => this.onPasteOrCut(e.data, false)),
+            clipboard.on('cut', (e:ClipEvent) => this.onPasteOrCut(e.data, true)),
+        );
         
         grid.kernel.routines.hook('before:doBeginEdit', () => this.clearCopy());
         grid.kernel.routines.hook('before:doCommit', () => this.clearCopy());

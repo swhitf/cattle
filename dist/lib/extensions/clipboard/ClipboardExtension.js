@@ -1,4 +1,14 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -10,6 +20,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Papa = require("papaparse");
+var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var Extensibility_1 = require("../../core/Extensibility");
 var Point_1 = require("../../geom/Point");
 var GridRange_1 = require("../../model/GridRange");
@@ -18,8 +29,10 @@ var GridChangeSet_1 = require("../editing/GridChangeSet");
 var Clipboard_1 = require("./Clipboard");
 // :(
 var NewLine = '\r\n'; // = !!window.navigator.platform.match(/.*[Ww][Ii][Nn].*/) ? '\r\n' : '\n';
-var ClipboardExtension = /** @class */ (function () {
+var ClipboardExtension = /** @class */ (function (_super) {
+    __extends(ClipboardExtension, _super);
     function ClipboardExtension() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     ClipboardExtension.prototype.init = function (grid) {
         var _this = this;
@@ -27,8 +40,7 @@ var ClipboardExtension = /** @class */ (function () {
         KeyBehavior_1.KeyBehavior.for(grid.surface)
             .on('CTRL+KEY_C', function () { return _this.doCopy(); })
             .on('CTRL+KEY_X', function () { return _this.doCut(); });
-        Clipboard_1.clipboard.on('paste', function (e) { return _this.onPasteOrCut(e.data, false); });
-        Clipboard_1.clipboard.on('cut', function (e) { return _this.onPasteOrCut(e.data, true); });
+        this.chain(Clipboard_1.clipboard.on('paste', function (e) { return _this.onPasteOrCut(e.data, false); }), Clipboard_1.clipboard.on('cut', function (e) { return _this.onPasteOrCut(e.data, true); }));
         grid.kernel.routines.hook('before:doBeginEdit', function () { return _this.clearCopy(); });
         grid.kernel.routines.hook('before:doCommit', function () { return _this.clearCopy(); });
     };
@@ -173,6 +185,6 @@ var ClipboardExtension = /** @class */ (function () {
         __metadata("design:returntype", void 0)
     ], ClipboardExtension.prototype, "doPaste", null);
     return ClipboardExtension;
-}());
+}(AbstractDestroyable_1.AbstractDestroyable));
 exports.ClipboardExtension = ClipboardExtension;
 //# sourceMappingURL=ClipboardExtension.js.map

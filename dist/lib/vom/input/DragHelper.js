@@ -10,20 +10,26 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var Point_1 = require("../../geom/Point");
 var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
+var Point_1 = require("../../geom/Point");
+var dom = require("../../misc/Dom");
 var DragHelper = /** @class */ (function (_super) {
     __extends(DragHelper, _super);
     function DragHelper(view, handler) {
         var _this = _super.call(this) || this;
         _this.handler = handler;
         _this.handles = [
-            listen(view, 'mousedown', _this.dragStart.bind(_this)),
-            listen(window, 'mousemove', _this.drag.bind(_this)),
-            listen(window, 'mouseup', _this.dragEnd.bind(_this)),
+            dom.on(view, 'mousedown', _this.dragStart.bind(_this)),
+            dom.on(window, 'mousemove', _this.drag.bind(_this)),
+            dom.on(window, 'mouseup', _this.dragEnd.bind(_this)),
         ];
         return _this;
     }
+    DragHelper.prototype.destroy = function () {
+        _super.prototype.destroy.call(this);
+        this.handles.forEach(function (x) { return x(); });
+        this.handles = null;
+    };
     DragHelper.prototype.dragStart = function (me) {
         this.dragging = true;
         this.previous = new Point_1.Point(me.screenX, me.screenY);
@@ -43,8 +49,4 @@ var DragHelper = /** @class */ (function (_super) {
     return DragHelper;
 }(AbstractDestroyable_1.AbstractDestroyable));
 exports.DragHelper = DragHelper;
-function listen(target, name, callback) {
-    target.addEventListener(name, callback);
-    return function () { return target.removeEventListener(name, callback); };
-}
 //# sourceMappingURL=DragHelper.js.map

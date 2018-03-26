@@ -1,7 +1,7 @@
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { VoidCallback } from '../../common';
 import { Point } from '../../geom/Point';
-import { AbstractDestroyable } from '../../base/AbstractDestroyable';
-import { Surface } from '../Surface';
+import * as dom from '../../misc/Dom';
 
 
 export interface DragHelperCallback
@@ -21,10 +21,17 @@ export class DragHelper extends AbstractDestroyable
         super();
 
         this.handles = [
-            listen(view, 'mousedown', this.dragStart.bind(this)),
-            listen(window, 'mousemove', this.drag.bind(this)),
-            listen(window, 'mouseup', this.dragEnd.bind(this)),
+            dom.on(view, 'mousedown', this.dragStart.bind(this)),
+            dom.on(window, 'mousemove', this.drag.bind(this)),
+            dom.on(window, 'mouseup', this.dragEnd.bind(this)),
         ];
+    }
+
+    public destroy():void
+    {
+        super.destroy();
+        this.handles.forEach(x => x());
+        this.handles = null;
     }
     
     private dragStart(me:MouseEvent):void
@@ -51,10 +58,4 @@ export class DragHelper extends AbstractDestroyable
         this.dragging = false;
         this.previous = null;
     }
-}
-
-function listen(target:EventTarget, name:string, callback:any):VoidCallback
-{
-    target.addEventListener(name, callback);
-    return () => target.removeEventListener(name, callback);
 }

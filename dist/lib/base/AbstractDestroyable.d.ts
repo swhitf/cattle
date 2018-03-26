@@ -1,4 +1,7 @@
 import { Destroyable } from './Destroyable';
+export interface DestroyableCallback {
+    (): void;
+}
 /**
  * Provides an abstract base class for Destroyable implementations.
  */
@@ -15,7 +18,7 @@ export declare class AbstractDestroyable implements Destroyable {
      *
      * @param objects the Destroyable objects
      */
-    protected chain(...objects: Destroyable[]): void;
+    protected chain(...objects: Array<DestroyableCallback | Destroyable>): void;
     /**
      * Destroys this object, releasing any resources it holds and rendering it unusable.
      */

@@ -10,9 +10,10 @@ import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
 import { GridView } from './GridView';
 export declare class GridElement extends SimpleEventEmitter {
-    private cameraBuffers;
     private autoBufferUpdateEnabled;
-    private readonly internal;
+    private burden;
+    private cameraBuffers;
+    private internal;
     static create(container: HTMLElement, initialModel?: GridModel): GridElement;
     static createDefault(container: HTMLElement, initialModel?: GridModel): GridElement;
     private constructor();
@@ -25,6 +26,7 @@ export declare class GridElement extends SimpleEventEmitter {
     readonly layout: GridLayout;
     readonly surface: Surface;
     readonly view: GridView;
+    destroy(): void;
     extend(ext: GridExtension): GridElement;
     useTheme(theme: Theme): GridElement;
     exec(command: string, ...args: any[]): void;

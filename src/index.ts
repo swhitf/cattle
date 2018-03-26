@@ -1,6 +1,7 @@
 //@no-export
 
 export * from "./base/AbstractDestroyable";
+export * from "./base/Burden";
 export * from "./base/CallbackDestroyable";
 export * from "./base/Destroy";
 export * from "./base/Destroyable";
@@ -40,7 +41,6 @@ export * from "./geom/Point";
 export * from "./geom/Rect";
 export * from "./misc/Base26";
 export * from "./misc/Dom";
-export * from "./misc/Polyfill";
 export * from "./misc/Util";
 export * from "./model/GridCell";
 export * from "./model/GridCellStyle";

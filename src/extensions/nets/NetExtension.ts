@@ -1,11 +1,12 @@
-import { DefaultNetManager } from './DefaultNetManager';
-import { NetManager } from './NetManager';
+import { AbstractDestroyable } from '../../base/AbstractDestroyable';
+import { GridExtension, Variable } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-import { GridExtension, Variable } from '../../core/Extensibility';
+import { DefaultNetManager } from './DefaultNetManager';
+import { NetManager } from './NetManager';
 
 
-export class NetExtension implements GridExtension
+export class NetExtension extends AbstractDestroyable implements GridExtension
 {
     @Variable(false)
     public nets:NetManager;
