@@ -4,7 +4,6 @@ import 'es6-shim';
 import 'reflect-metadata';
 
 import { GridElement } from '../core/GridElement';
-import { NetManager } from '../extensions/nets/NetManager';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
@@ -14,7 +13,12 @@ import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
 import * as vq from '../vom/VisualQuery';
 
 
-const click = (x, h) => document.getElementById(x).addEventListener('click', h);
+
+
+const click = (x, h) => {
+    document.getElementById(x).addEventListener('click', h);
+    return () => document.getElementById(x).removeEventListener('click', h)
+};
 
 
 // const seq = {
@@ -35,11 +39,13 @@ const click = (x, h) => document.getElementById(x).addEventListener('click', h);
 
 // console.log(expr.matches(evt));
 
-let model = GridModel.dim(26 * 5, 50 * 10);
-model.cells.forEach(x => x.value = x.ref);
+const state = {} as any;
 
-let grid = GridElement
-    .createDefault(document.getElementById('x'), model)
+state.model = GridModel.dim(26 * 5, 50 * 10);
+state.model.cells.forEach(x => x.value = x.ref);
+
+state.grid = GridElement
+    .createDefault(document.getElementById('x'), state.model)
     .mergeInterface()
 ;
 
@@ -49,21 +55,28 @@ let grid = GridElement
 
 //grid.surface.on('keydown', (e:VisualKeyboardEvent) => console.log(KeyExpression.create(e)));
 
-window['grid'] = grid;
-window['surface'] = grid.surface;
+window['grid'] = state.grid;
+window['surface'] = state.grid.surface;
 window['pt'] = Point.create;
-window['vq'] = s => vq.select(grid.surface.root, s);
+window['vq'] = s => vq.select(state.grid.surface.root, s);
 
 console.dir(GridRef.unmake('BF250'));
 
-grid.model.cells[0].style = GridCellStyle.get('test');
-grid.model.cells[0].value = 'Test';
+state.grid.model.cells[0].style = GridCellStyle.get('test');
+state.grid.model.cells[0].value = 'Test';
 
-let nets = grid.get('nets') as NetManager;
-// nets.create('test', 'default', 'B2', 'E4');
-
-grid.freezeMargin = new Point(0, 0);
-
-click('useExcel', () => grid.useTheme(MicrosoftExcelTheme));
-click('useGoogle', () => grid.useTheme(GoogleSheetsTheme));
-click('trashModel', () => grid.model = GridModel.dim(8, 20));
+const lsnrs = [
+    click('useExcel', () => state.grid.useTheme(MicrosoftExcelTheme)),
+    click('useGoogle', () => state.grid.useTheme(GoogleSheetsTheme)),
+    click('destroy', () => {
+        lsnrs.forEach(x => x());
+        lsnrs.splice(0, lsnrs.length);
+        state.grid.destroy();
+        state.grid = null;
+        state.model = null;
+        window['grid'] = null;
+        window['surface'] = null;
+        window['vq'] = null;
+        window['pt'] = null;
+    }),
+];
