@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Border_1 = require("../vom/styling/Border");
 var Theme_1 = require("../vom/styling/Theme");
 exports.GoogleSheetsTheme = new Theme_1.Theme('GoogleSheets', {
+    'net label': {
+        foreground: 'red',
+    },
     'cell': {
         zIndex: -1,
     },
@@ -17,6 +20,6 @@ exports.GoogleSheetsTheme = new Theme_1.Theme('GoogleSheets', {
     'net.copy': {
         animateBorder: true,
         border: new Border_1.Border(2, '#4285f4', [6, 4]),
-    }
+    },
 });
 //# sourceMappingURL=GoogleSheetsTheme.js.map

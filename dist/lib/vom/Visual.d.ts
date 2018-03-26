@@ -5,8 +5,11 @@ import { Rect } from '../geom/Rect';
 import { VisualEvent } from './events/VisualEvent';
 import { AnimationBuilder } from './styling/Animate';
 import { Surface } from './Surface';
-export interface VisualPredicate {
-    (v: Visual): boolean;
+export interface VisualIteratorCallback<R = void> {
+    (x: Visual, i: number): R;
+}
+export interface VisualCallback<R = void> {
+    (x: Visual): R;
 }
 export interface VisualTagSet {
     readonly length: number;
@@ -26,7 +29,10 @@ export declare abstract class Visual extends SimpleEventEmitter implements Visua
     protected parentVisual: Visual;
     private cacheData;
     private storeData;
-    constructor(bounds?: Rect, children?: Visual[]);
+    private __dirty;
+    private __state;
+    private __style;
+    constructor(bounds?: Rect);
     readonly abstract canHost: boolean;
     readonly abstract type: string;
     abstract render(gfx: CanvasRenderingContext2D): void;
@@ -51,11 +57,14 @@ export declare abstract class Visual extends SimpleEventEmitter implements Visua
     animate(): AnimationBuilder<this>;
     data(key: string, value?: any): any;
     isMounted(): boolean;
-    mount(...visuals: Visual[]): void;
+    mount(child: Visual): void;
     unmount(child: Visual): boolean;
     mountTo(to: Visual): void;
     unmountSelf(): void;
     toArray(recursive?: boolean): Visual[];
+    map<T>(callback: VisualIteratorCallback<T>): void;
+    filter(callback: VisualIteratorCallback<boolean>): Visual[];
+    visit(callback: VisualCallback): void;
     toString(): string;
     protected cache<T>(key: string, getter: () => T): T;
     protected clearCache(): void;
@@ -65,5 +74,5 @@ export declare abstract class Visual extends SimpleEventEmitter implements Visua
     protected visualStyleDidChange(): void;
     protected notify(evt: VisualEvent, bubble?: boolean): void;
     protected notifyChange(property: string): void;
-    protected notifyCompose(): void;
+    protected notifyCompose(child: Visual, mode: 'mount' | 'unmount'): void;
 }

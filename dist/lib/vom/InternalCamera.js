@@ -16,6 +16,7 @@ var CameraChangeEvent_1 = require("./events/CameraChangeEvent");
 var InternalCamera = /** @class */ (function () {
     function InternalCamera(id, order, bounds, vector, emitter) {
         this.emitter = emitter;
+        this.__dirty = {};
         this.initializing = true;
         this.id = id;
         this.order = order;

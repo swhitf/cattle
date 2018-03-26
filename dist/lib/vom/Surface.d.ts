@@ -3,7 +3,7 @@ import { Point } from '../geom/Point';
 import { CameraManager } from './CameraManager';
 import { RefreshLoop } from './RefreshLoop';
 import { Theme } from './styling/Theme';
-import { Visual, VisualPredicate } from './Visual';
+import { Visual, VisualCallback } from './Visual';
 export declare class Surface extends SimpleEventEmitter {
     readonly cameras: CameraManager;
     readonly root: Visual;
@@ -14,16 +14,16 @@ export declare class Surface extends SimpleEventEmitter {
     theme: Theme;
     private readonly sequence;
     private readonly composition;
-    private dirtyTheming;
     private dirtyRender;
     private dirtySequence;
-    private dirtyStates;
+    private dirtyTheming;
+    private themeQueue;
     private tracker;
     constructor(width?: number, height?: number);
     readonly renderRequired: boolean;
     render(): void;
     query(selector: string): Visual[];
-    test(surfacePt: Point, filter?: VisualPredicate): Visual[];
+    test(surfacePt: Point, filter?: VisualCallback<boolean>): Visual[];
     private performThemeUpdates();
     private performCompositionUpdates();
     private createCameraManager();

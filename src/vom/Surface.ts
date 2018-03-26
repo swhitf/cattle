@@ -9,7 +9,7 @@ import { cumulativeOffset } from '../misc/Dom';
 import { CameraManager } from './CameraManager';
 import { CameraChangeEvent } from './events/CameraChangeEvent';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
-import { VisualEvent } from './events/VisualEvent';
+import { VisualComposeEvent } from './events/VisualComposeEvent';
 import { VisualKeyboardEvent, VisualKeyboardEventTypes } from './events/VisualKeyboardEvent';
 import { VisualMouseDragEvent } from './events/VisualMouseDragEvent';
 import { VisualMouseEvent, VisualMouseEventTypes } from './events/VisualMouseEvent';
@@ -22,7 +22,7 @@ import { Composition, CompositionRegion } from './rendering/Composition';
 import { Report } from './rendering/Report';
 import { RootVisual } from './RootVisual';
 import { Theme } from './styling/Theme';
-import { Visual, VisualPredicate } from './Visual';
+import { Visual, VisualCallback } from './Visual';
 import * as vq from './VisualQuery';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
@@ -49,6 +49,13 @@ interface ObjectDirtyState
     object:any;
     transform?:boolean;
     //size?:boolean;
+    render?:boolean;
+    theme?:boolean;
+}
+
+interface DirtyState
+{
+    transform?:boolean;
     render?:boolean;
     theme?:boolean;
 }
@@ -80,10 +87,11 @@ export class Surface extends SimpleEventEmitter
     private readonly sequence:VisualSequence;
     private readonly composition:Composition;
 
-    private dirtyTheming:boolean;
     private dirtyRender:boolean;
     private dirtySequence:boolean;
-    private dirtyStates:KeyedSet<ObjectDirtyState>;
+    private dirtyTheming:boolean;
+
+    private themeQueue = new KeyedSet<Visual>(x => x.id);
     private tracker:VisualTracker;
 
     constructor(width:number = 800, height:number = 800)
@@ -99,7 +107,6 @@ export class Surface extends SimpleEventEmitter
 
         this.composition = new Composition();
         this.sequence = new VisualSequence(this.root);
-        this.dirtyStates = new KeyedSet<ObjectDirtyState>(x => x.object.id);
         this.tracker = new VisualTracker();
  
         this.ticker = new RefreshLoop(60);
@@ -109,7 +116,7 @@ export class Surface extends SimpleEventEmitter
 
     public get renderRequired():boolean
     {
-        return this.dirtyRender || this.dirtySequence;
+        return this.dirtyRender || this.dirtySequence || this.dirtyTheming;
     }
 
     public render():void
@@ -118,7 +125,7 @@ export class Surface extends SimpleEventEmitter
 
         if (this.dirtyTheming)
         {
-            //this.performThemeUpdates();
+            this.performThemeUpdates();
         }
 
         let didRender = false;
@@ -135,8 +142,7 @@ export class Surface extends SimpleEventEmitter
             didRender = true;
         }
 
-        this.dirtyRender = this.dirtySequence = false;
-        this.dirtyStates.clear();
+        this.dirtyRender = this.dirtySequence = this.dirtyTheming = false;
 
         if (didRender)
         {
@@ -150,7 +156,7 @@ export class Surface extends SimpleEventEmitter
         return vq.select(this.sequence.all, selector);
     }
 
-    public test(surfacePt:Point, filter?:VisualPredicate):Visual[]
+    public test(surfacePt:Point, filter?:VisualCallback<boolean>):Visual[]
     {
         filter = filter || (x => true);
         
@@ -174,25 +180,32 @@ export class Surface extends SimpleEventEmitter
 
     private performThemeUpdates():void
     {
-        const { composition, sequence, view, dirtyStates } = this;
-        const visuals = new KeyedSet<Visual>(x => x.id);
+        const { theme, themeQueue } = this;
 
-        dirtyStates.forEach(st => 
-        {
-            if (st.theme)
+        const toRoot = (v:Visual) => {
+            const list = [];
+            while (v.parent != null)
             {
-                visuals.addAll(st.object.toArray());
+                list.push(v.parent);
+                v = v.parent;
             }
-        });
+            return list;
+        };
 
-        this.applyTheme(this.theme, visuals.array);
+        const list = themeQueue.array.slice(0);
+        list.forEach(x => themeQueue.addAll(toRoot(x)));
+
+        this.applyTheme(theme, themeQueue.array);
+
+        //Clear the theme queue
+        themeQueue.clear();
     }
 
     private performCompositionUpdates():void 
     {
         const cpt = Report.time('Composition.Prepare');
 
-        const { composition, sequence, view, dirtyStates } = this;
+        const { composition, sequence, view } = this;
 
         //Only render to cameras with valid bounds
         const cameras = this.cameras.toArray()
@@ -206,7 +219,7 @@ export class Surface extends SimpleEventEmitter
         for (const cam of cameras) 
         { 
             const camMat = Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
-            const camState = dirtyStates.get(cam.id);
+            const camState = cam['__dirty'] as DirtyState;
             const camRegion = rootRegion.getRegion(cam.id, 0);
             camRegion.arrange(cam.bounds);
 
@@ -225,7 +238,7 @@ export class Surface extends SimpleEventEmitter
                 // if (visual.zIndex < 1) return true;
                 // if (visual.classes.has('input')) return true;
 
-                const visualState = dirtyStates.get(visual.id);
+                const visualState = visual['__dirty'] as DirtyState;
 
                 //If no zLayer or id does not match zIndex, obtain layer
                 if (!zLayer || zLayer.id != visual.zIndex.toString())
@@ -267,6 +280,7 @@ export class Surface extends SimpleEventEmitter
                     });
                 }
 
+                visual['__dirty'] = {};
                 return true;
             });
         }
@@ -293,14 +307,13 @@ export class Surface extends SimpleEventEmitter
 
             if (e.property == 'vector' || e.property == 'bounds')
             {
-                ds.transform = true;
+                e.target['__dirty'].transform = true;
             }
             // else if (e.property == 'bounds')
             // {
             //     ds.size = true;
             // }
 
-            this.dirtyStates.merge(ds);
             this.dirtyRender = true;
         });
 
@@ -465,41 +478,61 @@ export class Surface extends SimpleEventEmitter
         this.propagateEvent(evt, stack);
     }
 
-    private onVisualCompose(e:VisualEvent)
+    private onVisualCompose(e:VisualComposeEvent)
     {
         this.dirtyRender = true;
         this.dirtySequence = true;
         this.dirtyTheming = true;
 
-        this.dirtyStates.merge({ object: e.target, render: true, theme: true });
-        this.sequence.invalidate(e.target);
+        const ds = { render: true, theme: true };
+        const { target, subject } = e;
+       
+        Object.assign(subject['__dirty'], ds);
+        this.themeQueue.add(subject);
+
+        subject.visit(x => {
+            Object.assign(x['__dirty'], ds);
+            this.themeQueue.add(x);
+        });        
+        
+        this.sequence.invalidate(target);
     }
 
     private onVisualChange(e:VisualChangeEvent)
     {
-        const ds = { object: e.target } as ObjectDirtyState;
+        const target = e.target;
+        const ds = {} as DirtyState;
 
         if (e.property == 'topLeft' || e.property == 'size')
         {
             ds.transform = true;
         }
-        // else if (e.property == 'size')
-        // {
-        //     ds.size = true;
-        // }
         else if (e.property == 'classes' || e.property == 'traits')
         {
             ds.render = true;
             ds.theme = true;
+            
             this.dirtyTheming = true;
+            this.themeQueue.add(target);
+        }
+        else if (e.property == 'zIndex')
+        {
+            this.sequence.invalidate(target);
         }
         else
         {
             ds.render = true;
         }
 
-        this.dirtyStates.merge(ds);
         this.dirtyRender = true;
+
+        Object.assign(target['__dirty'], ds);
+        target.visit(x => {
+            Object.assign(x['__dirty'], ds);
+            if (ds.theme) {
+                this.themeQueue.add(x);
+            }
+        });
     }
 
     private propagateEvent(se:Event, stack:Visual[]):void

@@ -55,6 +55,7 @@ var Surface = /** @class */ (function (_super) {
         if (width === void 0) { width = 800; }
         if (height === void 0) { height = 800; }
         var _this = _super.call(this) || this;
+        _this.themeQueue = new KeyedSet_1.KeyedSet(function (x) { return x.id; });
         _this.width = width;
         _this.height = height;
         _this.root = _this.createRoot();
@@ -62,7 +63,6 @@ var Surface = /** @class */ (function (_super) {
         _this.cameras = _this.createCameraManager();
         _this.composition = new Composition_1.Composition();
         _this.sequence = new VisualSequence_1.VisualSequence(_this.root);
-        _this.dirtyStates = new KeyedSet_1.KeyedSet(function (x) { return x.object.id; });
         _this.tracker = new VisualTracker_1.VisualTracker();
         _this.ticker = new RefreshLoop_1.RefreshLoop(60);
         _this.ticker.add('render', function () { return _this.render(); });
@@ -71,7 +71,7 @@ var Surface = /** @class */ (function (_super) {
     }
     Object.defineProperty(Surface.prototype, "renderRequired", {
         get: function () {
-            return this.dirtyRender || this.dirtySequence;
+            return this.dirtyRender || this.dirtySequence || this.dirtyTheming;
         },
         enumerable: true,
         configurable: true
@@ -79,7 +79,7 @@ var Surface = /** @class */ (function (_super) {
     Surface.prototype.render = function () {
         Report_1.Report.begin();
         if (this.dirtyTheming) {
-            //this.performThemeUpdates();
+            this.performThemeUpdates();
         }
         var didRender = false;
         if (this.dirtySequence) {
@@ -90,8 +90,7 @@ var Surface = /** @class */ (function (_super) {
             this.performCompositionUpdates();
             didRender = true;
         }
-        this.dirtyRender = this.dirtySequence = false;
-        this.dirtyStates.clear();
+        this.dirtyRender = this.dirtySequence = this.dirtyTheming = false;
         if (didRender) {
             Report_1.Report.complete();
             this.propagateEvent(new Event_1.Event('render'), []);
@@ -114,18 +113,24 @@ var Surface = /** @class */ (function (_super) {
         return collected;
     };
     Surface.prototype.performThemeUpdates = function () {
-        var _a = this, composition = _a.composition, sequence = _a.sequence, view = _a.view, dirtyStates = _a.dirtyStates;
-        var visuals = new KeyedSet_1.KeyedSet(function (x) { return x.id; });
-        dirtyStates.forEach(function (st) {
-            if (st.theme) {
-                visuals.addAll(st.object.toArray());
+        var _a = this, theme = _a.theme, themeQueue = _a.themeQueue;
+        var toRoot = function (v) {
+            var list = [];
+            while (v.parent != null) {
+                list.push(v.parent);
+                v = v.parent;
             }
-        });
-        this.applyTheme(this.theme, visuals.array);
+            return list;
+        };
+        var list = themeQueue.array.slice(0);
+        list.forEach(function (x) { return themeQueue.addAll(toRoot(x)); });
+        this.applyTheme(theme, themeQueue.array);
+        //Clear the theme queue
+        themeQueue.clear();
     };
     Surface.prototype.performCompositionUpdates = function () {
         var cpt = Report_1.Report.time('Composition.Prepare');
-        var _a = this, composition = _a.composition, sequence = _a.sequence, view = _a.view, dirtyStates = _a.dirtyStates;
+        var _a = this, composition = _a.composition, sequence = _a.sequence, view = _a.view;
         //Only render to cameras with valid bounds
         var cameras = this.cameras.toArray()
             .filter(function (x) { return !!x.bounds.width && !!x.bounds.height; });
@@ -134,7 +139,7 @@ var Surface = /** @class */ (function (_super) {
         rootRegion.arrange(new Rect_1.Rect(0, 0, this.width, this.height));
         var _loop_1 = function (cam) {
             var camMat = Matrix_1.Matrix.identity.translate(cam.vector.x, cam.vector.y).inverse();
-            var camState = dirtyStates.get(cam.id);
+            var camState = cam['__dirty'];
             var camRegion = rootRegion.getRegion(cam.id, 0);
             camRegion.arrange(cam.bounds);
             //Rely on the knowledge that visuals will be in zIndex order, so we can get once and
@@ -147,7 +152,7 @@ var Surface = /** @class */ (function (_super) {
                 }
                 // if (visual.zIndex < 1) return true;
                 // if (visual.classes.has('input')) return true;
-                var visualState = dirtyStates.get(visual.id);
+                var visualState = visual['__dirty'];
                 //If no zLayer or id does not match zIndex, obtain layer
                 if (!zLayer || zLayer.id != visual.zIndex.toString()) {
                     zLayer = camRegion.getRegion(visual.zIndex.toString(), visual.zIndex);
@@ -178,6 +183,7 @@ var Surface = /** @class */ (function (_super) {
                         });
                     });
                 }
+                visual['__dirty'] = {};
                 return true;
             });
         };
@@ -200,13 +206,12 @@ var Surface = /** @class */ (function (_super) {
         cm.on('change', function (e) {
             var ds = { object: e.target };
             if (e.property == 'vector' || e.property == 'bounds') {
-                ds.transform = true;
+                e.target['__dirty'].transform = true;
             }
             // else if (e.property == 'bounds')
             // {
             //     ds.size = true;
             // }
-            _this.dirtyStates.merge(ds);
             _this.dirtyRender = true;
         });
         return cm;
@@ -331,14 +336,24 @@ var Surface = /** @class */ (function (_super) {
         this.propagateEvent(evt, stack);
     };
     Surface.prototype.onVisualCompose = function (e) {
+        var _this = this;
         this.dirtyRender = true;
         this.dirtySequence = true;
         this.dirtyTheming = true;
-        this.dirtyStates.merge({ object: e.target, render: true, theme: true });
-        this.sequence.invalidate(e.target);
+        var ds = { render: true, theme: true };
+        var target = e.target, subject = e.subject;
+        Object.assign(subject['__dirty'], ds);
+        this.themeQueue.add(subject);
+        subject.visit(function (x) {
+            Object.assign(x['__dirty'], ds);
+            _this.themeQueue.add(x);
+        });
+        this.sequence.invalidate(target);
     };
     Surface.prototype.onVisualChange = function (e) {
-        var ds = { object: e.target };
+        var _this = this;
+        var target = e.target;
+        var ds = {};
         if (e.property == 'topLeft' || e.property == 'size') {
             ds.transform = true;
         }
@@ -346,12 +361,22 @@ var Surface = /** @class */ (function (_super) {
             ds.render = true;
             ds.theme = true;
             this.dirtyTheming = true;
+            this.themeQueue.add(target);
+        }
+        else if (e.property == 'zIndex') {
+            this.sequence.invalidate(target);
         }
         else {
             ds.render = true;
         }
-        this.dirtyStates.merge(ds);
         this.dirtyRender = true;
+        Object.assign(target['__dirty'], ds);
+        target.visit(function (x) {
+            Object.assign(x['__dirty'], ds);
+            if (ds.theme) {
+                _this.themeQueue.add(x);
+            }
+        });
     };
     Surface.prototype.propagateEvent = function (se, stack) {
         this.emit(se);

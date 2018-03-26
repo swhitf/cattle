@@ -5,6 +5,7 @@ import { Rect } from '../geom/Rect';
 import { toggle } from '../misc/Dom';
 import { index, values } from '../misc/Util';
 import { VisualChangeEvent } from './events/VisualChangeEvent';
+import { VisualComposeEvent } from './events/VisualComposeEvent';
 import { VisualEvent } from './events/VisualEvent';
 import { Animate, AnimationBuilder } from './styling/Animate';
 import { Styleable } from './styling/Styleable';
@@ -13,9 +14,14 @@ import { Surface } from './Surface';
 
 var IdSeed:number = Math.floor(Math.random() * (new Date().getTime() / 1000));
 
-export interface VisualPredicate
+export interface VisualIteratorCallback<R = void>
 {
-    (v:Visual):boolean;
+    (x:Visual, i:number):R;
+}
+
+export interface VisualCallback<R = void>
+{
+    (x:Visual):R;
 }
 
 export interface VisualTagSet
@@ -49,7 +55,11 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
     private cacheData:any = {};
     private storeData:any = {};
 
-    constructor(bounds:Rect = Rect.empty, children:Visual[] = [])
+    private __dirty = {} as any;
+    private __state = {} as any;
+    private __style = {} as any;    
+
+    constructor(bounds:Rect = Rect.empty)
     {
         super();
 
@@ -57,11 +67,6 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         this.traits = new VisualTagSetImpl(this, 'traits');
         this.topLeft = bounds.topLeft();
         this.size = bounds.size();
-
-        if (children && children.length)
-        {
-            this.mount(...children);
-        }
     }
 
     public abstract get canHost():boolean;
@@ -165,10 +170,10 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
     public get transform():Matrix
     {
-        return this.cache('transform', () => {
+        // return this.cache('transform', () => {
             var t = !!this.parent ? this.parent.transform : Matrix.identity;
             return t.translate(this.left, this.top);
-        });
+        // });
     }
 
     public get transformLocal():Matrix
@@ -225,24 +230,21 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         return !!this.parentVisual ? this.parentVisual.isMounted() : false;
     }
 
-    public mount(...visuals:Visual[]):void
+    public mount(child:Visual):void
     {
-        if (visuals.some(x => !!x.parentVisual))
+        if (!!child.parentVisual)
         {
-            throw `One or more visuals is already mounted somewhere else.`;
+            throw `Visual is already mounted somewhere else.`;
         }
 
-        for (let v of visuals)
-        {   
-            v.visualWillMount();
+        child.visualWillMount();
 
-            this.children.push(v);
-            v.parentVisual = this;
+        this.children.push(child);
+        child.parentVisual = this;
 
-            v.visualDidMount();
-        }
+        child.visualDidMount();
     
-        this.notifyCompose();
+        this.notifyCompose(child, 'mount');
     }
 
     public unmount(child:Visual):boolean
@@ -258,7 +260,7 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         this.children.splice(idx, 1);
         child.parentVisual = null;
         
-        this.notifyCompose();
+        this.notifyCompose(child, 'mount');
         return true;
     }
     
@@ -292,6 +294,25 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
         }
 
         return arr;
+    }
+
+    public map<T>(callback:VisualIteratorCallback<T>):void
+    {
+        this.children.forEach(callback);
+    }
+
+    public filter(callback:VisualIteratorCallback<boolean>):Visual[]
+    {
+        return this.children.filter(callback);
+    }
+
+    public visit(callback:VisualCallback):void
+    {
+        for (let c of this.children)
+        {
+            callback(c);
+            c.visit(callback);
+        }
     }
 
     public toString():string
@@ -354,17 +375,12 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
     {
         this.clearCache();
 
-        if (property === 'zIndex' && !!this.parentVisual)
-        {
-            this.parentVisual.notifyCompose();
-        }
-
         this.notify(new VisualChangeEvent(this, property));
     }
 
-    protected notifyCompose():void
+    protected notifyCompose(child:Visual, mode:'mount'|'unmount'):void
     {
-        this.notify(new VisualEvent('compose', this));
+        this.notify(new VisualComposeEvent(this, child, mode));
     }
 }
 

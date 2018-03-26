@@ -24,27 +24,26 @@ var Matrix_1 = require("../geom/Matrix");
 var Point_1 = require("../geom/Point");
 var Rect_1 = require("../geom/Rect");
 var VisualChangeEvent_1 = require("./events/VisualChangeEvent");
-var VisualEvent_1 = require("./events/VisualEvent");
+var VisualComposeEvent_1 = require("./events/VisualComposeEvent");
 var Animate_1 = require("./styling/Animate");
 var Styleable_1 = require("./styling/Styleable");
 var IdSeed = Math.floor(Math.random() * (new Date().getTime() / 1000));
 var Visual = /** @class */ (function (_super) {
     __extends(Visual, _super);
-    function Visual(bounds, children) {
+    function Visual(bounds) {
         if (bounds === void 0) { bounds = Rect_1.Rect.empty; }
-        if (children === void 0) { children = []; }
         var _this = _super.call(this) || this;
         _this.id = 'v' + (IdSeed++);
         _this.children = [];
         _this.cacheData = {};
         _this.storeData = {};
+        _this.__dirty = {};
+        _this.__state = {};
+        _this.__style = {};
         _this.classes = new VisualTagSetImpl(_this, 'classes');
         _this.traits = new VisualTagSetImpl(_this, 'traits');
         _this.topLeft = bounds.topLeft();
         _this.size = bounds.size();
-        if (children && children.length) {
-            _this.mount.apply(_this, children);
-        }
         return _this;
     }
     Object.defineProperty(Visual.prototype, "left", {
@@ -138,11 +137,10 @@ var Visual = /** @class */ (function (_super) {
     });
     Object.defineProperty(Visual.prototype, "transform", {
         get: function () {
-            var _this = this;
-            return this.cache('transform', function () {
-                var t = !!_this.parent ? _this.parent.transform : Matrix_1.Matrix.identity;
-                return t.translate(_this.left, _this.top);
-            });
+            // return this.cache('transform', () => {
+            var t = !!this.parent ? this.parent.transform : Matrix_1.Matrix.identity;
+            return t.translate(this.left, this.top);
+            // });
         },
         enumerable: true,
         configurable: true
@@ -201,22 +199,15 @@ var Visual = /** @class */ (function (_super) {
     Visual.prototype.isMounted = function () {
         return !!this.parentVisual ? this.parentVisual.isMounted() : false;
     };
-    Visual.prototype.mount = function () {
-        var visuals = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            visuals[_i] = arguments[_i];
+    Visual.prototype.mount = function (child) {
+        if (!!child.parentVisual) {
+            throw "Visual is already mounted somewhere else.";
         }
-        if (visuals.some(function (x) { return !!x.parentVisual; })) {
-            throw "One or more visuals is already mounted somewhere else.";
-        }
-        for (var _a = 0, visuals_1 = visuals; _a < visuals_1.length; _a++) {
-            var v = visuals_1[_a];
-            v.visualWillMount();
-            this.children.push(v);
-            v.parentVisual = this;
-            v.visualDidMount();
-        }
-        this.notifyCompose();
+        child.visualWillMount();
+        this.children.push(child);
+        child.parentVisual = this;
+        child.visualDidMount();
+        this.notifyCompose(child, 'mount');
     };
     Visual.prototype.unmount = function (child) {
         var idx = this.children.indexOf(child);
@@ -226,7 +217,7 @@ var Visual = /** @class */ (function (_super) {
         child.visualWillUnmount();
         this.children.splice(idx, 1);
         child.parentVisual = null;
-        this.notifyCompose();
+        this.notifyCompose(child, 'mount');
         return true;
     };
     Visual.prototype.mountTo = function (to) {
@@ -250,6 +241,19 @@ var Visual = /** @class */ (function (_super) {
             }
         }
         return arr;
+    };
+    Visual.prototype.map = function (callback) {
+        this.children.forEach(callback);
+    };
+    Visual.prototype.filter = function (callback) {
+        return this.children.filter(callback);
+    };
+    Visual.prototype.visit = function (callback) {
+        for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
+            var c = _a[_i];
+            callback(c);
+            c.visit(callback);
+        }
     };
     Visual.prototype.toString = function () {
         return this.constructor['name'] + " " + this.left + "x" + this.top + " " + this.width + ":" + this.height;
@@ -284,13 +288,10 @@ var Visual = /** @class */ (function (_super) {
     };
     Visual.prototype.notifyChange = function (property) {
         this.clearCache();
-        if (property === 'zIndex' && !!this.parentVisual) {
-            this.parentVisual.notifyCompose();
-        }
         this.notify(new VisualChangeEvent_1.VisualChangeEvent(this, property));
     };
-    Visual.prototype.notifyCompose = function () {
-        this.notify(new VisualEvent_1.VisualEvent('compose', this));
+    Visual.prototype.notifyCompose = function (child, mode) {
+        this.notify(new VisualComposeEvent_1.VisualComposeEvent(this, child, mode));
     };
     __decorate([
         Styleable_1.Styleable(Point_1.Point.empty),

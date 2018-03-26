@@ -4,6 +4,10 @@ import { Theme } from '../vom/styling/Theme';
 
 export const GoogleSheetsTheme = new Theme('GoogleSheets', {
 
+    'net label': {
+        foreground: 'red',
+    },   
+
     'cell': {
         zIndex: -1,
     },
@@ -21,6 +25,6 @@ export const GoogleSheetsTheme = new Theme('GoogleSheets', {
     'net.copy': {
         animateBorder: true,
         border: new Border(2, '#4285f4', [6, 4]),
-    }
+    },
 
 });

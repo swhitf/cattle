@@ -1,5 +1,6 @@
-import { RectLike } from '../../geom/Rect';
 import { Destroyable } from '../../base/Destroyable';
+import { RectLike } from '../../geom/Rect';
+import { Visual } from '../../vom/Visual';
 /**
  * Provides an interface with which consumers can manipulate a net instance.
  */
@@ -25,6 +26,10 @@ export interface NetHandle extends Destroyable {
      * will be the same as `fromRef`.
      */
     readonly toRef: string;
+    /**
+     * The visual used to represent the net.
+     */
+    readonly visual: Visual;
     /**
      * Controls whether or not the net is visible.
      */

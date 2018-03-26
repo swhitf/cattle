@@ -9,8 +9,6 @@ import { CameraChangeEvent } from './events/CameraChangeEvent';
 
 export class InternalCamera implements Camera
 {
-    private initializing = true;
-
     public readonly id:string;
     
     @Observable()
@@ -21,6 +19,9 @@ export class InternalCamera implements Camera
     
     @Observable()
     public vector:Point;
+
+    private __dirty = {} as any;
+    private initializing = true;
 
     constructor(id:string, order:number, bounds:Rect, vector:Point, private emitter:EventEmitter)
     {
