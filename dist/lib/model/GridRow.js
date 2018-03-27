@@ -19,8 +19,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var GridObject_1 = require("./GridObject");
 var Observable_1 = require("../base/Observable");
+var GridObject_1 = require("./GridObject");
 /**
  * Represents a grid row.
  */
@@ -33,12 +33,16 @@ var GridRow = /** @class */ (function (_super) {
      * @param height
      */
     function GridRow(ref, height) {
-        if (height === void 0) { height = 21; }
+        if (height === void 0) { height = GridRow.defaultHeight; }
         var _this = _super.call(this) || this;
         _this.ref = ref;
         _this.height = height;
         return _this;
     }
+    /**
+     * The default height of a row; this can be altered.
+     */
+    GridRow.defaultHeight = 21;
     __decorate([
         Observable_1.Observable(),
         __metadata("design:type", Number)

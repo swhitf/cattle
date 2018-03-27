@@ -8,6 +8,11 @@ import { GridObject } from './GridObject';
 export class GridColumn extends GridObject
 {
     /**
+     * The default width of a row; this can be altered.
+     */
+    public static defaultWidth = 100;
+
+    /**
      * The column reference, must be unique per GridModel instance.  Used to indicate the position of the
      * column within the grid based on a zero-index.
      */
@@ -25,7 +30,7 @@ export class GridColumn extends GridObject
      * @param ref
      * @param width
      */
-    constructor(ref:number, width:number = 100)
+    constructor(ref:number, width:number = GridColumn.defaultWidth)
     {
         super();
         

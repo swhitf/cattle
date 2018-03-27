@@ -4,6 +4,10 @@ import { GridObject } from './GridObject';
  */
 export declare class GridColumn extends GridObject {
     /**
+     * The default width of a row; this can be altered.
+     */
+    static defaultWidth: number;
+    /**
      * The column reference, must be unique per GridModel instance.  Used to indicate the position of the
      * column within the grid based on a zero-index.
      */

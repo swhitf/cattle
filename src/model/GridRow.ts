@@ -1,5 +1,5 @@
-import { GridObject } from './GridObject';
 import { Observable } from '../base/Observable';
+import { GridObject } from './GridObject';
 
 
 /**
@@ -7,6 +7,11 @@ import { Observable } from '../base/Observable';
  */
 export class GridRow extends GridObject
 {
+    /**
+     * The default height of a row; this can be altered.
+     */
+    public static defaultHeight = 21;
+
     /**
      * The row reference, must be unique per GridModel instance.  Used to indicate the position of the
      * row within the grid based on a zero-index.
@@ -25,7 +30,7 @@ export class GridRow extends GridObject
      * @param ref
      * @param height
      */
-    constructor(ref:number, height:number = 21)
+    constructor(ref:number, height:number = GridRow.defaultHeight)
     {
         super();
 

@@ -33,12 +33,16 @@ var GridColumn = /** @class */ (function (_super) {
      * @param width
      */
     function GridColumn(ref, width) {
-        if (width === void 0) { width = 100; }
+        if (width === void 0) { width = GridColumn.defaultWidth; }
         var _this = _super.call(this) || this;
         _this.ref = ref;
         _this.width = width;
         return _this;
     }
+    /**
+     * The default width of a row; this can be altered.
+     */
+    GridColumn.defaultWidth = 100;
     __decorate([
         Observable_1.Observable(),
         __metadata("design:type", Number)
