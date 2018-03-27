@@ -1,11 +1,18 @@
 
 
+const next = (function() {
+    let val = Number.MIN_SAFE_INTEGER;
+    return function() {
+        return val++;
+    };
+})();
+
 /**
  * Represents an object within a grid model.
  */
 export class GridObject
 {
-    private n:number = Number.MIN_VALUE;
+    private nval:number = next();
 
     /**
      * Gets a numerical value that represents the unique state of the element.  When an Observable()
@@ -14,11 +21,11 @@ export class GridObject
      */
     public get nonce():number
     {
-        return this.n;
+        return this.nval;
     }
 
     private notifyChange(property:string):void
     {
-        this.n++;
+        this.nval = next();
     }
 }

@@ -18,8 +18,12 @@ const Timer = function() {
 
 export class Report 
 {
+    public static enabled = true;
+
     public static begin():void
     {
+        if (!this.enabled) return;
+
         data.counters = {};
         data.start = performance.now();
         data.timers = {};
@@ -27,6 +31,11 @@ export class Report
 
     public static time(what:string, callback?:any):any
     {
+        if (!this.enabled) {
+            if (callback) callback();
+            else return () => {};
+        };
+        
         const list = (data.timers[what] || (data.timers[what] = []));
         const t = new Timer();
         list.push(t);
@@ -42,6 +51,8 @@ export class Report
 
     public static count(what:string, value?:number)
     {
+        if (!this.enabled) return;
+        
         if (data.counters[what] === undefined)
         {
             data.counters[what] = 0;
@@ -59,6 +70,8 @@ export class Report
 
     public static complete(print:boolean = true):any
     {
+        if (!this.enabled) return;
+        
         if (print) 
         {
             console.clear();
@@ -93,4 +106,4 @@ function pad(n, width, z) {
     z = z || '0';
     n = n + '';
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-  }
+}

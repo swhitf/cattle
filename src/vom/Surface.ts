@@ -200,6 +200,8 @@ export class Surface extends SimpleEventEmitter
     {
         const { theme, themeQueue } = this;
 
+        const ptt = Report.time('Theme.Update');
+
         const toRoot = (v:Visual) => {
             const list = [];
             while (v.parent != null)
@@ -217,6 +219,8 @@ export class Surface extends SimpleEventEmitter
 
         //Clear the theme queue
         themeQueue.clear();
+
+        ptt();
     }
 
     private performCompositionUpdates():void 
@@ -229,7 +233,7 @@ export class Surface extends SimpleEventEmitter
         const cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
 
-        Report.time('composition.beginUpdate()', () => composition.beginUpdate())
+        composition.beginUpdate();
 
         const rootRegion = composition.root;
         rootRegion.arrange(new Rect(0, 0, this.width, this.height));
@@ -281,12 +285,6 @@ export class Surface extends SimpleEventEmitter
                     elmt.arrange(new Rect(xy.left, xy.top, visual.width + 10, visual.height + 10));
                 }
                 
-                //Update element size if new or visual has resized
-                // if (elmt.age == 0 || (!!camState && camState.transform) || (!!visualState && visualState.transform))
-                // {
-                //     elmt.dim(visual.width + 10, visual.height + 10);
-                // }
-
                 //Finally, if our element is dirty or the visual needs redrawing, redraw
                 if (elmt.dirty || (!!visualState && visualState.render))
                 {
@@ -303,7 +301,7 @@ export class Surface extends SimpleEventEmitter
             });
         }
 
-        Report.time('composition.endUpdate()', () => composition.endUpdate())
+        composition.endUpdate();
         cpt();
 
         const cdt = Report.time('Composition.Draw');

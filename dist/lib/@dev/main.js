@@ -51,6 +51,11 @@ state.grid.model.cells[0].value = 'Test';
 var lsnrs = [
     click('useExcel', function () { return state.grid.useTheme(MicrosoftExcelTheme_1.MicrosoftExcelTheme); }),
     click('useGoogle', function () { return state.grid.useTheme(GoogleSheetsTheme_1.GoogleSheetsTheme); }),
+    click('swap', function () {
+        state.model = GridModel_1.GridModel.dim(26 * 5, 50 * 10);
+        state.model.cells.forEach(function (x) { return x.value = x.ref; });
+        state.grid.model.cells[0].value = 'Another';
+    }),
     click('destroy', function () {
         lsnrs.forEach(function (x) { return x(); });
         lsnrs.splice(0, lsnrs.length);

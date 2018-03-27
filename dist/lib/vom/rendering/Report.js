@@ -19,11 +19,20 @@ var Report = /** @class */ (function () {
     function Report() {
     }
     Report.begin = function () {
+        if (!this.enabled)
+            return;
         data.counters = {};
         data.start = performance.now();
         data.timers = {};
     };
     Report.time = function (what, callback) {
+        if (!this.enabled) {
+            if (callback)
+                callback();
+            else
+                return function () { };
+        }
+        ;
         var list = (data.timers[what] || (data.timers[what] = []));
         var t = new Timer();
         list.push(t);
@@ -36,6 +45,8 @@ var Report = /** @class */ (function () {
         }
     };
     Report.count = function (what, value) {
+        if (!this.enabled)
+            return;
         if (data.counters[what] === undefined) {
             data.counters[what] = 0;
         }
@@ -48,6 +59,8 @@ var Report = /** @class */ (function () {
     };
     Report.complete = function (print) {
         if (print === void 0) { print = true; }
+        if (!this.enabled)
+            return;
         if (print) {
             console.clear();
             console.info('Render Report at', new Date().getTime(), 'in', performance.now() - data.start);
@@ -66,6 +79,7 @@ var Report = /** @class */ (function () {
         }
         return data;
     };
+    Report.enabled = true;
     return Report;
 }());
 exports.Report = Report;

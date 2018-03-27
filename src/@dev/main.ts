@@ -68,6 +68,11 @@ state.grid.model.cells[0].value = 'Test';
 const lsnrs = [
     click('useExcel', () => state.grid.useTheme(MicrosoftExcelTheme)),
     click('useGoogle', () => state.grid.useTheme(GoogleSheetsTheme)),
+    click('swap', () => {
+        state.model = GridModel.dim(26 * 5, 50 * 10);
+        state.model.cells.forEach(x => x.value = x.ref);
+        state.grid.model.cells[0].value = 'Another';
+    }),
     click('destroy', () => {
         lsnrs.forEach(x => x());
         lsnrs.splice(0, lsnrs.length);

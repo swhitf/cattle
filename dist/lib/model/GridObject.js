@@ -1,11 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var next = (function () {
+    var val = Number.MIN_SAFE_INTEGER;
+    return function () {
+        return val++;
+    };
+})();
 /**
  * Represents an object within a grid model.
  */
 var GridObject = /** @class */ (function () {
     function GridObject() {
-        this.n = Number.MIN_VALUE;
+        this.nval = next();
     }
     Object.defineProperty(GridObject.prototype, "nonce", {
         /**
@@ -14,13 +20,13 @@ var GridObject = /** @class */ (function () {
          * same value.  This is used for dirty tracking.
          */
         get: function () {
-            return this.n;
+            return this.nval;
         },
         enumerable: true,
         configurable: true
     });
     GridObject.prototype.notifyChange = function (property) {
-        this.n++;
+        this.nval = next();
     };
     return GridObject;
 }());

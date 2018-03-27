@@ -126,6 +126,7 @@ var Surface = /** @class */ (function (_super) {
     };
     Surface.prototype.performThemeUpdates = function () {
         var _a = this, theme = _a.theme, themeQueue = _a.themeQueue;
+        var ptt = Report_1.Report.time('Theme.Update');
         var toRoot = function (v) {
             var list = [];
             while (v.parent != null) {
@@ -139,6 +140,7 @@ var Surface = /** @class */ (function (_super) {
         this.applyTheme(theme, themeQueue.array);
         //Clear the theme queue
         themeQueue.clear();
+        ptt();
     };
     Surface.prototype.performCompositionUpdates = function () {
         var cpt = Report_1.Report.time('Composition.Prepare');
@@ -146,7 +148,7 @@ var Surface = /** @class */ (function (_super) {
         //Only render to cameras with valid bounds
         var cameras = this.cameras.toArray()
             .filter(function (x) { return !!x.bounds.width && !!x.bounds.height; });
-        Report_1.Report.time('composition.beginUpdate()', function () { return composition.beginUpdate(); });
+        composition.beginUpdate();
         var rootRegion = composition.root;
         rootRegion.arrange(new Rect_1.Rect(0, 0, this.width, this.height));
         var _loop_1 = function (cam) {
@@ -181,11 +183,6 @@ var Surface = /** @class */ (function (_super) {
                     var xy = camVisMat.apply(Point_1.Point.empty);
                     elmt.arrange(new Rect_1.Rect(xy.left, xy.top, visual.width + 10, visual.height + 10));
                 }
-                //Update element size if new or visual has resized
-                // if (elmt.age == 0 || (!!camState && camState.transform) || (!!visualState && visualState.transform))
-                // {
-                //     elmt.dim(visual.width + 10, visual.height + 10);
-                // }
                 //Finally, if our element is dirty or the visual needs redrawing, redraw
                 if (elmt.dirty || (!!visualState && visualState.render)) {
                     Report_1.Report.time('Element.Draw', function () {
@@ -203,7 +200,7 @@ var Surface = /** @class */ (function (_super) {
             var cam = cameras_1[_i];
             _loop_1(cam);
         }
-        Report_1.Report.time('composition.endUpdate()', function () { return composition.endUpdate(); });
+        composition.endUpdate();
         cpt();
         var cdt = Report_1.Report.time('Composition.Draw');
         composition.render(view);
