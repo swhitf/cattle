@@ -15,6 +15,7 @@ __export(require("./base/Observable"));
 __export(require("./base/SimpleEventEmitter"));
 __export(require("./common"));
 __export(require("./core/CellVisual"));
+__export(require("./core/events/GridCellEvent"));
 __export(require("./core/events/GridChangeEvent"));
 __export(require("./core/events/GridEvent"));
 __export(require("./core/Extensibility"));

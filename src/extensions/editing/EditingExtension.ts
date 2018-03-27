@@ -1,5 +1,6 @@
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { SimpleEventEmitter } from '../../base/SimpleEventEmitter';
+import { GridCellEvent } from '../../core/events/GridCellEvent';
 import { Command, Routine } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
@@ -139,6 +140,7 @@ export class EditingExtension extends AbstractDestroyable
 
         this.state = State.Editing;
 
+        grid.emit(new GridCellEvent('beginEdit', grid, primarySelection.from));
         return true;
     }
 
@@ -162,6 +164,7 @@ export class EditingExtension extends AbstractDestroyable
         }
 
         this.state = State.Idle;
+        grid.emit(new GridCellEvent('endEdit', grid, primarySelection.from));
 
         return true;
     }

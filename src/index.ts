@@ -12,6 +12,7 @@ export * from "./base/Observable";
 export * from "./base/SimpleEventEmitter";
 export * from "./common";
 export * from "./core/CellVisual";
+export * from "./core/events/GridCellEvent";
 export * from "./core/events/GridChangeEvent";
 export * from "./core/events/GridEvent";
 export * from "./core/Extensibility";

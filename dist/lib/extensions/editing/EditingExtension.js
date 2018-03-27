@@ -21,6 +21,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var AbstractDestroyable_1 = require("../../base/AbstractDestroyable");
 var SimpleEventEmitter_1 = require("../../base/SimpleEventEmitter");
+var GridCellEvent_1 = require("../../core/events/GridCellEvent");
 var Extensibility_1 = require("../../core/Extensibility");
 var Rect_1 = require("../../geom/Rect");
 var dom = require("../../misc/Dom");
@@ -121,6 +122,7 @@ var EditingExtension = /** @class */ (function (_super) {
         input.goto(inputRect);
         input.focus();
         this.state = State.Editing;
+        grid.emit(new GridCellEvent_1.GridCellEvent('beginEdit', grid, primarySelection.from));
         return true;
     };
     EditingExtension.prototype.doEndEdit = function (commit) {
@@ -135,6 +137,7 @@ var EditingExtension = /** @class */ (function (_super) {
             this.commitUniform([primarySelection.from], newValue);
         }
         this.state = State.Idle;
+        grid.emit(new GridCellEvent_1.GridCellEvent('endEdit', grid, primarySelection.from));
         return true;
     };
     EditingExtension.prototype.erase = function () {
