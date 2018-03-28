@@ -223,6 +223,8 @@ var GridElement = /** @class */ (function (_super) {
         for (var i = 0; i < cameras.count; i++) {
             var camera = cameras.item(i);
             var buffer = this.cameraBuffers[camera.id];
+            if (camera.bounds.width + camera.bounds.height <= 0)
+                continue;
             buffer.update(layout);
         }
     };

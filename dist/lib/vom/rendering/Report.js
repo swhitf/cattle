@@ -19,20 +19,11 @@ var Report = /** @class */ (function () {
     function Report() {
     }
     Report.begin = function () {
-        if (!this.enabled)
-            return;
         data.counters = {};
         data.start = performance.now();
         data.timers = {};
     };
     Report.time = function (what, callback) {
-        if (!this.enabled) {
-            if (callback)
-                callback();
-            else
-                return function () { };
-        }
-        ;
         var list = (data.timers[what] || (data.timers[what] = []));
         var t = new Timer();
         list.push(t);
@@ -45,8 +36,6 @@ var Report = /** @class */ (function () {
         }
     };
     Report.count = function (what, value) {
-        if (!this.enabled)
-            return;
         if (data.counters[what] === undefined) {
             data.counters[what] = 0;
         }
@@ -79,7 +68,7 @@ var Report = /** @class */ (function () {
         }
         return data;
     };
-    Report.enabled = true;
+    Report.enabled = false;
     return Report;
 }());
 exports.Report = Report;

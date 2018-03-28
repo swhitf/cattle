@@ -51,6 +51,7 @@ __export(require("./model/GridObject"));
 __export(require("./model/GridRange"));
 __export(require("./model/GridRef"));
 __export(require("./model/GridRow"));
+__export(require("./model/GridValueType"));
 __export(require("./model/GridWalk"));
 __export(require("./themes/GoogleSheetsTheme"));
 __export(require("./themes/MicrosoftExcelTheme"));

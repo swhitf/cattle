@@ -48,7 +48,7 @@ export class Composition
         this.rootRegion.endUpdate();
     }
 
-    public invalidate():void
+    public reset():void
     {
         this.rootRegion = new Region(new Key('root'));
     }

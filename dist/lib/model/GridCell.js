@@ -23,6 +23,7 @@ var Observable_1 = require("../base/Observable");
 var GridCellStyle_1 = require("./GridCellStyle");
 var GridObject_1 = require("./GridObject");
 var GridRef_1 = require("./GridRef");
+var GridValueType_1 = require("./GridValueType");
 /**
  * Represents a cell within a grid.
  */
@@ -44,8 +45,21 @@ var GridCell = /** @class */ (function (_super) {
         _this.rowSpan = params.rowSpan || 1;
         _this.style = GridCellStyle_1.GridCellStyle.get.apply(GridCellStyle_1.GridCellStyle, (params.style || []));
         _this.value = (params.value === undefined || params.value === null) ? '' : params.value;
+        _this.valueType = params.valueType || GridValueType_1.GridValueTypes.string;
         return _this;
     }
+    /**
+     * Gets the formatted value of the cell.
+     */
+    GridCell.prototype.formattedValue = function () {
+        return this.valueType.format(this.value, this.data);
+    };
+    /**
+     * Gets the typed value of the cell.
+     */
+    GridCell.prototype.typedValue = function () {
+        return this.valueType.convert(this.value, this.data);
+    };
     __decorate([
         Observable_1.Observable(),
         __metadata("design:type", Object)
@@ -58,6 +72,10 @@ var GridCell = /** @class */ (function (_super) {
         Observable_1.Observable(),
         __metadata("design:type", String)
     ], GridCell.prototype, "value", void 0);
+    __decorate([
+        Observable_1.Observable(),
+        __metadata("design:type", Object)
+    ], GridCell.prototype, "valueType", void 0);
     return GridCell;
 }(GridObject_1.GridObject));
 exports.GridCell = GridCell;

@@ -282,13 +282,14 @@ var Surface = /** @class */ (function (_super) {
                     this.view.width = this.width;
                     this.view.height = this.height;
                     this.dirtyRender = true;
+                    this.composition.reset();
                     this.propagateEvent(new Event_1.Event('resize'), []);
                 }
                 break;
             case 'theme':
                 this.applyTheme(this.theme);
                 this.dirtyRender = true;
-                this.composition.invalidate();
+                this.composition.reset();
                 break;
         }
     };

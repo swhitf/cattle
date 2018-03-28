@@ -41,7 +41,7 @@ export class CellVisual extends Visual
     public update(cell:GridCell):void
     {
         this.ref = cell.ref;
-        this.text = cell.value;
+        this.text = cell.formattedValue();
         
         for (let cs of this.cellStyles)
         {

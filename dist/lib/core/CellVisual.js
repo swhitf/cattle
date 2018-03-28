@@ -36,7 +36,7 @@ var CellVisual = /** @class */ (function (_super) {
     }
     CellVisual.prototype.update = function (cell) {
         this.ref = cell.ref;
-        this.text = cell.value;
+        this.text = cell.formattedValue();
         for (var _i = 0, _a = this.cellStyles; _i < _a.length; _i++) {
             var cs = _a[_i];
             this.classes.remove(cs);

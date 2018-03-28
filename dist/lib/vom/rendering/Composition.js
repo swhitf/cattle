@@ -19,7 +19,7 @@ var Composition = /** @class */ (function () {
     Composition.prototype.endUpdate = function () {
         this.rootRegion.endUpdate();
     };
-    Composition.prototype.invalidate = function () {
+    Composition.prototype.reset = function () {
         this.rootRegion = new Region_1.Region(new Key_1.Key('root'));
     };
     Composition.prototype.render = function (to) {

@@ -18,6 +18,6 @@ export declare class Composition {
     readonly root: CompositionRegion;
     beginUpdate(): void;
     endUpdate(): void;
-    invalidate(): void;
+    reset(): void;
     render(to: HTMLCanvasElement): void;
 }

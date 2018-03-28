@@ -266,6 +266,9 @@ export class GridElement extends SimpleEventEmitter
             let camera = cameras.item(i);
             let buffer = this.cameraBuffers[camera.id];
 
+            if (camera.bounds.width + camera.bounds.height <= 0)
+                continue;
+
             buffer.update(layout);
         }
     }

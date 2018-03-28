@@ -9,6 +9,7 @@ var Point_1 = require("../geom/Point");
 var GridCellStyle_1 = require("../model/GridCellStyle");
 var GridModel_1 = require("../model/GridModel");
 var GridRef_1 = require("../model/GridRef");
+var GridValueType_1 = require("../model/GridValueType");
 var GoogleSheetsTheme_1 = require("../themes/GoogleSheetsTheme");
 var MicrosoftExcelTheme_1 = require("../themes/MicrosoftExcelTheme");
 var vq = require("../vom/VisualQuery");
@@ -48,6 +49,8 @@ window['vq'] = function (s) { return vq.select(state.grid.surface.root, s); };
 console.dir(GridRef_1.GridRef.unmake('BF250'));
 state.grid.model.cells[0].style = GridCellStyle_1.GridCellStyle.get('test');
 state.grid.model.cells[0].value = 'Test';
+state.grid.model.cells[1].valueType = GridValueType_1.GridValueTypes.number;
+state.grid.model.cells[2].valueType = GridValueType_1.GridValueTypes.date;
 var lsnrs = [
     click('useExcel', function () { return state.grid.useTheme(MicrosoftExcelTheme_1.MicrosoftExcelTheme); }),
     click('useGoogle', function () { return state.grid.useTheme(GoogleSheetsTheme_1.GoogleSheetsTheme); }),

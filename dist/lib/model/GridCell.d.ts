@@ -1,5 +1,6 @@
 import { GridCellStyle } from './GridCellStyle';
 import { GridObject } from './GridObject';
+import { GridValueType } from './GridValueType';
 /**
  * Defines the parameters that can/should be passed to a new GridCell instance.
  */
@@ -7,13 +8,14 @@ export interface GridCellParams {
     colRef: number;
     rowRef: number;
     value: string;
+    valueType?: GridValueType;
     style?: string[];
-    data?: GridData;
+    data?: GridCellData;
     type?: string;
     colSpan?: number;
     rowSpan?: number;
 }
-export declare type GridData = Readonly<{
+export declare type GridCellData = Readonly<{
     [key: string]: any;
 }>;
 export interface GridCellRefParts {
@@ -52,7 +54,7 @@ export declare class GridCell extends GridObject {
     /**
      * A bag of readonly key value pairs assocated with the cell.
      */
-    data: GridData;
+    data: GridCellData;
     /**
      * The style of the cell.
      */
@@ -62,9 +64,21 @@ export declare class GridCell extends GridObject {
      */
     value: string;
     /**
+     * The value type of the cell.
+     */
+    valueType: GridValueType;
+    /**
      * Initializes a new instance of DefaultGridCell.
      *
      * @param params
      */
     constructor(params: GridCellParams);
+    /**
+     * Gets the formatted value of the cell.
+     */
+    formattedValue(): string;
+    /**
+     * Gets the typed value of the cell.
+     */
+    typedValue(): any;
 }

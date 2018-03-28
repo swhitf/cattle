@@ -49,6 +49,7 @@ export * from "./model/GridObject";
 export * from "./model/GridRange";
 export * from "./model/GridRef";
 export * from "./model/GridRow";
+export * from "./model/GridValueType";
 export * from "./model/GridWalk";
 export * from "./themes/GoogleSheetsTheme";
 export * from "./themes/MicrosoftExcelTheme";

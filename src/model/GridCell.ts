@@ -2,6 +2,7 @@ import { Observable } from '../base/Observable';
 import { GridCellStyle } from './GridCellStyle';
 import { GridObject } from './GridObject';
 import { GridRef } from './GridRef';
+import { GridValueType, GridValueTypes } from './GridValueType';
 
 
 /**
@@ -12,14 +13,15 @@ export interface GridCellParams
     colRef:number;
     rowRef:number;
     value:string;
+    valueType?:GridValueType
     style?:string[];
-    data?:GridData;
+    data?:GridCellData;
     type?:string;
     colSpan?:number;
     rowSpan?:number;
 }
 
-export type GridData = Readonly<{[key:string]:any}>;
+export type GridCellData = Readonly<{[key:string]:any}>;
 
 export interface GridCellRefParts
 {
@@ -67,7 +69,7 @@ export class GridCell extends GridObject
      * A bag of readonly key value pairs assocated with the cell.
      */
     @Observable()
-    public data:GridData;
+    public data:GridCellData;
 
     /**
      * The style of the cell.
@@ -80,6 +82,12 @@ export class GridCell extends GridObject
      */
     @Observable()
     public value:string;
+
+    /**
+     * The value type of the cell.
+     */
+    @Observable()
+    public valueType:GridValueType;
 
     /**
      * Initializes a new instance of DefaultGridCell.
@@ -99,5 +107,20 @@ export class GridCell extends GridObject
         this.rowSpan = params.rowSpan || 1;
         this.style = GridCellStyle.get(...(params.style || []));
         this.value = (params.value === undefined || params.value === null) ? '' : params.value;
+        this.valueType = params.valueType || GridValueTypes.string;
+    }
+
+    /**
+     * Gets the formatted value of the cell.
+     */
+    public formattedValue():string {
+        return this.valueType.format(this.value, this.data);
+    }
+
+    /**
+     * Gets the typed value of the cell.
+     */
+    public typedValue():any {
+        return this.valueType.convert(this.value, this.data);
     }
 }
