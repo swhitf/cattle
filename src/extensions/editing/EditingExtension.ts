@@ -27,9 +27,17 @@ enum State
     EditingPrecise = 'editingPrecice',
 }
 
+export interface GridInputRange 
+{
+    start:number;
+    end:number;
+}
+
 export interface GridInput extends EventEmitter
 {
-    val(value?:string, range?:{from:number, to?:number}):string;
+    readonly range:GridInputRange;
+
+    val(value?:string, range?:GridInputRange):string;
 }
 
 export class EditingExtension extends AbstractDestroyable
@@ -301,6 +309,14 @@ class InputHandle extends SimpleEventEmitter implements GridInput
         return this.text;
     }
 
+    public get range():GridInputRange
+    {
+        return {
+            start: this.text.selectionStart,
+            end: this.text.selectionEnd,
+        }
+    }
+
     public get visible():boolean
     {
         return !!this.text.parentElement;
@@ -351,7 +367,7 @@ class InputHandle extends SimpleEventEmitter implements GridInput
         }, 0);
     }
 
-    public val(value?:string, range?:{from:number, to?:number}):string
+    public val(value?:string, range?:GridInputRange):string
     {
         let { text, visible } = this;
         if (!visible) return;
@@ -362,7 +378,7 @@ class InputHandle extends SimpleEventEmitter implements GridInput
             
             if (range)
             {
-                text.setSelectionRange(range.from, range.to || range.from);
+                text.setSelectionRange(range.start, range.end || range.start);
             }
         }
 

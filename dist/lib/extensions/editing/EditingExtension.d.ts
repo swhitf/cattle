@@ -2,11 +2,13 @@ import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { EventEmitter } from '../../base/EventEmitter';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
+export interface GridInputRange {
+    start: number;
+    end: number;
+}
 export interface GridInput extends EventEmitter {
-    val(value?: string, range?: {
-        from: number;
-        to?: number;
-    }): string;
+    readonly range: GridInputRange;
+    val(value?: string, range?: GridInputRange): string;
 }
 export declare class EditingExtension extends AbstractDestroyable {
     private autoApply;

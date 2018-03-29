@@ -272,6 +272,16 @@ var InputHandle = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(InputHandle.prototype, "range", {
+        get: function () {
+            return {
+                start: this.text.selectionStart,
+                end: this.text.selectionEnd,
+            };
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(InputHandle.prototype, "visible", {
         get: function () {
             return !!this.text.parentElement;
@@ -319,7 +329,7 @@ var InputHandle = /** @class */ (function (_super) {
         if (value !== undefined) {
             text.value = value;
             if (range) {
-                text.setSelectionRange(range.from, range.to || range.from);
+                text.setSelectionRange(range.start, range.end || range.start);
             }
         }
         return text.value;
