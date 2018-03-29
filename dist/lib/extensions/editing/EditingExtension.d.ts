@@ -1,11 +1,18 @@
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
+import { EventEmitter } from '../../base/EventEmitter';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
+export interface GridInput extends EventEmitter {
+    val(value?: string, range?: {
+        from: number;
+        to?: number;
+    }): string;
+}
 export declare class EditingExtension extends AbstractDestroyable {
     private autoApply;
     private grid;
-    private input;
     private state;
+    private input;
     constructor(autoApply?: boolean);
     init(grid: GridElement, kernel: GridKernel): void;
     private readonly primarySelection;

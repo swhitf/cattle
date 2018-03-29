@@ -31,6 +31,7 @@ var KeyBehavior_1 = require("../../vom/input/KeyBehavior");
 var MouseBehavior_1 = require("../../vom/input/MouseBehavior");
 var GridChangeSet_1 = require("./GridChangeSet");
 var GridCommitEvent_1 = require("./GridCommitEvent");
+var GridInputEvent_1 = require("./GridInputEvent");
 var State;
 (function (State) {
     State["Idle"] = "idle";
@@ -188,6 +189,10 @@ var EditingExtension = /** @class */ (function (_super) {
         return false;
     };
     __decorate([
+        Extensibility_1.Variable('input', false),
+        __metadata("design:type", InputHandle)
+    ], EditingExtension.prototype, "input", void 0);
+    __decorate([
         Extensibility_1.Command(),
         __metadata("design:type", Function),
         __metadata("design:paramtypes", [Array, Object]),
@@ -235,6 +240,11 @@ var InputHandle = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.root = root;
         _this.text = text;
+        text.addEventListener('keypress', function (e) {
+            if (!!e.which) {
+                _this.emit(new GridInputEvent_1.GridInputEvent('type'));
+            }
+        });
         return _this;
     }
     InputHandle.create = function (root) {
@@ -294,17 +304,25 @@ var InputHandle = /** @class */ (function (_super) {
         });
     };
     InputHandle.prototype.focus = function () {
-        var text = this.text;
+        var _a = this, text = _a.text, visible = _a.visible;
+        if (!visible)
+            return;
         setTimeout(function () {
             text.focus();
             text.setSelectionRange(text.value.length, text.value.length);
         }, 0);
     };
-    InputHandle.prototype.val = function (value) {
+    InputHandle.prototype.val = function (value, range) {
+        var _a = this, text = _a.text, visible = _a.visible;
+        if (!visible)
+            return;
         if (value !== undefined) {
-            this.text.value = value;
+            text.value = value;
+            if (range) {
+                text.setSelectionRange(range.from, range.to || range.from);
+            }
         }
-        return this.text.value;
+        return text.value;
     };
     return InputHandle;
 }(SimpleEventEmitter_1.SimpleEventEmitter));

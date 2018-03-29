@@ -26,6 +26,7 @@ export * from "./extensions/clipboard/ClipEvent";
 export * from "./extensions/editing/EditingExtension";
 export * from "./extensions/editing/GridChangeSet";
 export * from "./extensions/editing/GridCommitEvent";
+export * from "./extensions/editing/GridInputEvent";
 export * from "./extensions/history/DefaultHistoryManager";
 export * from "./extensions/history/HistoryExtension";
 export * from "./extensions/history/HistoryManager";

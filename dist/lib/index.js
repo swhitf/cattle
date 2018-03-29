@@ -29,6 +29,7 @@ __export(require("./extensions/clipboard/ClipEvent"));
 __export(require("./extensions/editing/EditingExtension"));
 __export(require("./extensions/editing/GridChangeSet"));
 __export(require("./extensions/editing/GridCommitEvent"));
+__export(require("./extensions/editing/GridInputEvent"));
 __export(require("./extensions/history/DefaultHistoryManager"));
 __export(require("./extensions/history/HistoryExtension"));
 __export(require("./extensions/nets/DefaultNetManager"));

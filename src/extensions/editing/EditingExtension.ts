@@ -1,7 +1,8 @@
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
+import { EventEmitter } from '../../base/EventEmitter';
 import { SimpleEventEmitter } from '../../base/SimpleEventEmitter';
 import { GridCellEvent } from '../../core/events/GridCellEvent';
-import { Command, Routine } from '../../core/Extensibility';
+import { Command, Routine, Variable } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
 import { Point } from '../../geom/Point';
@@ -16,6 +17,7 @@ import { NetVisual } from '../nets/NetVisual';
 import { Selection } from '../selector/SelectorExtension';
 import { GridChangeSet } from './GridChangeSet';
 import { GridCommitEvent } from './GridCommitEvent';
+import { GridInputEvent } from './GridInputEvent';
 
 
 enum State
@@ -25,11 +27,18 @@ enum State
     EditingPrecise = 'editingPrecice',
 }
 
+export interface GridInput extends EventEmitter
+{
+    val(value?:string, range?:{from:number, to?:number}):string;
+}
+
 export class EditingExtension extends AbstractDestroyable
 {
     private grid:GridElement;
-    private input:InputHandle;
     private state:State = State.Idle;
+
+    @Variable('input', false)
+    private input:InputHandle;
 
     constructor(private autoApply:boolean = true)
     {
@@ -252,7 +261,7 @@ function is_readonly(cell:GridCell):boolean
     return cell['readonly'] === true || cell['editable'] === false;
 }
 
-class InputHandle extends SimpleEventEmitter
+class InputHandle extends SimpleEventEmitter implements GridInput
 {
     public static create(root:HTMLElement):InputHandle
     {
@@ -279,6 +288,12 @@ class InputHandle extends SimpleEventEmitter
     private constructor(private root:HTMLElement, private text:HTMLInputElement) 
     {
         super();
+        
+        text.addEventListener('keypress', e => {
+            if (!!e.which) {
+                this.emit(new GridInputEvent('type'));
+            }
+        });
     }
 
     public get elmt():HTMLInputElement
@@ -326,7 +341,8 @@ class InputHandle extends SimpleEventEmitter
 
     public focus():void
     {
-        let { text } = this;
+        let { text, visible } = this;
+        if (!visible) return;
 
         setTimeout(() =>
         {
@@ -335,13 +351,21 @@ class InputHandle extends SimpleEventEmitter
         }, 0);
     }
 
-    public val(value?:string):string
+    public val(value?:string, range?:{from:number, to?:number}):string
     {
+        let { text, visible } = this;
+        if (!visible) return;
+        
         if (value !== undefined)
         {
-            this.text.value = value;
+            text.value = value;
+            
+            if (range)
+            {
+                text.setSelectionRange(range.from, range.to || range.from);
+            }
         }
 
-        return this.text.value;
+        return text.value;
     }
 }
