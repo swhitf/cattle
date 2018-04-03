@@ -1,6 +1,6 @@
 {
   "name": "cattle",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "A spreadsheet-like grid component library.",
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
@@ -34,5 +34,16 @@
     "tsify": "^3.0.4",
     "typescript": "^2.6.2",
     "watchify": "^3.10.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:swhitf/cattle.git"
+  },
+  "keywords": [
+    "spreadsheet",
+    "grid",
+    "datagrid",
+    "sheets",
+    "excel"
+  ]
 }
