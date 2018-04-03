@@ -4,6 +4,7 @@ import 'es6-shim';
 import 'reflect-metadata';
 
 import { GridElement } from '../core/GridElement';
+import { HintExtension } from '../extensions/hints/HintExtension';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
@@ -12,6 +13,7 @@ import { GridValueTypes } from '../model/GridValueType';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
 import * as vq from '../vom/VisualQuery';
+import { DevHintProvider } from './DevHintProvider';
 
 
 const click = (x, h) => {
@@ -45,6 +47,7 @@ state.model.cells.forEach(x => x.value = x.ref);
 
 state.grid = GridElement
     .createDefault(document.getElementById('x'), state.model)
+    .extend(new HintExtension([new DevHintProvider()]))
     .mergeInterface()
 ;
 

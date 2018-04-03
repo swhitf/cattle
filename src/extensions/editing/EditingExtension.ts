@@ -1,8 +1,6 @@
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
-import { EventEmitter } from '../../base/EventEmitter';
-import { SimpleEventEmitter } from '../../base/SimpleEventEmitter';
 import { GridCellEvent } from '../../core/events/GridCellEvent';
-import { Command, Routine, Variable } from '../../core/Extensibility';
+import { Command, Routine } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
 import { Point } from '../../geom/Point';
@@ -17,7 +15,6 @@ import { NetVisual } from '../nets/NetVisual';
 import { Selection } from '../selector/SelectorExtension';
 import { GridChangeSet } from './GridChangeSet';
 import { GridCommitEvent } from './GridCommitEvent';
-import { GridInputEvent } from './GridInputEvent';
 
 
 enum State
@@ -46,7 +43,7 @@ export class EditingExtension extends AbstractDestroyable
         MouseBehavior.for(grid.surface)
             .on(['LEFT.DBLCLICK/e'], () => this.doBeginEdit())
         ;
-
+ 
         KeyBehavior.for(grid.surface)
             .when(() => this.state == State.Idle, x => x
                 .on('BACKSPACE/e/x', () => this.doBeginEdit(''))
@@ -342,17 +339,11 @@ class InputHandle
 
     public val(value?:string):string
     {
-        let { text, visible } = this;
-        if (!visible) return;
+        let { text } = this;
         
         if (value !== undefined)
         {
             text.value = value;
-            
-        //     if (range)
-        //     {
-        //         text.setSelectionRange(range.start, range.end || range.start);
-        //     }
         }
 
         return text.value;
