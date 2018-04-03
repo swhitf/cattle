@@ -27,26 +27,11 @@ enum State
     EditingPrecise = 'editingPrecice',
 }
 
-export interface GridInputRange 
-{
-    start:number;
-    end:number;
-}
-
-export interface GridInput extends EventEmitter
-{
-    readonly range:GridInputRange;
-
-    val(value?:string, range?:GridInputRange):string;
-}
-
 export class EditingExtension extends AbstractDestroyable
 {
     private grid:GridElement;
+    private inputHandle:InputHandle;
     private state:State = State.Idle;
-
-    @Variable('input', false)
-    private input:InputHandle;
 
     constructor(private autoApply:boolean = true)
     {
@@ -56,7 +41,7 @@ export class EditingExtension extends AbstractDestroyable
     public init(grid:GridElement, kernel:GridKernel)
     {
         this.grid = grid;
-        this.input = InputHandle.create(grid.container);
+        this.inputHandle = InputHandle.create(grid.container);
 
         MouseBehavior.for(grid.surface)
             .on(['LEFT.DBLCLICK/e'], () => this.doBeginEdit())
@@ -70,11 +55,11 @@ export class EditingExtension extends AbstractDestroyable
             )
         ;
 
-        MouseBehavior.for(this.input.elmt)
+        MouseBehavior.for(this.inputHandle.elmt)
             .on(['LEFT', 'MIDDLE', 'RIGHT'], () => this.state = State.EditingPrecise)
         ;
 
-        KeyBehavior.for(this.input.elmt)
+        KeyBehavior.for(this.inputHandle.elmt)
             .on('ESCAPE/e/x', () => this.doEndEdit(false))
             .on('ENTER/e/x', () => this.endEditToNeighbor(Vectors.e))
             .on('TAB/e/x', () => this.endEditToNeighbor(Vectors.e))
@@ -95,6 +80,9 @@ export class EditingExtension extends AbstractDestroyable
 
         //Before select commit pending edit
         kernel.routines.hook('before:doSelect', () => this.doEndEdit(true));
+    
+        //Export input element for other modules
+        kernel.variables.define('editInput', { get: () => this.inputHandle.elmt } );
     }
 
     private get primarySelection():Selection
@@ -129,7 +117,7 @@ export class EditingExtension extends AbstractDestroyable
     @Routine()
     private doBeginEdit(override?:string):boolean
     {
-        let { grid, input, primarySelection } = this;
+        let { grid, inputHandle, primarySelection } = this;
 
         if (this.state != State.Idle || !primarySelection)
             return false;
@@ -145,15 +133,15 @@ export class EditingExtension extends AbstractDestroyable
 
         if (!!override || override === '')
         {
-            input.val(override);
+            inputHandle.val(override);
         }
         else
         {
-            input.val(cell.value);
+            inputHandle.val(cell.value);
         }
 
-        input.goto(inputRect);
-        input.focus();
+        inputHandle.goto(inputRect);
+        inputHandle.focus();
 
         this.state = State.Editing;
 
@@ -164,15 +152,15 @@ export class EditingExtension extends AbstractDestroyable
     @Routine()
     private doEndEdit(commit?:boolean):boolean
     {
-        let { grid, input, primarySelection } = this;
+        let { grid, inputHandle, primarySelection } = this;
 
         if (this.state == State.Idle)
             return false;
 
-        let newValue = input.val();
+        let newValue = inputHandle.val();
 
-        input.visible = false;
-        input.val('');
+        inputHandle.visible = false;
+        inputHandle.val('');
         grid.focus();
 
         if (commit && !!primarySelection)
@@ -269,7 +257,7 @@ function is_readonly(cell:GridCell):boolean
     return cell['readonly'] === true || cell['editable'] === false;
 }
 
-class InputHandle extends SimpleEventEmitter implements GridInput
+class InputHandle
 {
     public static create(root:HTMLElement):InputHandle
     {
@@ -294,27 +282,12 @@ class InputHandle extends SimpleEventEmitter implements GridInput
     }
 
     private constructor(private root:HTMLElement, private text:HTMLInputElement) 
-    {
-        super();
-        
-        text.addEventListener('keypress', e => {
-            if (!!e.which) {
-                this.emit(new GridInputEvent('type'));
-            }
-        });
+    {   
     }
 
     public get elmt():HTMLInputElement
     {
         return this.text;
-    }
-
-    public get range():GridInputRange
-    {
-        return {
-            start: this.text.selectionStart,
-            end: this.text.selectionEnd,
-        }
     }
 
     public get visible():boolean
@@ -367,7 +340,7 @@ class InputHandle extends SimpleEventEmitter implements GridInput
         }, 0);
     }
 
-    public val(value?:string, range?:GridInputRange):string
+    public val(value?:string):string
     {
         let { text, visible } = this;
         if (!visible) return;
@@ -376,10 +349,10 @@ class InputHandle extends SimpleEventEmitter implements GridInput
         {
             text.value = value;
             
-            if (range)
-            {
-                text.setSelectionRange(range.start, range.end || range.start);
-            }
+        //     if (range)
+        //     {
+        //         text.setSelectionRange(range.start, range.end || range.start);
+        //     }
         }
 
         return text.value;
