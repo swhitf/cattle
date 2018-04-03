@@ -41,6 +41,11 @@ export class SimpleEventEmitter implements EventEmitter
         }
     }
 
+    protected clearSubscriptions():void
+    {
+        this.buckets = {};
+    }
+
     private getCallbackList(event:string):EventCallback[]
     {
         return this.buckets[event] || (this.buckets[event] = []);

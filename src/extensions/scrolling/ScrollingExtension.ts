@@ -82,8 +82,6 @@ export class ScrollerExtension extends AbstractDestroyable
 
     private onContainerScroll():void
     {
-        console.log('scroll');
-
         let grid = this.grid;
         let maxScroll = new Point(
             Math.max(0, grid.layout.width - grid.surface.width),

@@ -1,5 +1,6 @@
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { GridCellEvent } from '../../core/events/GridCellEvent';
+import { GridChangeEvent } from '../../core/events/GridChangeEvent';
 import { Command, Routine } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
@@ -13,6 +14,7 @@ import { KeyBehavior } from '../../vom/input/KeyBehavior';
 import { MouseBehavior } from '../../vom/input/MouseBehavior';
 import { NetVisual } from '../nets/NetVisual';
 import { Selection } from '../selector/SelectorExtension';
+import { ExternalInput } from './ExternalInput';
 import { GridChangeSet } from './GridChangeSet';
 import { GridCommitEvent } from './GridCommitEvent';
 
@@ -26,6 +28,11 @@ enum State
 
 export class EditingExtension extends AbstractDestroyable
 {
+    public static linkStaticInput(grid:GridElement, input:HTMLInputElement):void
+    {
+        ExternalInput.create(grid, input);
+    }
+
     private grid:GridElement;
     private inputHandle:InputHandle;
     private state:State = State.Idle;
@@ -48,7 +55,7 @@ export class EditingExtension extends AbstractDestroyable
             .when(() => this.state == State.Idle, x => x
                 .on('BACKSPACE/e/x', () => this.doBeginEdit(''))
                 .on('DELETE', () => this.erase())
-                .on('*.PRESS', e => !!e.char && !e.modifiers.ctrl && !e.modifiers.alt ? this.doBeginEdit(e.char) : false)
+                .on('*.PRESS', e => !!e.char && !e.modifiers.ctrl && !e.modifiers.alt ? this.doBeginEdit(e.char) : true)                
             )
         ;
 
@@ -68,18 +75,20 @@ export class EditingExtension extends AbstractDestroyable
                 .on('LEFT_ARROW/e/x', () => this.endEditToNeighbor(Vectors.w))
             )          
             .on([
-                'SHIFT+UP_ARROW/e', 'CTRL+UP_ARROW/e',
-                'SHIFT+DOWN_ARROW/e', 'CTRL+DOWN_ARROW/e',
-                'SHIFT+RIGHT_ARROW/e', 'CTRL+RIGHT_ARROW/e',
-                'SHIFT+LEFT_ARROW/e', 'CTRL+LEFT_ARROW/e',
-            ], () => this.state = State.EditingPrecise)
+                    'SHIFT+UP_ARROW/e', 'CTRL+UP_ARROW/e',
+                    'SHIFT+DOWN_ARROW/e', 'CTRL+DOWN_ARROW/e',
+                    'SHIFT+RIGHT_ARROW/e', 'CTRL+RIGHT_ARROW/e',
+                    'SHIFT+LEFT_ARROW/e', 'CTRL+LEFT_ARROW/e',
+                ], () => this.state = State.EditingPrecise)
+            .on('*.UP', e => this.grid.emit(new GridChangeEvent(this.grid, 'editValue')))
         ;
 
         //Before select commit pending edit
         kernel.routines.hook('before:doSelect', () => this.doEndEdit(true));
     
-        //Export input element for other modules
+        //Export input element and edit value for other modules
         kernel.variables.define('editInput', { get: () => this.inputHandle.elmt } );
+        kernel.variables.define('editValue', { get: () => this.inputHandle.elmt.value, } );
     }
 
     private get primarySelection():Selection
@@ -111,8 +120,9 @@ export class EditingExtension extends AbstractDestroyable
         this.doCommit(changes);
     }
 
+    @Command('beginEdit')
     @Routine()
-    private doBeginEdit(override?:string):boolean
+    private doBeginEdit(override?:string, autoFocus:boolean = true):boolean
     {
         let { grid, inputHandle, primarySelection } = this;
 
@@ -138,11 +148,17 @@ export class EditingExtension extends AbstractDestroyable
         }
 
         inputHandle.goto(inputRect);
-        inputHandle.focus();
+
+        if (autoFocus)
+        {
+            inputHandle.focus();
+        }
 
         this.state = State.Editing;
 
         grid.emit(new GridCellEvent('beginEdit', grid, primarySelection.from));
+        grid.emit(new GridChangeEvent(grid, 'editValue'));
+        
         return true;
     }
 
@@ -166,6 +182,8 @@ export class EditingExtension extends AbstractDestroyable
         }
 
         this.state = State.Idle;
+
+        grid.emit(new GridChangeEvent(grid, 'editValue'));
         grid.emit(new GridCellEvent('endEdit', grid, primarySelection.from));
 
         return true;
@@ -199,13 +217,13 @@ export class EditingExtension extends AbstractDestroyable
 
         if (changes.length)
         {
-            grid.emit(new GridCommitEvent(grid, changes));
-
             if (autoApply)
             {
                 changes.apply(grid.model);
                 grid.forceUpdate();
             }
+            
+            grid.emit(new GridCommitEvent(grid, changes));
         }
     }
 

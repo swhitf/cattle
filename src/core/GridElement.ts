@@ -26,7 +26,6 @@ import { GridChangeEvent } from './events/GridChangeEvent';
 import { GridExtension, Routine } from './Extensibility';
 import { GridKernel } from './GridKernel';
 import { GridLayout } from './GridLayout';
-import { GridView } from './GridView';
 
 export class GridElement extends SimpleEventEmitter
 {
@@ -39,7 +38,6 @@ export class GridElement extends SimpleEventEmitter
         layout: null as GridLayout,
         surface: null as Surface,
         kernel: null as GridKernel,
-        view: null as GridView,
     } 
 
     public static create(container:HTMLElement, initialModel?:GridModel):GridElement
@@ -72,7 +70,6 @@ export class GridElement extends SimpleEventEmitter
         this.internal.kernel = new GridKernel(this.emit.bind(this));
         this.internal.layout = GridLayout.empty;
         this.internal.surface = surface;
-        this.internal.view = new GridView(this.layout, this.surface);
 
         this.initCameras();        
         this.initSurface();
@@ -82,6 +79,7 @@ export class GridElement extends SimpleEventEmitter
 
         this.burden.add(enableAutoResize(container, surface));
         this.burden.add(() => surface.destroy());
+        this.burden.add(() => this.clearSubscriptions());
         this.burden.add(() => {
             this.cameraBuffers = null;
             this.internal = null;
@@ -119,11 +117,6 @@ export class GridElement extends SimpleEventEmitter
     public get surface():Surface
     {
         return this.internal.surface;
-    }
-
-    public get view():GridView
-    {
-        return this.internal.view;
     }
 
     public destroy():void
@@ -292,7 +285,6 @@ export class GridElement extends SimpleEventEmitter
     private updateLayout():void
     {
         this.internal.layout = GridLayout.compute(this.model, this.padding);
-        this.internal.view = new GridView(this.layout, this.surface);
     }
 
     @Routine()
@@ -446,7 +438,6 @@ function enableAutoResize(container:HTMLElement, surface:Surface):DestroyableCal
         
         const apply = () => {
             if (surface.width != width || surface.height != height) {
-                console.log('apply-size');
                 surface.width = width;
                 surface.height = height;
             }

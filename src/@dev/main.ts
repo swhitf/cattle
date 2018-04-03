@@ -4,6 +4,7 @@ import 'es6-shim';
 import 'reflect-metadata';
 
 import { GridElement } from '../core/GridElement';
+import { EditingExtension } from '../extensions/editing/EditingExtension';
 import { HintExtension } from '../extensions/hints/HintExtension';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
@@ -69,6 +70,7 @@ state.grid.model.cells[0].value = 'Test';
 state.grid.model.cells[1].valueType = GridValueTypes.number;
 state.grid.model.cells[2].valueType = GridValueTypes.date;
 
+EditingExtension.linkStaticInput(state.grid, document.getElementById('externalInput') as any);
 
 const lsnrs = [
     click('useExcel', () => state.grid.useTheme(MicrosoftExcelTheme)),
