@@ -7,8 +7,9 @@
   "scripts": {
     "build": "node scripts/build.js",
     "clean": "node scripts/build.js --task=clean",
-    "export": "node scripts/index.js && tsc --pretty",
-    "start": "concurrently -k \"node scripts/build.js -w \" \"http-server ./dist/dev -s -c-1\""
+    "export": "node scripts/build.js --task=clean && node scripts/index.js && tsc --pretty",
+    "start": "concurrently -k \"node scripts/build.js -w \" \"http-server ./dist/dev -s -c-1\"",
+    "prepublish": "node scripts/build.js --task=clean && node scripts/index.js && tsc --pretty"
   },
   "author": "Stephen Whitfield",
   "license": "MIT",

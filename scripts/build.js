@@ -27,6 +27,7 @@ const tasks = {
         log('Cleaning...');
         fs.removeSync('./build');
         fs.removeSync('./dist');
+        fs.removeSync('./src/index.ts');
     },
 
     js: function () {
