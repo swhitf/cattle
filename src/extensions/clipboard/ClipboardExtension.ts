@@ -133,9 +133,11 @@ export class ClipboardExtension extends AbstractDestroyable implements GridExten
 
         for (let r = 0; r < range.height; r++)
         {
+            let x = range.width * r;
+
             for (let c = 0; c < range.width; c++)
             {
-                text += range.ltr[(r + c)].value;
+                text += range.ltr[(x + c)].value;
 
                 if (c < (range.width - 1))
                 {

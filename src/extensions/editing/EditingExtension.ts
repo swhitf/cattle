@@ -131,17 +131,13 @@ export class EditingExtension extends AbstractDestroyable
     {
         let { grid, input, primarySelection } = this;
 
-        if (this.state != State.Idle || !primarySelection)
-            return false;
+        if (this.state != State.Idle || !primarySelection) return false;
 
         let cell = grid.model.findCell(primarySelection.from);
-
-        if (!cell || is_readonly(cell))
-            return false;
+        if (!cell || is_readonly(cell)) return false;
 
         let inputRect = this.computeInputRect();
-        if (!inputRect) 
-            return false;
+        if (!inputRect) return false;
 
         if (!!override || override === '')
         {
