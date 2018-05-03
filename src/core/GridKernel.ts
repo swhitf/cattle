@@ -93,11 +93,15 @@ export class GridKernel
 
         for (let n in commands)
         {
+            if (!!target[n]) throw new Error('Cannot mergeInterface because a command has been registered with a duplicate or reserved name.');
+
             target[n] = commands[n];
         }
 
         for (let n in variables)
         {
+            if (!!target[n]) throw new Error('Cannot mergeInterface because a variable has been registered with a duplicate or reserved name.');
+
             Object.defineProperty(target, n, variables[n]);
         }
 

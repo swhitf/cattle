@@ -355,4 +355,5 @@ jspm_packages
 
 # Extras
 build/
-dist/dev
+dist/
+src/index.ts

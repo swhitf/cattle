@@ -1,4 +1,4 @@
-import { ObjectMap } from '../common';
+import { ObjectMap, VoidCallback } from '../common';
 import { Point } from '../geom/Point';
 
 
@@ -31,10 +31,29 @@ export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
 
 /** Events **/
 
-export function on(e:EventTarget, event:string, callback:EventListenerOrEventListenerObject):() => void 
+export function on(e:EventTarget, event:string, callback:EventListenerOrEventListenerObject):VoidCallback
 {
     e.addEventListener(event, callback);
     return () => e.removeEventListener(event, callback);
+}
+
+export function watchInput(input:HTMLInputElement, callback:VoidCallback):VoidCallback
+{
+    return (function() { 
+        let tempVal = null as string;
+        const down = on(input, 'keydown', function() {
+            tempVal = input.value;
+        });
+        const up = on(input, 'keyup', function() {
+            if (tempVal != input.value) {
+                callback();
+            }
+        });
+        return function() {
+            down();
+            up();
+        }
+    })();    
 }
 
 /** Location **/

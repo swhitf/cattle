@@ -1,14 +1,15 @@
 {
   "name": "cattle",
-  "version": "0.4.0",
+  "version": "1.2.0",
   "description": "A spreadsheet-like grid component library.",
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
   "scripts": {
     "build": "node scripts/build.js",
     "clean": "node scripts/build.js --task=clean",
-    "export": "node scripts/index.js && tsc --pretty",
-    "start": "concurrently -k \"node scripts/build.js -w \" \"http-server ./dist/dev -s -c-1\""
+    "export": "node scripts/build.js --task=clean && node scripts/index.js && tsc --pretty",
+    "start": "concurrently -k \"node scripts/build.js -w \" \"http-server ./dist/dev -s -c-1\"",
+    "prepublish": "node scripts/build.js --task=clean && node scripts/index.js && tsc --pretty"
   },
   "author": "Stephen Whitfield",
   "license": "MIT",
@@ -34,5 +35,16 @@
     "tsify": "^3.0.4",
     "typescript": "^2.6.2",
     "watchify": "^3.10.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:swhitf/cattle.git"
+  },
+  "keywords": [
+    "spreadsheet",
+    "grid",
+    "datagrid",
+    "sheets",
+    "excel"
+  ]
 }

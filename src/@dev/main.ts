@@ -4,6 +4,8 @@ import 'es6-shim';
 import 'reflect-metadata';
 
 import { GridElement } from '../core/GridElement';
+import { EditingExtension } from '../extensions/editing/EditingExtension';
+import { HintExtension } from '../extensions/hints/HintExtension';
 import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
@@ -12,6 +14,7 @@ import { GridValueTypes } from '../model/GridValueType';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
 import * as vq from '../vom/VisualQuery';
+import { DevHintProvider } from './DevHintProvider';
 
 
 const click = (x, h) => {
@@ -45,6 +48,7 @@ state.model.cells.forEach(x => x.value = x.ref);
 
 state.grid = GridElement
     .createDefault(document.getElementById('x'), state.model)
+    .extend(new HintExtension([new DevHintProvider()]))
     .mergeInterface()
 ;
 
@@ -66,6 +70,7 @@ state.grid.model.cells[0].value = 'Test';
 state.grid.model.cells[1].valueType = GridValueTypes.number;
 state.grid.model.cells[2].valueType = GridValueTypes.date;
 
+EditingExtension.linkStaticInput(state.grid, document.getElementById('externalInput') as any);
 
 const lsnrs = [
     click('useExcel', () => state.grid.useTheme(MicrosoftExcelTheme)),
