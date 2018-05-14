@@ -32,7 +32,23 @@
                 top: 80px;
                 left: 10px;
                 right: 10px;
+                bottom: 200px;
+            }
+
+            #reports {
+                position: fixed;
                 bottom: 10px;
+                left: 10px;
+                right: 10px;
+                height: 180px;
+            }
+
+            #reports > * {
+                float: left;
+                width: 33%;
+                white-space: pre;
+                font-size: 10px;
+                font-family: 'Consolas';
             }
 
         </style>
@@ -43,6 +59,11 @@
             <button id="destroy">Destroy</button>
             <button id="useGoogle">Google Theme</button>
             <button id="useExcel">Excel Theme</button>
+        </div>
+        <div id="reports">
+            <div id="report1"></div>
+            <div id="report2"></div>
+            <div id="report3"></div>
         </div>
         <input id="externalInput" />
         <div id="x">

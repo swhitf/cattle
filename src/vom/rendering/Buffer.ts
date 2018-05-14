@@ -28,7 +28,7 @@ export class Buffer
 
     public get context():CanvasRenderingContext2D 
     {
-        return this.canvas.getContext('2d');
+        return this.canvas.getContext('2d', { alpha: false });
     }
 
     public get width():number 
@@ -53,7 +53,7 @@ export class Buffer
 
     public clear(area:RectLike):void 
     {
-        const gfx = this.canvas.getContext('2d');
+        const gfx = this.context;
         gfx.setTransform(1, 0, 0, 1, 0, 0);
         // gfx.fillStyle = 'red';
         // gfx.fillRect(area.left, area.top, area.width, area.height);
@@ -69,13 +69,13 @@ export class Buffer
     {
         this.canvas.width = width;
         this.canvas.height = height;
-        const gfx = this.canvas.getContext('2d');
+        const gfx = this.context;
         gfx.setTransform(1, 0, 0, 1, 0, 0);
         gfx.clearRect(0, 0, width, height);
     }
 
     public update(callback:BufferUpdateCallback):void 
     {
-        callback(this.canvas.getContext('2d'));
+        callback(this.context);
     }
 }

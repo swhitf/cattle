@@ -18,7 +18,10 @@ const Timer = function() {
 
 export class Report 
 {
-    public static enabled = false;
+    public static output1 = document.getElementById('report1') as HTMLElement;
+    public static output2 = document.getElementById('report2') as HTMLElement;
+    public static output3 = document.getElementById('report3') as HTMLElement;
+    public static enabled = true;
 
     public static begin():void
     {
@@ -63,30 +66,37 @@ export class Report
     {
         if (!this.enabled) return;
         
-        if (print) 
+        if (print && Report.output1) 
         {
-            console.clear();
-            console.info('Render Report at', new Date().getTime(), 'in', performance.now() - data.start);
+            const log = [] as string[];
+            const write = function(...a:any[]) { log.push(a.join(' ')); }
 
-            console.info('  Timers:')
+            console.clear();
+            write('Render Report at', new Date().getTime(), 'in', performance.now() - data.start);
+
+            write('  Timers:')
             for (let key in data.timers)
             {
                 const list = data.timers[key].map(x => x.val());
                 if (list.length > 1) {
-                    console.info('   ', list.length, key, 
-                        'Avg', list.reduce((x, t) => x + t, 0) / list.length,
-                        'Min', Math.min(...list),
-                        'Max', Math.max(...list),
-                        'Sum', list.reduce((x, t) => x + t, 0),
+                    write('   ', list.length, key, 
+                        'Avg', (list.reduce((x, t) => x + t, 0) / list.length).toFixed(5),
+                        'Min', (Math.min(...list)).toFixed(5),
+                        'Max', (Math.max(...list)).toFixed(5),
+                        'Sum', (list.reduce((x, t) => x + t, 0)).toFixed(5),
                     );
                 }
                 else {
-                    console.info('   ', 1, key, list[0]);
+                    write('   ', 1, key, list[0]);
                 }
             }
             
             // console.info('  Messages:')
             // data.logs.forEach(x => console.info('    ' + x));
+
+            Report.output3.innerHTML = Report.output2.innerHTML;
+            Report.output2.innerHTML = Report.output1.innerHTML;
+            Report.output1.innerHTML = log.join('\r\n');
         }
 
         return data;

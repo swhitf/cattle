@@ -33,16 +33,19 @@ export abstract class Node
 
     public arrange(rect:Rect)
     {
-        if (!!this.area && this.area.equals(rect))
-            return;
+        if (!!this.area && this.area.equals(rect)) return;
 
         if (this.parent && this.area)
         {
             this.parent.invalidate(this.area);
         }
 
+        if (!this.area || (this.area.width != rect.width || this.area.height != rect.height))
+        {
+            this.dirty = true;
+        }
+
         this.area = rect;
-        this.dirty = true;
     }
 
     public beginUpdate():void

@@ -375,7 +375,7 @@ class CameraBuffer extends AbstractDestroyable
     {
         let { camera, visuals } = this;
 
-        let cells = layout.captureCells(camera.area.inflate([300, 300]));
+        let cells = layout.captureCells(camera.area.inflate([0, 0]));
         let newList = new Array<CameraBufferEntry>(cells.length);
 
         this.cycle++;
