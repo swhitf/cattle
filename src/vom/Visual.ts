@@ -10,19 +10,10 @@ import { VisualEvent } from './events/VisualEvent';
 import { Animate, AnimationBuilder } from './styling/Animate';
 import { Styleable } from './styling/Styleable';
 import { Surface } from './Surface';
+import { VisualCallback, VisualIteratorCallback, VisualList } from './VisualList';
 
 
 var IdSeed:number = Math.floor(Math.random() * (new Date().getTime() / 1000));
-
-export interface VisualIteratorCallback<R = void>
-{
-    (x:Visual, i:number):R;
-}
-
-export interface VisualCallback<R = void>
-{
-    (x:Visual):R;
-}
 
 export interface VisualTagSet
 {
@@ -49,7 +40,7 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
     public readonly classes:VisualTagSet;
     public readonly traits:VisualTagSet;
 
-    protected readonly children:Visual[] = [];
+    protected readonly children:VisualList = new VisualList();
     protected parentVisual:Visual;
     
     private cacheData:any = {};
@@ -183,7 +174,7 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
     public get childCount():number
     {
-        return this.children.length;
+        return this.children.size;
     }
 
     public get parent():Visual
@@ -239,7 +230,7 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
         child.visualWillMount();
 
-        this.children.push(child);
+        this.children.add(child);
         child.parentVisual = this;
 
         child.visualDidMount();
@@ -249,15 +240,14 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
     public unmount(child:Visual):boolean
     {
-        let idx = this.children.indexOf(child);
-        if (idx < 0)
+        if (!this.children.contains(child))
         {
             return false;
         }
 
         child.visualWillUnmount();
         
-        this.children.splice(idx, 1);
+        this.children.remove(child);
         child.parentVisual = null;
         
         this.notifyCompose(child, 'mount');
@@ -283,22 +273,23 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
     public toArray(recursive:boolean = false):Visual[]
     {
-        let arr = this.children.slice(0);
+        let arr = [] as Visual[];
 
-        if (recursive)
+        this.children.forEach(x => 
         {
-            for (let c of this.children)
+            arr.push(x);
+            if (recursive) 
             {
-                arr = arr.concat(c.toArray(true));
+                arr = arr.concat(x.toArray(recursive));
             }
-        }
-
+        });
+        
         return arr;
     }
 
-    public map<T>(callback:VisualIteratorCallback<T>):void
+    public map<T>(callback:VisualIteratorCallback<T>):T[]
     {
-        this.children.forEach(callback);
+        return this.children.map(callback);
     }
 
     public filter(callback:VisualIteratorCallback<boolean>):Visual[]
@@ -308,11 +299,11 @@ export abstract class Visual extends SimpleEventEmitter implements Visual
 
     public visit(callback:VisualCallback):void
     {
-        for (let c of this.children)
+        this.children.forEach(x => 
         {
-            callback(c);
-            c.visit(callback);
-        }
+            callback(x);
+            x.visit(callback);
+        });
     }
 
     public toString():string

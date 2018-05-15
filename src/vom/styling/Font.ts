@@ -16,7 +16,7 @@ export class Font
 
     constructor(family?:string, size?:number, weight?:number, styling?:FontStyling, variant?:FontVariant)
     {
-        this.family = family || 'sans-serif';
+        this.family = family || 'Arial';
         this.size = size || 14;
         this.weight = weight || 400;
         this.styling = styling || 'normal';

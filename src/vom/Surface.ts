@@ -22,7 +22,8 @@ import { Composition, CompositionRegion } from './rendering/Composition';
 import { Report } from './rendering/Report';
 import { RootVisual } from './RootVisual';
 import { Theme } from './styling/Theme';
-import { Visual, VisualCallback } from './Visual';
+import { Visual } from './Visual';
+import { VisualCallback } from './VisualList';
 import * as vq from './VisualQuery';
 import { VisualSequence } from './VisualSequence';
 import { VisualTracker } from './VisualTracker';
@@ -89,11 +90,19 @@ export class Surface extends SimpleEventEmitter
     private readonly dragSupport:DragHelper;
 
     private destroyed:boolean;    
-    private dirtyRender:boolean;
+    private _dirtyRender:boolean;
     private dirtySequence:boolean;
     private dirtyTheming:boolean;
     private themeQueue = new KeyedSet<Visual>(x => x.id);
     private tracker:VisualTracker;
+
+    private get dirtyRender() { return this._dirtyRender; }
+    private set dirtyRender(x:boolean) { 
+        // if (x){
+        //     console.log('dirtyRender', x);
+        // }
+        this._dirtyRender = x;
+    }
 
     constructor(width:number = 800, height:number = 800)
     {
@@ -164,6 +173,7 @@ export class Surface extends SimpleEventEmitter
 
         if (didRender)
         {
+            console.log('render');
             Report.complete();
             this.propagateEvent(new Event('render'), []);
         }
@@ -221,6 +231,11 @@ export class Surface extends SimpleEventEmitter
         themeQueue.clear();
 
         ptt();
+    }
+
+    private performCompositionUpdates2():void 
+    {
+        
     }
 
     private performCompositionUpdates():void 

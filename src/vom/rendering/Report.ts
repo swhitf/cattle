@@ -18,6 +18,7 @@ const Timer = function() {
 
 export class Report 
 {
+    public static num:number = 0;
     public static output1 = document.getElementById('report1') as HTMLElement;
     public static output2 = document.getElementById('report2') as HTMLElement;
     public static output3 = document.getElementById('report3') as HTMLElement;
@@ -71,8 +72,7 @@ export class Report
             const log = [] as string[];
             const write = function(...a:any[]) { log.push(a.join(' ')); }
 
-            console.clear();
-            write('Render Report at', new Date().getTime(), 'in', performance.now() - data.start);
+            write('Render Report', Report.num++, 'at', new Date().getTime(), 'in', performance.now() - data.start);
 
             write('  Timers:')
             for (let key in data.timers)
@@ -91,9 +91,6 @@ export class Report
                 }
             }
             
-            // console.info('  Messages:')
-            // data.logs.forEach(x => console.info('    ' + x));
-
             Report.output3.innerHTML = Report.output2.innerHTML;
             Report.output2.innerHTML = Report.output1.innerHTML;
             Report.output1.innerHTML = log.join('\r\n');

@@ -22,7 +22,6 @@ const click = (x, h) => {
     return () => document.getElementById(x).removeEventListener('click', h)
 };
 
-
 // const seq = {
 //     length: 2,    
 //     item: (index:number) => {

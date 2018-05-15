@@ -19,6 +19,7 @@ import { GridModel } from '../model/GridModel';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { Camera } from '../vom/Camera';
 import { CameraEvent } from '../vom/events/CameraEvent';
+import { Report } from '../vom/rendering/Report';
 import { Theme } from '../vom/styling/Theme';
 import { Surface } from '../vom/Surface';
 import { CellVisual } from './CellVisual';
@@ -205,11 +206,13 @@ export class GridElement extends SimpleEventEmitter
         
         surface.on('resize', () => this.updateCameras());
         surface.on('resize', () => this.updateSurface());
-        surface.ticker.add('updateSurface', () => this.updateSurface());
+        //surface.ticker.add('updateSurface', () => this.updateSurface());
     }
     
     private updateCameras():void
     {
+        console.log('updateCameras');
+
         let { freezeMargin, layout, surface } = this;
         this.autoBufferUpdateEnabled = false;
 
@@ -251,6 +254,8 @@ export class GridElement extends SimpleEventEmitter
 
     private updateSurface():void
     {
+        Report.begin();
+
         let layout = this.layout;
         let cameras = this.surface.cameras;
 
@@ -264,6 +269,8 @@ export class GridElement extends SimpleEventEmitter
 
             buffer.update(layout);
         }
+
+        Report.complete(true);
     }
     
     private allocateBuffer(camera:Camera):CameraBuffer
@@ -326,9 +333,11 @@ export class GridElement extends SimpleEventEmitter
             case 'padding':
                 this.updateLayout();
                 this.updateCameras();
+                this.updateSurface();
                 break;
             case 'scroll':
                 this.updateCameras();
+                this.updateSurface();
                 break;
         }   
 
@@ -375,11 +384,14 @@ class CameraBuffer extends AbstractDestroyable
     {
         let { camera, visuals } = this;
 
+        const cc = Report.time('captureCells');
         let cells = layout.captureCells(camera.area.inflate([0, 0]));
         let newList = new Array<CameraBufferEntry>(cells.length);
+        cc();
 
         this.cycle++;
 
+        const cu = Report.time('createOrUpdate');
         for (let i = 0; i < cells.length; i++)
         {
             let cell = cells[i];
@@ -402,7 +414,9 @@ class CameraBuffer extends AbstractDestroyable
             entry.cycle = this.cycle;
             newList[i] = entry;
         }
+        cu();
 
+        const d = Report.time('delete');
         for (let entry of this.list)
         {
             if (entry.cycle < this.cycle)
@@ -411,6 +425,7 @@ class CameraBuffer extends AbstractDestroyable
                 visuals.destroy(entry.visual);
             }
         }
+        d();
 
         this.list = newList;
     }

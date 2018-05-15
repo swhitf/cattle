@@ -75,10 +75,10 @@ export class CellVisual extends Visual
         gfx.font = this.font.toString();
         gfx.textBaseline = 'middle';
         gfx.fillText(
-            this.text, 
-            this.padding.left, 
-            ((this.height - this.padding.vertical) / 2) + this.padding.top, 
-            this.textMode == 'fit' ? this.width - this.padding.horizontal : undefined
-        );
+            'Testing123', 
+            this.padding.left,
+            ((this.height - this.padding.vertical) / 2) + this.padding.top,
+            this.textMode == 'fit' ? this.width - this.padding.horizontal : 65535 
+        ); 
     }
 }
