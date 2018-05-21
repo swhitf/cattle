@@ -1,16 +1,20 @@
+import { Event } from '../base/Event';
+import { KeyedSet } from '../base/KeyedSet';
+import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { ObjectIndex, ObjectMap } from '../common';
-import { GridColumn } from './GridColumn';
-import { GridCell } from './GridCell';
-import { GridRow } from './GridRow';
-import { Point, PointInput } from '../geom/Point';
+import { Point } from '../geom/Point';
 import * as u from '../misc/Util';
+import { GridCell } from './GridCell';
+import { GridColumn } from './GridColumn';
+import { GridObject } from './GridObject';
+import { GridRow } from './GridRow';
 
 
 /**
  * Represents the logical composition of a grid.  It hosts the collections of the various entity model 
  * objects as well as methods for access and inspection.  All inspection methods use O(1) implementations.
  */
-export class GridModel
+export class GridModel extends SimpleEventEmitter
 {
     /**
      * Creates an grid model with the specified number of columns and rows populated with default cells.
@@ -36,9 +40,9 @@ export class GridModel
                 }
 
                 cells.push(new GridCell({
-                    colRef: c,
-                    rowRef: r,
-                    value: '',
+                    colRef:c,
+                    rowRef:r,
+                    value:'',
                 }));
             }
         }
@@ -56,20 +60,22 @@ export class GridModel
         return new GridModel([], [], []);
     }
 
+    private readonly emitter = new SimpleEventEmitter();
+
     /**
      * The grid cell definitions.  The order is arbitrary.
      */
-    public readonly cells:GridCell[];
+    public readonly cells:KeyedSet<GridCell>;
 
     /**
      * The grid column definitions.  The order is arbitrary.
      */
-    public readonly columns:GridColumn[];
+    public readonly columns:KeyedSet<GridColumn>;
 
     /**
      * The grid row definitions.  The order is arbitrary.
      */
-    public readonly rows:GridRow[];
+    public readonly rows:KeyedSet<GridRow>
 
     private byId:ObjectMap<GridCell>;
     private byCoord:ObjectIndex<ObjectIndex<GridCell>>;
@@ -84,9 +90,11 @@ export class GridModel
      */
     constructor(cells:GridCell[], columns:GridColumn[], rows:GridRow[])
     {
-        this.cells = cells;
-        this.columns = columns;
-        this.rows = rows;
+        super();
+        
+        this.cells = new GridObjectSet<GridCell>(x => x.ref, this, cells);
+        this.columns = new GridObjectSet<GridColumn>(x => x.ref, this, columns);
+        this.rows = new GridObjectSet<GridRow>(x => x.ref, this, rows);
 
         this.refresh();
     }
@@ -150,11 +158,11 @@ export class GridModel
     {
         let { cells } = this;
 
-        this.byId = u.index(cells, x => x.ref);
+        this.byId = u.index(cells.array, x => x.ref);
         this.byCoord = {};
-        this.dims = { width: 0, height: 0};
+        this.dims = { width:0, height:0};
 
-        for (let cell of cells)
+        for (let cell of cells.array)
         {
             if (this.dims.width < cell.colRef + cell.colSpan)
             {
@@ -184,4 +192,73 @@ export class GridModel
             }        
         }
     }
+}
+
+export class GridObjectSet<T extends GridObject> extends KeyedSet<T>
+{
+    private model:GridModel
+
+    constructor(indexer:(t:T) => number|string, model:GridModel, values:T[]) 
+    {
+        super(indexer);
+        this.model = model;
+
+        for (let tm of values) 
+        {
+            this.array.push(tm);
+            this.index[indexer(tm)] = tm;
+            connect(model, tm, false);
+        }
+    }
+
+    public add(value:T):boolean 
+    {
+        if (super.add(value))
+        {
+            connect(this.model, value);
+            return true;
+        }
+        
+        return false;
+    }
+
+    public clear():void 
+    {
+        this.array.forEach(x => disconnect(this.model, x, false));
+        super.clear();
+        this.model.emit(new Event('change'));
+    }
+
+    public delete(key:number|string):boolean 
+    {
+        const value = this.get(key);
+        if (value && super.remove(value))
+        {
+            disconnect(this.model, value);
+            return true;
+        }
+
+        return false;
+    }
+
+    public remove(value:T):boolean 
+    {
+        if (super.remove(value))
+        {
+            disconnect(this.model, value);
+            return true;
+        }
+        
+        return false;
+    }
+}
+
+function connect(model:GridModel, object:GridObject, notify:boolean = true)
+{
+    object['connect'](model, notify);
+}
+
+function disconnect(model:GridModel, object:GridObject, notify:boolean = true)
+{
+    object['disconnect'](model, notify);
 }

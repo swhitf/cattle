@@ -223,7 +223,7 @@ export class Surface extends SimpleEventEmitter
         };
 
         const list = themeQueue.array.slice(0);
-        list.forEach(x => themeQueue.addAll(toRoot(x)));
+        list.forEach(x => toRoot(x).forEach(v => themeQueue.add(v)));
 
         this.applyTheme(theme, themeQueue.array);
 

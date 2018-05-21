@@ -1,5 +1,5 @@
-import { Event } from './Event';
 import { Destroyable } from './Destroyable';
+import { Event } from './Event';
 
 
 export interface EventCallback

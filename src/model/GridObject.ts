@@ -1,3 +1,6 @@
+import { Event } from '../base/Event';
+import { GridModel } from './GridModel';
+
 
 
 const next = (function() {
@@ -12,20 +15,45 @@ const next = (function() {
  */
 export class GridObject
 {
-    private nval:number = next();
+    private __model:GridModel;
+    private __version:number = next();
 
     /**
-     * Gets a numerical value that represents the unique state of the element.  When an Observable()
-     * property on the element changes, the nonce will change.  It will never change back to the
+     * Gets a numerical value that represents the unique version of the element.  When an Observable()
+     * property on the element changes, the version will change.  It will never change back to the
      * same value.  This is used for dirty tracking.
      */
-    public get nonce():number
+    public get version():number
     {
-        return this.nval;
+        return this.__version;
     }
 
-    private notifyChange(property:string):void
+    private connect(model:GridModel, notify:boolean = true):void
     {
-        this.nval = next();
+        if (this.__model) throw 'GridObject is already part of an existing GridModel.';
+        this.__model = model;
+        if (notify)
+        {
+            model.emit(new Event('change'));
+        }
+    }
+
+    private disconnect(model:GridModel, notify:boolean = true):void
+    {
+        if (this.__model != model) throw 'Invalid GridObject.disconnect call.';
+        this.__model = null;
+        if (notify)
+        {
+            model.emit(new Event('change'));
+        }
+    }
+
+    private notifyChange(property?:string):void
+    {
+        this.__version = next();
+        if (this.__model)
+        {
+            this.__model.emit(new Event('change'));
+        }
     }
 }

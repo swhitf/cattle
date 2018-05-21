@@ -1,12 +1,12 @@
-import { PointLike } from '../geom/Point';
 import { ObjectIndex, ObjectMap } from '../common';
 import { Padding } from '../geom/Padding';
+import { PointLike } from '../geom/Point';
 import { Rect, RectLike } from '../geom/Rect';
+import * as u from '../misc/Util';
 import { GridCell } from '../model/GridCell';
 import { GridColumn } from '../model/GridColumn';
 import { GridModel } from '../model/GridModel';
 import { GridRow } from '../model/GridRow';
-import * as u from '../misc/Util';
 
 
 type CellColRowLookup = ObjectIndex<ObjectIndex<GridCell>>;
@@ -24,7 +24,7 @@ export class GridLayout
     {
         let colLookup = <ObjectIndex<GridColumn>>model.columns.reduce((t, x) => { t[x.ref] = x; return t }, {});
         let rowLookup = <ObjectIndex<GridRow>>model.rows.reduce((t, x) => { t[x.ref] = x; return t }, {});
-        let cellLookup = buildCellLookup(model.cells); //by col then row
+        let cellLookup = buildCellLookup(model.cells.array); //by col then row
 
         // Compute all expected columns and rows
         let maxCol = model.cells.map(x => x.colRef + (x.colSpan - 1)).reduce((t, x) => t > x ? t : x, 0);

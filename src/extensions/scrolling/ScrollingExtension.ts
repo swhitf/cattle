@@ -37,6 +37,7 @@ export class ScrollerExtension extends AbstractDestroyable
 
     private createElements():void
     {
+        console.log('createElements');
         //ScrollerExtension is a special case, we need to modify the grid container element in order
         //to reliability enable all scroll interaction without lots of emulation and buggy crap.  We
         //inject a wedge element that simulates the overflow for the container scroll bars and then
@@ -55,6 +56,7 @@ export class ScrollerExtension extends AbstractDestroyable
 
     private alignElements():void
     {
+        console.log('alignElements');
         let grid = this.grid;
         let container = grid.container;
 

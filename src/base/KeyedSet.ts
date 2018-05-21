@@ -1,11 +1,11 @@
 
 
-export interface KeySetItemCallback<T, R = void> 
+export interface KeyedSetItemCallback<T, R = void> 
 {
     (tm:T, index:number):R;
 }
 
-export interface KeySetItemReduceCallback<T, R = T> 
+export interface KeyedSetItemReduceCallback<T, R = T> 
 {
     (prev:R, curr:T, index:number, array:T[]):R;
 }
@@ -42,11 +42,6 @@ export class KeyedSet<T>
             this.list.push(value);
             return true;
         }
-    }
-
-    public addAll(values:T[]):void 
-    {
-        values.forEach(x => this.add(x));
     }
 
     public merge(value:T):void
@@ -89,34 +84,34 @@ export class KeyedSet<T>
         return this.delete(this.indexer(value));
     }
 
-    public removeAll(values:T[]):void 
-    {
-        values.forEach(x => this.remove(x));
-    }
+    // public removeWhere(predicate:KeyedSetItemCallback<T, boolean>):number 
+    // {
+    //     let before = this.list.length;
 
-    public removeWhere(predicate:KeySetItemCallback<T, boolean>):number 
-    {
-        let before = this.list.length;
+    //     this.list = this.list.filter((tm, i) => 
+    //     {
+    //         if (predicate(tm, i))
+    //         {
+    //             delete this.index[this.indexer(tm)];
+    //             return false;
+    //         }
 
-        this.list = this.list.filter((tm, i) => 
-        {
-            if (predicate(tm, i))
-            {
-                delete this.index[this.indexer(tm)];
-                return false;
-            }
+    //         return true;
+    //     });
 
-            return true;
-        });
-
-        return before - this.list.length;
-    }
+    //     return before - this.list.length;
+    // }
 
     public has(value:T):boolean 
     {
         let key = this.indexer(value);
         return !!this.index[key];
     }    
+
+    public at(index:number):T 
+    {
+        return this.list[index] || null;
+    }
 
     public get(key:string|number):T 
     {
@@ -133,27 +128,27 @@ export class KeyedSet<T>
         return this.list[this.list.length - 1];
     }
     
-    public forEach(callback:KeySetItemCallback<T>, thisArg?:any):void 
+    public forEach(callback:KeyedSetItemCallback<T>, thisArg?:any):void 
     {
         this.list.forEach(callback, thisArg);
     }
     
-    public filter(callback:KeySetItemCallback<T, boolean>):T[] 
+    public filter(callback:KeyedSetItemCallback<T, boolean>):T[] 
     {
         return this.list.filter(callback);
     }
     
-    public find(callback:KeySetItemCallback<T, boolean>):T 
+    public find(callback:KeyedSetItemCallback<T, boolean>):T 
     {
         return this.list.find(callback);
     }
     
-    public map<U>(callback:KeySetItemCallback<T, U>):U[] 
+    public map<U>(callback:KeyedSetItemCallback<T, U>):U[] 
     {
         return this.list.map(callback);
     }
 
-    public reduce<U>(callback:KeySetItemReduceCallback<T, U>, initial:U):U 
+    public reduce<U>(callback:KeyedSetItemReduceCallback<T, U>, initial:U):U 
     {
         return this.list.reduce(callback, initial);
     }

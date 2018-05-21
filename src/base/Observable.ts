@@ -28,6 +28,11 @@ export function Observable(defaultValue?:any):any
                 const emit = this['notifyChange'] as (property:string) => void;
                 const state = this['__state'] || (this['__state'] = {});
 
+                if ((value === undefined || value === null) && !(defaultValue === undefined || defaultValue === null))
+                {
+                    value = defaultValue;
+                }
+
                 state[propertyKey] = value;
                 emit.call(this, propertyKey);
             },

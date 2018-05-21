@@ -2,6 +2,7 @@ import * as ResizeObserver from 'resize-observer-polyfill';
 
 import { AbstractDestroyable, DestroyableCallback } from '../base/AbstractDestroyable';
 import { Burden } from '../base/Burden';
+import { Destroyable } from '../base/Destroyable';
 import { Observable } from '../base/Observable';
 import { SimpleEventEmitter } from '../base/SimpleEventEmitter';
 import { ObjectMap } from '../common';
@@ -33,6 +34,7 @@ export class GridElement extends SimpleEventEmitter
     private autoBufferUpdateEnabled:boolean = true;
     private burden:Burden = new Burden();
     private cameraBuffers:ObjectMap<CameraBuffer> = {};
+    private modelListener:Destroyable;
 
     private internal = {
         container: null as HTMLElement,
@@ -235,10 +237,10 @@ export class GridElement extends SimpleEventEmitter
             let margin = new Point(
                 layout.measureColumnRange(0, freezeMargin.x).width, 
                 layout.measureRowRange(0, freezeMargin.y).height);
-
+            
             camMain.vector = margin.add(this.scroll);
             camMain.bounds = new Rect(margin.x, margin.y, surface.width - margin.x, surface.height - margin.y);
-
+            
             camTop.vector = new Point(margin.x + this.scroll.x, 0);
             camTop.bounds = new Rect(margin.x, 0, surface.width - margin.x, margin.y);
             
@@ -309,9 +311,12 @@ export class GridElement extends SimpleEventEmitter
     @Routine()
     private doUpdateVisual(visual:CellVisual, cell:GridCell, rect:RectLike):void
     {
-        visual.topLeft = new Point(rect.left, rect.top);
-        visual.width = rect.width;
-        visual.height = rect.height;
+        const tl = new Point(rect.left, rect.top);
+
+        if (!visual.topLeft.equals(tl)) visual.topLeft = tl;
+        if (visual.width != rect.width) visual.width = rect.width;
+        if (visual.height != rect.height) visual.height = rect.height;
+        
         visual.update(cell);
     }
 
@@ -323,23 +328,24 @@ export class GridElement extends SimpleEventEmitter
 
     private notifyChange(property:string):void
     {
-        if (this.model == null)
-            return; 
-
-        switch (property)
+        if (property == 'model')
         {
-            case 'model':
-            case 'freezeMargin':
-            case 'padding':
-                this.updateLayout();
-                this.updateCameras();
-                this.updateSurface();
-                break;
-            case 'scroll':
-                this.updateCameras();
-                this.updateSurface();
-                break;
-        }   
+            if (this.modelListener) this.modelListener.destroy();
+            this.modelListener = this.model.on('change', () => {
+                throttle('surface', () => this.updateSurface());
+            });
+        }
+
+        if (property == 'model' || property == 'freezeMargin' || property == 'padding')
+        {
+            throttle('layout', () => this.updateLayout());
+        }
+
+        if (property == 'model' || property == 'freezeMargin' || property == 'padding' || property == 'scroll')
+        {
+            throttle('cameras', () => this.updateCameras());
+            throttle('surface', () => this.updateSurface());
+        }
 
         this.emit(new GridChangeEvent(this, property));
     }
@@ -404,11 +410,11 @@ class CameraBuffer extends AbstractDestroyable
                 entry = this.index[cell.ref] = new CameraBufferEntry(cell.ref, visual);
             }
 
-            if (entry.nonce != cell.nonce)
+            if (entry.nonce != cell.version)
             {
                 let rect = layout.measureCell(cell.ref);
                 visuals.update(entry.visual, cell, rect);
-                entry.nonce = cell.nonce;
+                entry.nonce = cell.version;
             }
 
             entry.cycle = this.cycle;
@@ -440,6 +446,17 @@ export class CameraBufferEntry
     {
     }
 }
+
+const throttle = (function() {
+    const tracker = {} as any;
+    return function(key:string, callback:any) {
+        if (tracker[key]) return;
+        tracker[key] = setTimeout(function() {
+            delete tracker[key];
+            callback();
+        }, 0);
+    };
+})();
 
 function enableAutoResize(container:HTMLElement, surface:Surface):DestroyableCallback {
 
