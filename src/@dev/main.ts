@@ -10,6 +10,7 @@ import { Point } from '../geom/Point';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
 import { GridRef } from '../model/GridRef';
+import { GridValueTypes } from '../model/GridValueType';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
 import * as vq from '../vom/VisualQuery';
@@ -42,7 +43,9 @@ const click = (x, h) => {
 const state = {} as any;
 
 state.model = GridModel.dim(26 * 5, 50 * 10);
+state.model.beginUpdate();
 state.model.cells.forEach(x => x.value = x.ref);
+state.model.endUpdate();
 
 state.grid = GridElement
     .createDefault(document.getElementById('x'), state.model)
@@ -63,10 +66,12 @@ window['vq'] = s => vq.select(state.grid.surface.root, s);
 
 console.dir(GridRef.unmake('BF250'));
 
+state.grid.model.beginUpdate();
 state.grid.model.cells.at(0).style = GridCellStyle.get('test');
 state.grid.model.cells.at(0).value = 'Test';
-// state.grid.model.cells.at(1).valueType = GridValueTypes.number;
-// state.grid.model.cells.at(2).valueType = GridValueTypes.date;
+state.grid.model.cells.at(1).valueType = GridValueTypes.number;
+state.grid.model.cells.at(2).valueType = GridValueTypes.date;
+state.grid.model.endUpdate();
 
 EditingExtension.linkStaticInput(state.grid, document.getElementById('externalInput') as any);
 
@@ -75,8 +80,10 @@ const lsnrs = [
     click('useGoogle', () => state.grid.useTheme(GoogleSheetsTheme)),
     click('swap', () => {
         state.model = GridModel.dim(26 * 5, 50 * 10);
+        state.model.beginUpdate();
         state.model.cells.forEach(x => x.value = x.ref);
         state.grid.model.cells[0].value = 'Another';
+        state.model.endUpdate();
     }),
     click('destroy', () => {
         lsnrs.forEach(x => x());

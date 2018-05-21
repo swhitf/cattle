@@ -332,19 +332,19 @@ export class GridElement extends SimpleEventEmitter
         {
             if (this.modelListener) this.modelListener.destroy();
             this.modelListener = this.model.on('change', () => {
-                throttle('surface', () => this.updateSurface());
+                this.updateSurface();
             });
         }
 
         if (property == 'model' || property == 'freezeMargin' || property == 'padding')
         {
-            throttle('layout', () => this.updateLayout());
+            this.updateLayout();
         }
 
         if (property == 'model' || property == 'freezeMargin' || property == 'padding' || property == 'scroll')
         {
-            throttle('cameras', () => this.updateCameras());
-            throttle('surface', () => this.updateSurface());
+            this.updateCameras();
+            this.updateSurface();
         }
 
         this.emit(new GridChangeEvent(this, property));
@@ -446,17 +446,6 @@ export class CameraBufferEntry
     {
     }
 }
-
-const throttle = (function() {
-    const tracker = {} as any;
-    return function(key:string, callback:any) {
-        if (tracker[key]) return;
-        tracker[key] = setTimeout(function() {
-            delete tracker[key];
-            callback();
-        }, 0);
-    };
-})();
 
 function enableAutoResize(container:HTMLElement, surface:Surface):DestroyableCallback {
 

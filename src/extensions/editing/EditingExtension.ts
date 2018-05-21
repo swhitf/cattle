@@ -216,7 +216,7 @@ export class EditingExtension extends AbstractDestroyable
             if (autoApply)
             {
                 changes.apply(grid.model);
-                grid.forceUpdate();
+                // grid.forceUpdate();
             }
             
             grid.emit(new GridCommitEvent(grid, changes));

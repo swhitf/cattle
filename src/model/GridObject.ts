@@ -1,4 +1,3 @@
-import { Event } from '../base/Event';
 import { GridModel } from './GridModel';
 
 
@@ -28,24 +27,18 @@ export class GridObject
         return this.__version;
     }
 
-    private connect(model:GridModel, notify:boolean = true):void
+    private connect(model:GridModel):void
     {
         if (this.__model) throw 'GridObject is already part of an existing GridModel.';
         this.__model = model;
-        if (notify)
-        {
-            model.emit(new Event('change'));
-        }
+        model['notifyChange'](this);
     }
 
-    private disconnect(model:GridModel, notify:boolean = true):void
+    private disconnect(model:GridModel):void
     {
         if (this.__model != model) throw 'Invalid GridObject.disconnect call.';
         this.__model = null;
-        if (notify)
-        {
-            model.emit(new Event('change'));
-        }
+        model['notifyChange'](this);
     }
 
     private notifyChange(property?:string):void
@@ -53,7 +46,7 @@ export class GridObject
         this.__version = next();
         if (this.__model)
         {
-            this.__model.emit(new Event('change'));
+            this.__model['notifyChange'](this);
         }
     }
 }

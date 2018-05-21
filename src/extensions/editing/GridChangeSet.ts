@@ -72,7 +72,9 @@ export class GridChangeSet
     }
 
     public apply(model:GridModel):void
-    {
+    {   
+        let updStarted = false;
+
         for (let ref in this.index)
         {
             let tm = this.index[ref];
@@ -82,7 +84,18 @@ export class GridChangeSet
             if (is_readonly(cell) && !tm.cascaded)
                 continue;
 
+            if (!updStarted) 
+            {
+                model.beginUpdate();
+                updStarted = true;
+            }
+
             cell.value = tm.value;
+        }
+
+        if (updStarted) 
+        {
+            model.endUpdate();
         }
     }
 

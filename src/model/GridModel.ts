@@ -77,6 +77,7 @@ export class GridModel extends SimpleEventEmitter
      */
     public readonly rows:KeyedSet<GridRow>
 
+    private readonly updates:GridModelUpdate[] = [];
     private byId:ObjectMap<GridCell>;
     private byCoord:ObjectIndex<ObjectIndex<GridCell>>;
     private dims = { width:0, height:0 };
@@ -91,12 +92,12 @@ export class GridModel extends SimpleEventEmitter
     constructor(cells:GridCell[], columns:GridColumn[], rows:GridRow[])
     {
         super();
-        
+
+        this.beginUpdate();
         this.cells = new GridObjectSet<GridCell>(x => x.ref, this, cells);
         this.columns = new GridObjectSet<GridColumn>(x => x.ref, this, columns);
         this.rows = new GridObjectSet<GridRow>(x => x.ref, this, rows);
-
-        this.refresh();
+        this.endUpdate();
     }
 
     /**
@@ -113,6 +114,30 @@ export class GridModel extends SimpleEventEmitter
     public get height():number
     {
         return this.dims.height;
+    }
+
+    /**
+     * Prepares the model for an update.  beginUpdate must be called before any model components are changed.  Calls can be nested and will
+     * result in nested 'change' event emits.
+     */
+    public beginUpdate():void
+    {
+        this.updates.push({ changes: 0 });
+    }
+
+    /**
+     * Marks the end of a model update.  This will emit 'change' if changes were made.
+     */
+    public endUpdate():void
+    {
+        const upd = this.updates.pop();
+        if (!upd) throw 'Invalid call to endUpdate';
+
+        if (upd.changes)
+        {
+            this.refresh();
+            this.emit(new Event('change'));
+        }
     }
 
     /**
@@ -154,7 +179,7 @@ export class GridModel extends SimpleEventEmitter
     /**
      * Refreshes internal caches used to optimize lookups and should be invoked after the model has been changed (structurally).
      */
-    public refresh():void
+    private refresh():void
     {
         let { cells } = this;
 
@@ -192,9 +217,23 @@ export class GridModel extends SimpleEventEmitter
             }        
         }
     }
+
+    private notifyChange(object:GridObject):void
+    {
+        if (!this.updates.length) 
+        {
+            throw 'Cannot perform GridModel updates without calling beginUpdate.';
+        }
+        this.updates[this.updates.length - 1].changes++;
+    }
 }
 
-export class GridObjectSet<T extends GridObject> extends KeyedSet<T>
+interface GridModelUpdate
+{
+    changes:number;
+}
+
+class GridObjectSet<T extends GridObject> extends KeyedSet<T>
 {
     private model:GridModel
 
@@ -207,7 +246,7 @@ export class GridObjectSet<T extends GridObject> extends KeyedSet<T>
         {
             this.array.push(tm);
             this.index[indexer(tm)] = tm;
-            connect(model, tm, false);
+            connect(model, tm);
         }
     }
 
@@ -224,9 +263,8 @@ export class GridObjectSet<T extends GridObject> extends KeyedSet<T>
 
     public clear():void 
     {
-        this.array.forEach(x => disconnect(this.model, x, false));
+        this.array.forEach(x => disconnect(this.model, x));
         super.clear();
-        this.model.emit(new Event('change'));
     }
 
     public delete(key:number|string):boolean 
@@ -253,12 +291,12 @@ export class GridObjectSet<T extends GridObject> extends KeyedSet<T>
     }
 }
 
-function connect(model:GridModel, object:GridObject, notify:boolean = true)
+function connect(model:GridModel, object:GridObject)
 {
-    object['connect'](model, notify);
+    object['connect'](model);
 }
 
-function disconnect(model:GridModel, object:GridObject, notify:boolean = true)
+function disconnect(model:GridModel, object:GridObject)
 {
-    object['disconnect'](model, notify);
+    object['disconnect'](model);
 }
