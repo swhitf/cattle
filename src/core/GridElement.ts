@@ -34,8 +34,8 @@ export class GridElement extends SimpleEventEmitter
     private autoBufferUpdateEnabled:boolean = true;
     private burden:Burden = new Burden();
     private cameraBuffers:ObjectMap<CameraBuffer> = {};
+    private destroyed:boolean = false;
     private modelListener:Destroyable;
-
     private internal = {
         container: null as HTMLElement,
         layout: null as GridLayout,
@@ -48,7 +48,7 @@ export class GridElement extends SimpleEventEmitter
         let surface = new Surface(container.clientWidth, container.clientHeight);
         container.appendChild(surface.view);        
 
-        let grid = new GridElement(container, surface, initialModel || GridModel.dim(26, 100));
+        let grid = new GridElement(container, surface, initialModel || GridModel.create(26, 100));
         return grid;
     }
 
@@ -90,7 +90,7 @@ export class GridElement extends SimpleEventEmitter
         });
     }
 
-    @Observable(GridModel.empty)
+    @Observable(GridModel.createEmpty())
     public model:GridModel;
     
     @Observable(Point.empty)
@@ -124,6 +124,8 @@ export class GridElement extends SimpleEventEmitter
 
     public destroy():void
     {
+        if (this.destroyed) return;
+        this.destroyed = true;
         this.burden.destroy();
     }
 
@@ -169,11 +171,14 @@ export class GridElement extends SimpleEventEmitter
 
     public focus():void
     {
+        if (this.destroyed) return;
         this.surface.view.focus();
     }
 
     public forceUpdate():void
     {
+        if (this.destroyed) return;
+
         this.updateSurface();
         this.surface.render();
     }
@@ -213,9 +218,9 @@ export class GridElement extends SimpleEventEmitter
     
     private updateCameras():void
     {
-        console.log('updateCameras');
+        if (this.destroyed) return;
 
-        let { freezeMargin, layout, surface } = this;
+        const { freezeMargin, layout, surface } = this;
         this.autoBufferUpdateEnabled = false;
 
         let camMain = surface.cameras.item('main');
@@ -256,6 +261,8 @@ export class GridElement extends SimpleEventEmitter
 
     private updateSurface():void
     {
+        if (this.destroyed) return;
+
         Report.begin();
 
         let layout = this.layout;
@@ -293,6 +300,7 @@ export class GridElement extends SimpleEventEmitter
 
     private updateLayout():void
     {
+        if (this.destroyed) return;
         this.internal.layout = GridLayout.compute(this.model, this.padding);
     }
 

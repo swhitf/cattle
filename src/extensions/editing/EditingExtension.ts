@@ -47,6 +47,8 @@ export class EditingExtension extends AbstractDestroyable
         this.grid = grid;
         this.inputHandle = InputHandle.create(grid.container);
 
+        this.chain(this.inputHandle);
+
         MouseBehavior.for(grid.surface)
             .on(['LEFT.DBLCLICK/e'], () => this.doBeginEdit())
         ;
@@ -268,7 +270,7 @@ function is_readonly(cell:GridCell):boolean
     return cell['readonly'] === true || cell['editable'] === false;
 }
 
-class InputHandle
+class InputHandle extends AbstractDestroyable
 {
     public static create(root:HTMLElement):InputHandle
     {
@@ -294,6 +296,7 @@ class InputHandle
 
     private constructor(private root:HTMLElement, private text:HTMLInputElement) 
     {   
+        super();
     }
 
     public get elmt():HTMLInputElement
@@ -319,6 +322,18 @@ class InputHandle
         {
             this.text.parentElement.removeChild(this.text);
         }
+    }
+
+    public destroy():void
+    {
+        super.destroy();
+        const { text } = this;
+        
+        if (text && text.parentElement)
+        {
+            text.parentElement.removeChild(text);
+            this.root = null;
+        }        
     }
 
     public goto(relativeRect:RectLike, autoShow:boolean = true):void

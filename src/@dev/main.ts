@@ -1,4 +1,3 @@
-//@no-export
 import 'es5-shim';
 import 'es6-shim';
 import 'reflect-metadata';
@@ -16,6 +15,7 @@ import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
 import * as vq from '../vom/VisualQuery';
 import { DevHintProvider } from './DevHintProvider';
 
+//@no-export
 
 const click = (x, h) => {
     document.getElementById(x).addEventListener('click', h);
@@ -42,7 +42,7 @@ const click = (x, h) => {
 
 const state = {} as any;
 
-state.model = GridModel.dim(26 * 5, 50 * 10);
+state.model = GridModel.create(26 * 5, 50 * 10); 
 state.model.beginUpdate();
 state.model.cells.forEach(x => x.value = x.ref);
 state.model.endUpdate();
@@ -79,7 +79,7 @@ const lsnrs = [
     click('useExcel', () => state.grid.useTheme(MicrosoftExcelTheme)),
     click('useGoogle', () => state.grid.useTheme(GoogleSheetsTheme)),
     click('swap', () => {
-        state.model = GridModel.dim(26 * 5, 50 * 10);
+        state.model = GridModel.create(26 * 5, 50 * 10);
         state.model.beginUpdate();
         state.model.cells.forEach(x => x.value = x.ref);
         state.grid.model.cells[0].value = 'Another';

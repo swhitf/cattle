@@ -29,10 +29,23 @@ export class ScrollerExtension extends AbstractDestroyable
             grid.padding.top,
             grid.padding.right + this.scrollerWidth,
             grid.padding.bottom + this.scrollerWidth,
-            grid.padding.left);
+            grid.padding.left
+        );
 
         grid.on('change', () => this.alignElements());
         grid.on('scroll', () => this.alignElements());
+    }
+
+    public destroy():void
+    {
+        super.destroy();
+        const { wedge } = this;
+        
+        if (wedge && wedge.parentElement)
+        {
+            wedge.parentElement.removeChild(wedge);
+            this.wedge = null;
+        }        
     }
 
     private createElements():void

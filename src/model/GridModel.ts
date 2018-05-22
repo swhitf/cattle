@@ -22,7 +22,7 @@ export class GridModel extends SimpleEventEmitter
      * @param cols
      * @param rows
      */
-    public static dim(width:number, height:number):GridModel
+    public static create(width:number, height:number):GridModel
     {
         let cells = [] as GridCell[];
         let columns = [] as GridColumn[];
@@ -55,7 +55,7 @@ export class GridModel extends SimpleEventEmitter
      *
      * @returns {GridModel}
      */
-    public static empty():GridModel
+    public static createEmpty():GridModel
     {
         return new GridModel([], [], []);
     }
