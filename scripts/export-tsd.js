@@ -6,8 +6,8 @@ const glob = require('glob');
 const path = require('path');
 const fs = require('fs');
 
-let files = glob.sync('./build/browser/**/*.d.ts');
-let excludes = glob.sync('./build/browser/*.d.ts');
+let files = glob.sync('./build/**/*.d.ts');
+let excludes = glob.sync('./build/*.d.ts');
 files = files.filter(x => excludes.indexOf(x) < 0);
 
 //Process each file into the code
