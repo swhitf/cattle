@@ -1,9 +1,10 @@
-import { GridModel } from '../GridModel';
-import { GridColumn } from '../GridColumn';
-import { GridRow } from '../GridRow';
-import { GridCell } from '../GridCell';
 import { Point } from '../../geom/Point';
-import * as _ from '../../misc/Util'
+import { ObjectIndex, ObjectMap } from '../../misc/Interfaces';
+import * as _ from '../../misc/Util';
+import { GridCell } from '../GridCell';
+import { GridColumn } from '../GridColumn';
+import { GridModel } from '../GridModel';
+import { GridRow } from '../GridRow';
 import { DefaultGridCell } from './DefaultGridCell';
 
 

@@ -1,11 +1,11 @@
-import { DefaultHistoryManager, HistoryAction, HistoryManager } from './HistoryManager';
-import { zipPairs } from '../../misc/Util';
-import { GridChangeSet } from '../common/EditingExtension';
-import { GridExtension, GridElement } from '../../ui/GridElement';
-import { GridKernel } from '../../ui/GridKernel';
 import { KeyInput } from '../../input/KeyInput';
+import { ObjectMap } from '../../misc/Interfaces';
+import { zipPairs } from '../../misc/Util';
 import { command } from '../../ui/Extensibility';
-import * as _ from '../../misc/Util'
+import { GridElement, GridExtension } from '../../ui/GridElement';
+import { GridKernel } from '../../ui/GridKernel';
+import { GridChangeSet } from '../common/EditingExtension';
+import { DefaultHistoryManager, HistoryAction, HistoryManager } from './HistoryManager';
 
 
 interface CellEditSnapshot

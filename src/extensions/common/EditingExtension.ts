@@ -1,17 +1,19 @@
-import { GridCell } from '../../model/GridCell';
-import { GridModel } from '../../model/GridModel';
-import { GridKernel } from '.././../ui/GridKernel';
-import { GridElement, GridKeyboardEvent } from '.././../ui/GridElement';
-import { SelectorWidget } from './SelectorExtension';
+import * as Tether from 'tether';
+
+import { Point } from '../../geom/Point';
+import { RectLike } from '../../geom/Rect';
 import { KeyInput } from '../../input/KeyInput';
 import { MouseInput } from '../../input/MouseInput';
-import { Point } from '../../geom/Point';
-import { RectLike, Rect } from '../../geom/Rect';
-import { values } from '../../misc/Util';
-import { AbsWidgetBase, Widget } from '../../ui/Widget';
-import { command, routine, variable } from '../../ui/Extensibility';
-import * as Tether from 'tether';
 import * as Dom from '../../misc/Dom';
+import { ObjectMap } from '../../misc/Interfaces';
+import { values } from '../../misc/Util';
+import { GridCell } from '../../model/GridCell';
+import { GridModel } from '../../model/GridModel';
+import { command, routine, variable } from '../../ui/Extensibility';
+import { AbsWidgetBase, Widget } from '../../ui/Widget';
+import { GridElement, GridKeyboardEvent } from '.././../ui/GridElement';
+import { GridKernel } from '.././../ui/GridKernel';
+import { SelectorWidget } from './SelectorExtension';
 
 
 const Vectors = {

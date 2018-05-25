@@ -1,3 +1,4 @@
+import { ObjectMap } from './Interfaces';
 
 
 export function parse(html:string):HTMLElement

@@ -1,3 +1,4 @@
+import { ObjectIndex, ObjectMap } from './Interfaces';
 
 
 export function coalesce<T>(...inputs:T[]):T

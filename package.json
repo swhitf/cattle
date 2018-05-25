@@ -7,6 +7,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "concurrently -k \"node scripts/build.js -w -s\" \"http-server ./dist/dev -c-1\"",
+    "export:lib": "tsc -v",
     "export:browser": "node scripts\\export-browser.js",
     "export:tsd": "node scripts\\export-tsd.js"
   },
@@ -14,7 +15,6 @@
   "license": "MIT",
   "dependencies": {
     "@types/papaparse": "^4.1.28",
-    "@types/reflect-metadata": "0.0.5",
     "@types/tether": "^1.4.0",
     "bases": "^0.2.1",
     "clipboard-js": "^0.3.3",
@@ -24,14 +24,13 @@
   },
   "devDependencies": {
     "@types/jquery": "^2.0.34",
-    "reflect-metadata":"^0.1.10",
-    "concurrently":"^3.5.0",
-    "http-server":"^0.10.0",
     "browserify": "^13.3.0",
+    "concurrently": "^3.5.0",
     "fs-extra": "^2.1.2",
-    "glob": "^7.1.1",
+    "glob": "^7.1.2",
     "gulp": "^3.9.1",
     "gulp-connect": "^5.0.0",
+    "http-server": "^0.10.0",
     "merge-stream": "^1.0.1",
     "parallelshell": "^2.0.0",
     "tsify": "^3.0.0",

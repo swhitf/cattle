@@ -1,20 +1,21 @@
-import { ie_safe_create_mouse_event } from '../misc/Polyfill';
 import { Padding } from '../geom/Padding';
-import { MouseInput } from '../input/MouseInput';
-import { GridRow } from '../model/GridRow';
+import { Point, PointLike } from '../geom/Point';
+import { Rect, RectLike } from '../geom/Rect';
+import { MouseDragEvent } from '../input/MouseDragEvent';
+import { ObjectMap } from '../misc/Interfaces';
+import { ie_safe_create_mouse_event } from '../misc/Polyfill';
+import { property } from '../misc/Property';
+import * as _ from '../misc/Util';
 import { DefaultGridModel } from '../model/default/DefaultGridModel';
-import { EventEmitterBase } from './internal/EventEmitter';
-import { GridKernel } from './GridKernel';
 import { GridCell } from '../model/GridCell';
 import { GridModel } from '../model/GridModel';
 import { GridRange } from '../model/GridRange';
-import { GridLayout } from './internal/GridLayout';
-import { MouseDragEvent } from '../input/MouseDragEvent';
-import { Rect, RectLike } from '../geom/Rect';
-import { Point, PointLike } from '../geom/Point';
-import { property } from '../misc/Property';
 import { variable } from './Extensibility';
-import * as _ from '../misc/Util';
+import { GridKernel } from './GridKernel';
+import { EventEmitterBase } from './internal/EventEmitter';
+import { GridLayout } from './internal/GridLayout';
+
+declare var Reflect;
 
 
 export interface GridExtension

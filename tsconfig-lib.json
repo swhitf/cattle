@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "lib": [
+            "dom",
+            "es5",
+            "es2015.core",
+            "es2015.promise",
+            "scripthost"
+        ],
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "declaration": true,
+        "rootDir": "src",
+        "outDir": "dist/lib",
+        "sourceMap": true
+    },
+    "exclude": [
+        "build",
+        "export",
+        "dist",
+        "node_modules",
+        "src/browser.ts",
+        "src/_dev"
+    ]
+}

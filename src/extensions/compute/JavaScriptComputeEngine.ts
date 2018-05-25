@@ -1,10 +1,10 @@
-import { Base26 } from '../..';
+import { ObjectMap } from '../../misc/Interfaces';
 import { extend, flatten, index } from '../../misc/Util';
-import { ComputeEngine } from './ComputeEngine';
-import { GridChangeSet } from '../common/EditingExtension';
-import { GridElement } from '../../ui/GridElement';
 import { GridCell } from '../../model/GridCell';
 import { GridRange } from '../../model/GridRange';
+import { GridElement } from '../../ui/GridElement';
+import { GridChangeSet } from '../common/EditingExtension';
+import { ComputeEngine } from './ComputeEngine';
 import { WatchManager } from './WatchManager';
 
 

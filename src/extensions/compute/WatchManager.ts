@@ -1,3 +1,6 @@
+import { ObjectMap } from '../../misc/Interfaces';
+
+
 export class WatchManager
 {
     private observing:ObjectMap<string[]> = {};

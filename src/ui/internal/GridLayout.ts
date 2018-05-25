@@ -1,12 +1,13 @@
 import { Padding } from '../../geom/Padding';
+import { Rect, RectLike } from '../../geom/Rect';
+import { ObjectIndex, ObjectMap } from '../../misc/Interfaces';
+import * as _ from '../../misc/Util';
 import { DefaultGridColumn } from '../../model/default/DefaultGridColumn';
 import { DefaultGridRow } from '../../model/default/DefaultGridRow';
 import { GridCell } from '../../model/GridCell';
 import { GridColumn } from '../../model/GridColumn';
 import { GridModel } from '../../model/GridModel';
 import { GridRow } from '../../model/GridRow';
-import { Rect, RectLike } from '../../geom/Rect';
-import * as _ from '../../misc/Util';
 
 
 type CellColRowLookup = ObjectIndex<ObjectIndex<GridCell>>;
