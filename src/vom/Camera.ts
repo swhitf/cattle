@@ -1,8 +1,5 @@
-import { Visual } from './Visual';
 import { Point, PointInput } from '../geom/Point';
-import { Matrix } from '../geom/Matrix';
 import { Rect } from '../geom/Rect';
-
 
 
 export interface Camera

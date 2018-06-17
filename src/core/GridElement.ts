@@ -399,7 +399,7 @@ class CameraBuffer extends AbstractDestroyable
         let { camera, visuals } = this;
 
         const cc = Report.time('captureCells');
-        let cells = layout.captureCells(camera.area.inflate([0, 0]));
+        let cells = layout.captureCells(camera.area.inflate([200, 200]));
         let newList = new Array<CameraBufferEntry>(cells.length);
         cc();
 

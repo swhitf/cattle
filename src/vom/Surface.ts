@@ -20,6 +20,9 @@ import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
 import { Composition, CompositionRegion } from './rendering/Composition';
 import { Report } from './rendering/Report';
+import { Composition2 } from './rendering2/Composition2';
+import { TileRef } from './rendering2/TileRef';
+import { TilingStrategy } from './rendering2/TilingStrategy';
 import { RootVisual } from './RootVisual';
 import { Theme } from './styling/Theme';
 import { Visual } from './Visual';
@@ -87,6 +90,7 @@ export class Surface extends SimpleEventEmitter
 
     private readonly sequence:VisualSequence;
     private readonly composition:Composition;
+    private readonly composition2:Composition2;
     private readonly dragSupport:DragHelper;
 
     private destroyed:boolean;    
@@ -118,6 +122,7 @@ export class Surface extends SimpleEventEmitter
         this.dragSupport = new DragHelper(this.view, this.onViewMouseDragEvent.bind(this));
 
         this.composition = new Composition();
+        this.composition2 = new Composition2();
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
  
@@ -165,7 +170,8 @@ export class Surface extends SimpleEventEmitter
 
         if (this.dirtyRender)
         {
-            this.performCompositionUpdates();
+            // this.performCompositionUpdates();
+            this.performCompositionUpdates2();
             didRender = true;
         }
 
@@ -231,11 +237,6 @@ export class Surface extends SimpleEventEmitter
         themeQueue.clear();
 
         ptt();
-    }
-
-    private performCompositionUpdates2():void 
-    {
-        
     }
 
     private performCompositionUpdates():void 
@@ -322,6 +323,63 @@ export class Surface extends SimpleEventEmitter
         const cdt = Report.time('Composition.Draw');
         composition.render(view);
         cdt();
+    }
+
+    private performCompositionUpdates2():void 
+    {
+        const { composition2, sequence, view } = this;
+        const tiling = new TilingStrategy();
+        
+        //Only render to cameras with valid bounds
+        const cameras = this.cameras.toArray()
+            .filter(x => !!x.bounds.width && !!x.bounds.height);
+
+        //Determine the tiles we need to render across all cameras
+        const camTiles = KeyedSet.createStrict(
+            [].concat(...cameras.map(x => tiling.for(x.area))) as TileRef[],
+            x => x.s
+        );
+
+        composition2.beginUpdate();
+
+        camTiles.forEach(x => this.composition2.tile(x))
+        
+        sequence.climb(visual => 
+        {
+            const visTiles = tiling.for(visual.absoluteBounds);
+            
+            //If the tiles this visual appears in are not in the camTiles, we don't need to render this visual
+            if (!camTiles.hasAny(visTiles)) return true;
+
+            //Get object describing dirty state of visual
+            const visualState = (visual['__dirty'] || {}) as DirtyState;
+
+            //Get (allocate or recycle) element for visual
+            const elmt = composition2.element(visual.id, visual.zIndex);
+
+            //Compute global element bounds by inflating the visual.absoluteBounds; inflation prevents clipping of
+            //borders or other decoration outside of the visual bounds
+            elmt.arrange(visual.absoluteBounds.inflate([5, 5]));
+
+            //If element is invalid or visual needs redrawing, then redraw
+            if (elmt.invalid || visualState.render)
+            {
+                elmt.draw(gfx => {
+                    gfx.translate(5, 5);
+                    visual.render(gfx)
+                });
+            }
+
+            visual['__dirty'] = {};
+            return true;
+        });
+
+        composition2.endUpdate();
+        
+        for (let c of cameras) 
+        {
+            composition2.render(view, c.bounds, c.vector);
+        }
     }
 
     private createCameraManager():InternalCameraManager
