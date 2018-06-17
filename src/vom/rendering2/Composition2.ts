@@ -2,6 +2,7 @@ import { KeyedSet } from '../../base/KeyedSet';
 import { Matrix } from '../../geom/Matrix';
 import { Point } from '../../geom/Point';
 import { Rect } from '../../geom/Rect';
+import { Report } from '../rendering/Report';
 import { Element } from './Element';
 import { Key } from './Key';
 import { Tile } from './Tile';
@@ -54,7 +55,7 @@ export class Composition2
         this.tiles.removeWhere(x => {
             if (x.retain) {
                 if (x.invalid) {
-                    x.draw(this.elements);
+                    Report.time('Tile.Draw', () => x.draw(this.elements));
                 }
                 return false;
             }
@@ -104,10 +105,12 @@ export class Composition2
             
             const t = Matrix.identity
                 .translate(vector.x, vector.y).inverse()
-                .translate(x.area.left, x.area.top);
+                .translate(x.area.left, x.area.top)
+                .translate(bounds.left, bounds.top)
+            ;
 
             gfx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-            x.buffer.drawTo(gfx);
+            x.buffer.drawTo(gfx, bounds);
         });
     }
 
@@ -116,4 +119,3 @@ export class Composition2
         this.tiles.forEach(x => x.invalidate(rect));
     }
 }
-

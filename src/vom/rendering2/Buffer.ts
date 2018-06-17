@@ -1,5 +1,5 @@
 //@no-export
-import { RectLike } from '../../geom/Rect';
+import { Rect, RectLike } from '../../geom/Rect';
 
 
 export interface BufferUpdateCallback 
@@ -50,7 +50,7 @@ export class Buffer
         gfx.clearRect(area.left, area.top, area.width, area.height);
     }
 
-    public drawTo(gfx:CanvasRenderingContext2D):void 
+    public drawTo(gfx:CanvasRenderingContext2D, clipRect?:Rect):void 
     {
         gfx.drawImage(this.canvas, 0, 0);
     }

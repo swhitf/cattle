@@ -330,12 +330,14 @@ export class Surface extends SimpleEventEmitter
         const { composition2, sequence, view } = this;
         const tiling = new TilingStrategy();
         
+        const cpt = Report.time('Composition.Prepare');
+
         //Only render to cameras with valid bounds
         const cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height);
 
         //Determine the tiles we need to render across all cameras
-        const camTiles = KeyedSet.createStrict(
+        const camTiles = KeyedSet.create(
             [].concat(...cameras.map(x => tiling.for(x.area))) as TileRef[],
             x => x.s
         );
@@ -364,10 +366,12 @@ export class Surface extends SimpleEventEmitter
             //If element is invalid or visual needs redrawing, then redraw
             if (elmt.invalid || visualState.render)
             {
+                Report.time('Element.Draw', () => 
                 elmt.draw(gfx => {
                     gfx.translate(5, 5);
                     visual.render(gfx)
-                });
+                })
+                );
             }
 
             visual['__dirty'] = {};
@@ -375,11 +379,14 @@ export class Surface extends SimpleEventEmitter
         });
 
         composition2.endUpdate();
+        cpt();
         
+        const cdt = Report.time('Composition.Draw');
         for (let c of cameras) 
         {
             composition2.render(view, c.bounds, c.vector);
         }
+        cdt();
     }
 
     private createCameraManager():InternalCameraManager
