@@ -179,7 +179,6 @@ export class Surface extends SimpleEventEmitter
 
         if (didRender)
         {
-            console.log('render');
             Report.complete();
             this.propagateEvent(new Event('render'), []);
         }

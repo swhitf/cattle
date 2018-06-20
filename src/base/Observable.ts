@@ -1,6 +1,8 @@
 
 
-export function Observable(defaultValue?:any):any
+export type ObservableValueFilter = (val:any) => any;
+
+export function Observable(defaultValue?:any, valueFilter?:ObservableValueFilter):any
 {
     return function(target:any, propertyKey:string):PropertyDescriptor
     {
@@ -31,6 +33,11 @@ export function Observable(defaultValue?:any):any
                 if ((value === undefined || value === null) && !(defaultValue === undefined || defaultValue === null))
                 {
                     value = defaultValue;
+                }
+
+                if (valueFilter)
+                {
+                    value = valueFilter(value);
                 }
 
                 state[propertyKey] = value;
