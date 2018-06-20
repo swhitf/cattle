@@ -330,7 +330,7 @@ export class Surface extends SimpleEventEmitter
         const { composition2, sequence, view } = this;
         const tiling = new TilingStrategy();
         
-        const cpt = Report.time('Composition.Prepare');
+        const $cp = Report.time('Composition.Prepare');
 
         //Only render to cameras with valid bounds
         const cameras = this.cameras.toArray()
@@ -342,9 +342,9 @@ export class Surface extends SimpleEventEmitter
             x => x.s
         );
 
-        composition2.beginUpdate();
+        Report.time('Composition.BeginUpdate', () => composition2.beginUpdate());
 
-        camTiles.forEach(x => this.composition2.tile(x))
+        camTiles.forEach(x => Report.time('Composition.AllocTile', () => this.composition2.tile(x)));
         
         sequence.climb(visual => 
         {
@@ -357,20 +357,22 @@ export class Surface extends SimpleEventEmitter
             const visualState = (visual['__dirty'] || {}) as DirtyState;
 
             //Get (allocate or recycle) element for visual
+            const $ea = Report.time('Element.Alloc');
             const elmt = composition2.element(visual.id, visual.zIndex);
+            $ea();
 
             //Compute global element bounds by inflating the visual.absoluteBounds; inflation prevents clipping of
             //borders or other decoration outside of the visual bounds
-            elmt.arrange(visual.absoluteBounds.inflate([5, 5]));
+            Report.time('Element.Arrange', () => elmt.arrange(visual.absoluteBounds.inflate([5, 5])));
 
             //If element is invalid or visual needs redrawing, then redraw
             if (elmt.invalid || visualState.render)
             {
                 Report.time('Element.Draw', () => 
-                elmt.draw(gfx => {
-                    gfx.translate(5, 5);
-                    visual.render(gfx)
-                })
+                    elmt.draw(gfx => {
+                        gfx.translate(5, 5);
+                        visual.render(gfx)
+                    })
                 );
             }
 
@@ -378,8 +380,8 @@ export class Surface extends SimpleEventEmitter
             return true;
         });
 
-        composition2.endUpdate();
-        cpt();
+        Report.time('Composition.EndUpdate', () => composition2.endUpdate());
+        $cp();
         
         const cdt = Report.time('Composition.Draw');
         for (let c of cameras) 
