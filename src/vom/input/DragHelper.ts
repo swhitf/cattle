@@ -6,12 +6,13 @@ import * as dom from '../../misc/Dom';
 
 export interface DragHelperCallback
 {
-    (me:MouseEvent, distance:Point):void;
+    (me:MouseEvent, source:HTMLElement, distance:Point):void;
 }
 
 export class DragHelper extends AbstractDestroyable
 {
     private dragging:boolean;
+    private dragSource:EventTarget;
     private previous:Point;
 
     private handles:VoidCallback[];
@@ -37,6 +38,7 @@ export class DragHelper extends AbstractDestroyable
     private dragStart(me:MouseEvent):void
     {
         this.dragging = true;
+        this.dragSource = me.target;
         this.previous = new Point(me.screenX, me.screenY);
     }
     
@@ -47,7 +49,7 @@ export class DragHelper extends AbstractDestroyable
             let screenPt = new Point(me.screenX, me.screenY);
             let distance = screenPt.subtract(this.previous);
 
-            this.handler(me, distance);
+            this.handler(me, this.dragSource as HTMLElement, distance);
 
             this.previous = screenPt;
         }

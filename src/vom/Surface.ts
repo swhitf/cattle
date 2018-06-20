@@ -534,7 +534,7 @@ export class Surface extends SimpleEventEmitter
         this.propagateEvent(evt, stack);
     }
 
-    private onViewMouseDragEvent(me:MouseEvent, distance:Point):void
+    private onViewMouseDragEvent(me:MouseEvent, source:HTMLElement, distance:Point):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulativeOffset(this.view));
         

@@ -5,7 +5,6 @@ import { GridKernel } from '../../core/GridKernel';
 import { Padding } from '../../geom/Padding';
 import { Point } from '../../geom/Point';
 import * as dom from '../../misc/Dom';
-import { coalesce } from '../../misc/Util';
 import { DragHelper } from '../../vom/input/DragHelper';
 
 
@@ -26,6 +25,7 @@ const Style = `
         right: 0;
         bottom: 0;
         background: gainsboro;
+        user-select: none;
     }
     
     .scroll-lane .scroll-bar {
@@ -74,8 +74,6 @@ export class ScrollerExtension2 extends AbstractDestroyable
     constructor(private scrollerWidth?:number) 
     {
         super();
-
-        this.scrollerWidth = coalesce(scrollerWidth, detectNativeScrollerWidth());
     }
 
     public init(grid:GridElement, kernel:GridKernel)
@@ -178,31 +176,6 @@ export class ScrollerExtension2 extends AbstractDestroyable
     }
 }
 
-function detectNativeScrollerWidth() 
-{
-    var outer = document.createElement("div");
-    outer.style.visibility = "hidden";
-    outer.style.width = "100px";
-    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
-    document.body.appendChild(outer);
-
-    var widthNoScroll = outer.offsetWidth;
-    // force scrollbars
-    outer.style.overflow = "scroll";
-
-    // add innerdiv
-    var inner = document.createElement("div");
-    inner.style.width = "100%";
-    outer.appendChild(inner);        
-
-    var widthWithScroll = inner.offsetWidth;
-
-    // remove divs
-    outer.parentNode.removeChild(outer);
-
-    return widthNoScroll - widthWithScroll;
-}
-
 class ScrollController extends AbstractDestroyable 
 {
     private lane:HTMLElement;
@@ -223,8 +196,10 @@ class ScrollController extends AbstractDestroyable
         this.lane = lane;
         this.bar = lane.firstElementChild as HTMLElement;
 
-        const dh = new DragHelper(this.bar, this.onBarDrag.bind(this));
-        this.chain(dh);
+        const dh1 = new DragHelper(this.bar, this.onBarDrag.bind(this));
+        const dh2 = new DragHelper(this.lane, this.onLaneDrag.bind(this));
+        
+        this.chain(dh1, dh2);
     }
 
     public get min():number
@@ -242,13 +217,30 @@ class ScrollController extends AbstractDestroyable
         return this.view / (this.total || 1);
     }
 
-    private onBarDrag(me:MouseEvent, dist:Point):void 
+    private onBarDrag(me:MouseEvent, source:HTMLElement, dist:Point):void 
     {
+        if (source != this.bar) return;
+
         let np = this.position + (dist.y / this.ratio);
         if (np < this.min) np = this.min;
         if (np > this.max) np = this.max;
         this.position = np;
     }
+
+    
+    private onLaneDrag(me:MouseEvent, source:HTMLElement, dist:Point):void 
+    {
+        if (source != this.lane) return;
+        
+        const mpt = new Point(me.clientX, me.clientY)
+        const rpt = mpt.subtract(dom.cumulativeOffset(this.lane));
+
+        let np = (rpt.y / this.ratio) - (this.view / 2);
+        if (np < this.min) np = this.min;
+        if (np > this.max) np = this.max;
+        this.position = np;
+    }
+
 
     private notifyChange(prop:string):void
     {
