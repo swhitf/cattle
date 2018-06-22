@@ -46,6 +46,11 @@ export abstract class Node
         }
 
         this.area = rect;
+
+        if (this.parent && this.area)
+        {
+            this.parent.invalidate(this.area);
+        }
     }
 
     public beginUpdate():void

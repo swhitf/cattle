@@ -36,7 +36,8 @@ export class Region extends Node implements CompositionRegion
 
     public invalidate(area:Rect):void
     {
-        if (area.equals(this.dirtyAreas[this.dirtyAreas.length -1]))
+        if (area.equals(this.dirtyAreas[this.dirtyAreas.length -1]) ||
+            area.equals(this.dirtyAreas[this.dirtyAreas.length -2]))
             return;
 
         this.dirtyAreas.push(area);
@@ -136,6 +137,14 @@ export class Region extends Node implements CompositionRegion
                     }
                 }
             });
+
+            // Uncomment to see the dirty areas
+            // for (let da of dirtyAreas) 
+            // {
+            //     buffer.context.setTransform(1, 0, 0, 1, 0, 0);
+            //     buffer.context.strokeStyle = 'red';
+            //     buffer.context.strokeRect(da.left, da.top, da.width, da.height);
+            // }
         }
         else
         {
@@ -147,7 +156,7 @@ export class Region extends Node implements CompositionRegion
         }
 
         this.dirty = false;
-        this.dirtyAreas = [];
+        this.dirtyAreas.splice(0, this.dirtyAreas.length);
     }
 }
 

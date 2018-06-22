@@ -53,7 +53,7 @@ state.grid = GridElement
     .mergeInterface()
 ;
 
-state.grid.freezeMargin = new Point(2, 2);
+// state.grid.freezeMargin = new Point(2, 2);
 
 //debug_events(grid);
 //debug_events(grid.surface);

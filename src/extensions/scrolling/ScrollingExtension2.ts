@@ -169,15 +169,15 @@ export class ScrollerExtension2 extends AbstractDestroyable
         const { grid } = this;
         const { model, layout } = grid;
         
-        const step = dimVec(dim, val + 1);
+        const step = dimVec(dim, val);
         
-        const from = layout.pickCell(grid.scroll);
-        const to = model.findCellNeighbor(from.ref, step);
+        // const from = layout.pickCell(grid.scroll);
+        // const to = model.findCellNeighbor(from.ref, step);
         
-        const a = Point.create(layout.measureCell(from.ref));
-        const b = Point.create(layout.measureCell(to.ref));
+        // const a = Point.create(layout.measureCell(from.ref));
+        // const b = Point.create(layout.measureCell(to.ref));
 
-        grid.scroll = grid.scroll.add(b.subtract(a));
+        grid.scroll = grid.scroll.add(step);
     }
 }
 
@@ -273,8 +273,9 @@ function dimVec(dim:ScrollDim, val:number):Point
 }
 
 function wheelStep(x) {
-    var s = Math.round(Math.abs(x) / 40);
-    if (s < 0) s = 1;
-    if (s > 2) s = 2;
-    return s * (x / Math.abs(x));
+    // var s = Math.round(Math.abs(x) / 40);
+    // if (s < 0) s = 1;
+    // if (s > 2) s = 2;
+    // return s * (x / Math.abs(x));
+    return x;
 }
