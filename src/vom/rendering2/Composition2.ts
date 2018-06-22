@@ -43,6 +43,17 @@ export class Composition2
 
     public beginUpdate():void
     {
+        for (let i = 0; i < this.tiles.size; i++) {
+            let a = 1 + 2;
+        }
+
+        for (let i = 0; i < this.elements.size; i++) {
+            let a = 1 + 2;
+        }
+
+        console.log(this.tiles.size);
+        console.log(this.elements.size);
+
         this.tiles.forEach(x => x.retain = false);
         this.elements.forEach(x => x.retain = false);
     }

@@ -170,8 +170,8 @@ export class Surface extends SimpleEventEmitter
 
         if (this.dirtyRender)
         {
-            // this.performCompositionUpdates();
-            this.performCompositionUpdates2();
+            this.performCompositionUpdates();
+            // this.performCompositionUpdates2();
             didRender = true;
         }
 
@@ -248,7 +248,7 @@ export class Surface extends SimpleEventEmitter
         const cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
 
-        composition.beginUpdate();
+        Report.time('Composition.BeginUpdate', () => composition.beginUpdate());
 
         const rootRegion = composition.root;
         rootRegion.arrange(new Rect(0, 0, this.width, this.height));

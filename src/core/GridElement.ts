@@ -45,7 +45,7 @@ export class GridElement extends SimpleEventEmitter
 
     public static create(container:HTMLElement, initialModel?:GridModel):GridElement
     {
-        let surface = new Surface(container.clientWidth, container.clientHeight);
+        let surface = new Surface(container.clientWidth - 12, container.clientHeight - 12);
         container.appendChild(surface.view);        
 
         let grid = new GridElement(container, surface, initialModel || GridModel.create(26, 100));
@@ -96,10 +96,10 @@ export class GridElement extends SimpleEventEmitter
     @Observable(Point.empty)
     public freezeMargin:Point;
     
-    @Observable(Padding.empty)
+    @Observable(new Padding(0))
     public padding:Padding;
     
-    @Observable(Point.empty)
+    @Observable(Point.empty, 'filterScrollValue')
     public scroll:Point;
 
     public get container():HTMLElement
@@ -175,13 +175,13 @@ export class GridElement extends SimpleEventEmitter
         this.surface.view.focus();
     }
 
-    public forceUpdate():void
-    {
-        if (this.destroyed) return;
+    // public forceUpdate():void
+    // {
+    //     if (this.destroyed) return;
 
-        this.updateSurface();
-        this.surface.render();
-    }
+    //     this.updateSurface();
+    //     this.surface.render();
+    // }
 
     private initCameras():void
     {
@@ -221,6 +221,8 @@ export class GridElement extends SimpleEventEmitter
         if (this.destroyed) return;
 
         const { freezeMargin, layout, surface } = this;
+        const scroll = this.alignScrollValue(this.scroll);
+
         this.autoBufferUpdateEnabled = false;
 
         let camMain = surface.cameras.item('main');
@@ -231,7 +233,7 @@ export class GridElement extends SimpleEventEmitter
         if (freezeMargin.equals(Point.empty))
         {   
             let camMain = surface.cameras.item('main');
-            camMain.vector = this.scroll;   
+            camMain.vector = scroll;   
             camMain.bounds = new Rect(0, 0, this.surface.width, this.surface.height);
 
             //Setting bounds to nothing will disable cameras
@@ -243,13 +245,13 @@ export class GridElement extends SimpleEventEmitter
                 layout.measureColumnRange(0, freezeMargin.x).width, 
                 layout.measureRowRange(0, freezeMargin.y).height);
             
-            camMain.vector = margin.add(this.scroll);
+            camMain.vector = margin.add(scroll);
             camMain.bounds = new Rect(margin.x, margin.y, surface.width - margin.x, surface.height - margin.y);
             
-            camTop.vector = new Point(margin.x + this.scroll.x, 0);
+            camTop.vector = new Point(margin.x + scroll.x, 0);
             camTop.bounds = new Rect(margin.x, 0, surface.width - margin.x, margin.y);
             
-            camLeft.vector = new Point(0, margin.y + this.scroll.y);
+            camLeft.vector = new Point(0, margin.y + scroll.y);
             camLeft.bounds = new Rect(0, margin.y, margin.x, surface.height - margin.y );
             
             camTopLeft.vector = new Point(0, 0);
@@ -357,6 +359,36 @@ export class GridElement extends SimpleEventEmitter
 
         this.emit(new GridChangeEvent(this, property));
     }
+
+    private filterScrollValue(val:Point):Point
+    {
+        const { layout, surface } = this;
+
+        const maxScroll = new Point(
+            Math.max(0, layout.width - surface.width),
+            Math.max(0, layout.height - surface.height),
+        );
+
+        return val.clamp(Point.empty, maxScroll);
+    }
+
+    private alignScrollValue(val:Point):Point
+    {
+        const { layout, surface } = this;
+
+        const cell = layout.pickCell(val);
+        if (cell)
+        {
+            const pos = Rect.fromLike(layout.measureCell(cell.ref));
+            //If scroll is right on a cell, keep value otherwise wrap to next cell
+            val = new Point(
+                val.left == pos.left ? val.left : pos.right, 
+                val.top == pos.top ? val.top : pos.bottom, 
+            );
+        }
+
+        return val;
+    }
 }
 
 interface VisualDelegate
@@ -399,7 +431,7 @@ class CameraBuffer extends AbstractDestroyable
         let { camera, visuals } = this;
 
         const cc = Report.time('captureCells');
-        let cells = layout.captureCells(camera.area.inflate([200, 200]));
+        let cells = layout.captureCells(camera.area.inflate([0, 0]));
         let newList = new Array<CameraBufferEntry>(cells.length);
         cc();
 
@@ -463,7 +495,9 @@ function enableAutoResize(container:HTMLElement, surface:Surface):DestroyableCal
     let t = { id: null as any };
 
     const roi = new RO((entries, observer) => {
-        const {left, top, width, height} = entries[0].contentRect;
+        let {left, top, width, height} = entries[0].contentRect;
+        width -= 12;
+        height -= 12;
         
         const apply = () => {
             if (surface.width != width || surface.height != height) {

@@ -8,10 +8,19 @@ export interface Camera
     
     order:number; 
 
+    /**
+     * Describes the bounds of the camera within the viewport.
+     */
     bounds:Rect; 
     
+    /**
+     * Describes the position the camera is looking at.
+     */
     vector:Point;
 
+    /**
+     * Describes the viewable area of the camera.
+     */
     readonly area:Rect;
 
     toCameraPoint(type:'surface'|'view', pt:PointInput):Point;

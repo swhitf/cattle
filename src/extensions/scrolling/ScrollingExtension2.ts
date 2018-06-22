@@ -2,7 +2,6 @@ import { AbstractDestroyable } from '../../base/AbstractDestroyable';
 import { Observable } from '../../base/Observable';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-import { Padding } from '../../geom/Padding';
 import { Point } from '../../geom/Point';
 import * as dom from '../../misc/Dom';
 import { DragHelper } from '../../vom/input/DragHelper';
@@ -30,21 +29,22 @@ const Style = `
     
     .scroll-lane .scroll-bar {
         position: absolute;
-        top: 0;
-        left: 0;
-        background: gray;
+        background: #9c9c9c;
         user-select: none;
+        border-radius: 2px;
     }
     
     .scroll-lane.scroll-v {
-        top: 0;
+        top: 0px;
         bottom: 12px;
         width: 12px;
+        outline-top: solid 2px red;
+        outline-bottom: solid 2px red;
     }
     
     .scroll-lane.scroll-v .scroll-bar {
-        right: 0;
-        height: 50px;
+        left: 2px;
+        right: 2px;
     }
     
     .scroll-lane.scroll-h {
@@ -54,8 +54,8 @@ const Style = `
     }
     
     .scroll-lane.scroll-h .scroll-bar {
-        bottom: 0;
-        width: 50px;
+        top: 2px;
+        bottom: 2px;
     }
 `;
 
@@ -71,7 +71,10 @@ export class ScrollerExtension2 extends AbstractDestroyable
     private grid:GridElement;
     private wedge:HTMLElement;
 
-    constructor(private scrollerWidth?:number) 
+    private vScroll:ScrollController;
+    private hScroll:ScrollController;
+
+    constructor() 
     {
         super();
     }
@@ -82,15 +85,15 @@ export class ScrollerExtension2 extends AbstractDestroyable
         this.createElements();
 
         //Set padding right and bottom to scroller width to prevent overlap
-        grid.padding = new Padding(
-            grid.padding.top,
-            grid.padding.right + this.scrollerWidth,
-            grid.padding.bottom + this.scrollerWidth,
-            grid.padding.left
-        );
+        // grid.padding = new Padding(
+        //     grid.padding.top,
+        //     grid.padding.right - 12,
+        //     grid.padding.bottom + 12,
+        //     grid.padding.left
+        // );
 
-        // grid.on('change', () => this.alignElements());
-        // grid.on('scroll', () => this.alignElements());
+        grid.surface.on('resize', () => this.alignElements());
+        grid.on('change', () => this.alignElements());
     }
 
     public destroy():void
@@ -115,71 +118,77 @@ export class ScrollerExtension2 extends AbstractDestroyable
         const container = dom.parse(Template);
         root.appendChild(container);
 
-        const sv = new ScrollController(
+        this.vScroll = new ScrollController(
+            'y',
             container.children.item(0) as HTMLElement,
             this.applyScroll.bind(this),
         );
-        sv.total = grid.layout.height;
-        sv.view = grid.surface.height;
-        sv.position = 0;
 
-        // this.chain(dom.on(root, 'scroll', this.onContainerScroll.bind(this)));
+        this.hScroll = new ScrollController(
+            'x',
+            container.children.item(1) as HTMLElement,
+            this.applyScroll.bind(this),
+        );
 
-        // const wedge = this.wedge = dom.create('div', { pointerEvents: 'none', });
-        // root.appendChild(wedge);
+        root.addEventListener('wheel', e => {
+            this.applyScrollStep('y', wheelStep(e.deltaY));
+        });
 
-        // this.alignElements();
+        this.alignElements();
     }
 
     private alignElements():void
     {
-        let grid = this.grid;
-        let container = grid.container;
+        const { grid, vScroll, hScroll } = this;
 
-        dom.css(grid.surface.view, {
-            position: 'absolute',
-            left: (grid.scroll.left) + 'px',
-            top: (grid.scroll.top) + 'px',
-        });
+        if (vScroll.total != grid.layout.height)
+            vScroll.total = grid.layout.height;
+        if (vScroll.view != grid.surface.height)
+            vScroll.view = grid.surface.height;
+        if (vScroll.position != grid.scroll.y)
+            vScroll.position = grid.scroll.y;
 
-        dom.css(this.wedge, {
-            width: `${grid.layout.width - this.scrollerWidth}px`,
-            height: `${grid.layout.height - this.scrollerWidth}px`,
-        });
-
-        if (container.scrollLeft != grid.scroll.left)
-        {
-            container.scrollLeft = grid.scroll.left;
-        }
-
-        if (container.scrollTop != grid.scroll.top)
-        {
-            container.scrollTop = grid.scroll.top;
-        }
+        if (hScroll.total != grid.layout.width)
+            hScroll.total = grid.layout.width;
+        if (hScroll.view != grid.surface.width)
+            hScroll.view = grid.surface.width;
+        if (hScroll.position != grid.scroll.x)
+            hScroll.position = grid.scroll.x;
     }
 
-    private applyScroll(dim:'x'|'y', val:number):void
+    private applyScroll(dim:ScrollDim, val:number):void
     {   
         const { grid } = this;
 
-        const i = dim === 'x' ? 0 : 1;
-        const spi = [grid.scroll.x, grid.scroll.y];
+        const step = dimVec(dim, val);
+        grid.scroll = Point.create(step);
+    }
 
-        spi[i] = val;
+    private applyScrollStep(dim:ScrollDim, val:number):void
+    {   
+        const { grid } = this;
+        const { model, layout } = grid;
+        
+        const step = dimVec(dim, val + 1);
+        
+        const from = layout.pickCell(grid.scroll);
+        const to = model.findCellNeighbor(from.ref, step);
+        
+        const a = Point.create(layout.measureCell(from.ref));
+        const b = Point.create(layout.measureCell(to.ref));
 
-        let maxScroll = new Point(
-            Math.max(0, grid.layout.width - grid.surface.width),
-            Math.max(0, grid.layout.height - grid.surface.height),
-        );
-
-        grid.scroll = Point.create(spi).clamp(Point.empty, maxScroll);
+        grid.scroll = grid.scroll.add(b.subtract(a));
     }
 }
+
+type ScrollDim = 'x'|'y';
 
 class ScrollController extends AbstractDestroyable 
 {
     private lane:HTMLElement;
     private bar:HTMLElement;
+
+    public readonly dim:ScrollDim;
 
     @Observable(0)
     public total:number;
@@ -190,9 +199,10 @@ class ScrollController extends AbstractDestroyable
     @Observable(0)
     public position:number;
 
-    constructor(lane:HTMLElement, private callback:any) 
+    constructor(dim:ScrollDim, lane:HTMLElement, private callback:any) 
     {
         super();
+        this.dim = dim;
         this.lane = lane;
         this.bar = lane.firstElementChild as HTMLElement;
 
@@ -221,12 +231,9 @@ class ScrollController extends AbstractDestroyable
     {
         if (source != this.bar) return;
 
-        let np = this.position + (dist.y / this.ratio);
-        if (np < this.min) np = this.min;
-        if (np > this.max) np = this.max;
-        this.position = np;
+        let np = this.position + (dist[this.dim] / this.ratio);
+        this.callback(this.dim, np);
     }
-
     
     private onLaneDrag(me:MouseEvent, source:HTMLElement, dist:Point):void 
     {
@@ -235,30 +242,39 @@ class ScrollController extends AbstractDestroyable
         const mpt = new Point(me.clientX, me.clientY)
         const rpt = mpt.subtract(dom.cumulativeOffset(this.lane));
 
-        let np = (rpt.y / this.ratio) - (this.view / 2);
-        if (np < this.min) np = this.min;
-        if (np > this.max) np = this.max;
-        this.position = np;
+        let np = (rpt[this.dim] / this.ratio) - (this.view / 2);
+        this.callback(this.dim, np);
     }
-
 
     private notifyChange(prop:string):void
     {
-        dom.css(this.bar, { 
-            top: (this.position * this.ratio) + 'px',
-            height: (this.lane.clientHeight * this.ratio) + 'px',
-        });
-
-        if (prop === 'position')
+        if (this.dim === 'x') 
         {
-            this.callback('y', this.position);
+            dom.css(this.bar, { 
+                left: (this.position * this.ratio) + 'px',
+                width: (this.lane.clientWidth * this.ratio) + 'px',
+            });
+        }
+        else 
+        {
+            dom.css(this.bar, { 
+                top: (this.position * this.ratio) + 'px',
+                height: (this.lane.clientHeight * this.ratio) + 'px',
+            });
         }
     }
 }
 
-function clamp(val:number, min:number, max:number)
+function dimVec(dim:ScrollDim, val:number):Point
 {
-    if (val < min) return min;
-    if (val > max) return max;
-    return val;
+    const xy = { x: 0, y: 0 };
+    xy[dim] = val;
+    return Point.create(xy);
+}
+
+function wheelStep(x) {
+    var s = Math.round(Math.abs(x) / 40);
+    if (s < 0) s = 1;
+    if (s > 2) s = 2;
+    return s * (x / Math.abs(x));
 }

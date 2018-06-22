@@ -2,7 +2,7 @@
 
 export type ObservableValueFilter = (val:any) => any;
 
-export function Observable(defaultValue?:any, valueFilter?:ObservableValueFilter):any
+export function Observable(defaultValue?:any, valueFilter?:ObservableValueFilter|string):any
 {
     return function(target:any, propertyKey:string):PropertyDescriptor
     {
@@ -37,7 +37,11 @@ export function Observable(defaultValue?:any, valueFilter?:ObservableValueFilter
 
                 if (valueFilter)
                 {
-                    value = valueFilter(value);
+                    const vf = typeof(valueFilter) === 'function' 
+                        ? valueFilter
+                        : this[valueFilter].bind(this);
+
+                    value = vf(value);                    
                 }
 
                 state[propertyKey] = value;
