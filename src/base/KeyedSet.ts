@@ -12,6 +12,24 @@ export interface KeyedSetItemReduceCallback<T, R = T>
 
 export class KeyedSet<T> 
 {
+    public static create<T>(items:T[], indexer:(t:T) => number|string):KeyedSet<T>
+    {
+        const set = new KeyedSet(indexer);
+        items.forEach(x => set.add(x));
+        return set;
+    }
+
+    public static createStrict<T>(items:T[], indexer:(t:T) => number|string):KeyedSet<T>
+    {
+        const set = new KeyedSet(indexer);
+        items.forEach(x => 
+        {
+            if (!set.add(x))
+                throw new Error('Not all items are uniquely indexable.');
+        });
+        return set;
+    }
+
     protected list = [] as T[];    
     protected index = {} as any;
 
@@ -84,29 +102,50 @@ export class KeyedSet<T>
         return this.delete(this.indexer(value));
     }
 
-    // public removeWhere(predicate:KeyedSetItemCallback<T, boolean>):number 
-    // {
-    //     let before = this.list.length;
+    public removeWhere(predicate:KeyedSetItemCallback<T, boolean>):T[] 
+    {
+        const what = [] as T[];
 
-    //     this.list = this.list.filter((tm, i) => 
-    //     {
-    //         if (predicate(tm, i))
-    //         {
-    //             delete this.index[this.indexer(tm)];
-    //             return false;
-    //         }
+        this.list = this.list.filter((tm, i) => 
+        {
+            if (predicate(tm, i))
+            {
+                what.push(tm);
+                delete this.index[this.indexer(tm)];
+                return false;
+            }
 
-    //         return true;
-    //     });
+            return true;
+        });
 
-    //     return before - this.list.length;
-    // }
+        return what;
+    }
 
     public has(value:T):boolean 
     {
         let key = this.indexer(value);
         return !!this.index[key];
-    }    
+    }
+    
+    public hasAny(value:T[]):boolean 
+    {
+        for (let x of value)
+        {
+            if (this.has(x)) return true;
+        }
+
+        return false;
+    }
+
+    public hasAll(value:T[]):boolean 
+    {
+        for (let x of value)
+        {
+            if (!this.has(x)) return false;
+        }
+
+        return true;
+    }
 
     public at(index:number):T 
     {

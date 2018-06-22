@@ -3,7 +3,8 @@ import { GridEvent } from '../../core/events/GridEvent';
 import { Command, Routine, Variable } from '../../core/Extensibility';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-import { PointInput } from '../../geom/Point';
+import { Point, PointInput } from '../../geom/Point';
+import { Rect } from '../../geom/Rect';
 import * as u from '../../misc/Util';
 import { Vectors } from '../../misc/Vectors';
 import { GridCell } from '../../model/GridCell';
@@ -291,6 +292,8 @@ export class SelectorExtension extends AbstractDestroyable
             }
         }
 
+        this.scrollToCell(to);
+
         grid.emit(new GridEvent('select', grid));
     }
 
@@ -366,6 +369,74 @@ export class SelectorExtension extends AbstractDestroyable
         }
 
         throw 'What is this type: ' + target;
+    }
+
+    private isCellInView(ref:string):boolean
+    {
+        const { model, layout, surface } = this.grid;
+
+        const rect = layout.measureCell(ref);
+
+        for (let i = 0; i < surface.cameras.count; i++)
+        {
+            const c = surface.cameras.item(i);
+
+            if (c.area.contains(rect))
+                return true;
+        }
+
+        return false;
+    }
+
+    private scrollToCell(ref:string):void
+    {
+        const { grid } = this;
+        const { freezeMargin, model, layout, surface } = grid;
+
+        const cell = model.findCell(ref);
+        const cellRect = Rect.fromLike(layout.measureCell(ref));
+        const viewRect = surface.cameras.item('main').area;
+            
+        let x, y;
+
+        if (cell.colRef < freezeMargin.x)
+        {
+            x = 0;
+        }
+        if (cell.rowRef < freezeMargin.y)
+        {
+            y = 0;
+        }
+
+        if (x === undefined)
+        {
+            x = grid.scroll.x;
+
+            if (cellRect.left < viewRect.left)
+            {
+                x += cellRect.left - viewRect.left;
+            }
+            if (cellRect.right > viewRect.right)
+            {
+                x += cellRect.right - viewRect.right;
+            }
+        }
+
+        if (y === undefined)
+        {
+            y = grid.scroll.y;
+            
+            if (cellRect.top < viewRect.top)
+            {
+                y += cellRect.top - viewRect.top;
+            }
+            if (cellRect.bottom > viewRect.bottom)
+            {
+                y += cellRect.bottom - viewRect.bottom;
+            }
+        }
+
+        grid.scroll = new Point(x, y);
     }
 }
 

@@ -20,6 +20,9 @@ import { InternalCameraManager } from './InternalCameraManager';
 import { RefreshLoop } from './RefreshLoop';
 import { Composition, CompositionRegion } from './rendering/Composition';
 import { Report } from './rendering/Report';
+import { Composition2 } from './rendering2/Composition2';
+import { TileRef } from './rendering2/TileRef';
+import { TilingStrategy } from './rendering2/TilingStrategy';
 import { RootVisual } from './RootVisual';
 import { Theme } from './styling/Theme';
 import { Visual } from './Visual';
@@ -87,6 +90,7 @@ export class Surface extends SimpleEventEmitter
 
     private readonly sequence:VisualSequence;
     private readonly composition:Composition;
+    private readonly composition2:Composition2;
     private readonly dragSupport:DragHelper;
 
     private destroyed:boolean;    
@@ -118,6 +122,7 @@ export class Surface extends SimpleEventEmitter
         this.dragSupport = new DragHelper(this.view, this.onViewMouseDragEvent.bind(this));
 
         this.composition = new Composition();
+        this.composition2 = new Composition2();
         this.sequence = new VisualSequence(this.root);
         this.tracker = new VisualTracker();
  
@@ -166,6 +171,7 @@ export class Surface extends SimpleEventEmitter
         if (this.dirtyRender)
         {
             this.performCompositionUpdates();
+            // this.performCompositionUpdates2();
             didRender = true;
         }
 
@@ -173,7 +179,6 @@ export class Surface extends SimpleEventEmitter
 
         if (didRender)
         {
-            console.log('render');
             Report.complete();
             this.propagateEvent(new Event('render'), []);
         }
@@ -233,11 +238,6 @@ export class Surface extends SimpleEventEmitter
         ptt();
     }
 
-    private performCompositionUpdates2():void 
-    {
-        
-    }
-
     private performCompositionUpdates():void 
     {
         const cpt = Report.time('Composition.Prepare');
@@ -248,7 +248,7 @@ export class Surface extends SimpleEventEmitter
         const cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
 
-        composition.beginUpdate();
+        Report.time('Composition.BeginUpdate', () => composition.beginUpdate());
 
         const rootRegion = composition.root;
         rootRegion.arrange(new Rect(0, 0, this.width, this.height));
@@ -321,6 +321,72 @@ export class Surface extends SimpleEventEmitter
 
         const cdt = Report.time('Composition.Draw');
         composition.render(view);
+        cdt();
+    }
+
+    private performCompositionUpdates2():void 
+    {
+        const { composition2, sequence, view } = this;
+        const tiling = new TilingStrategy();
+        
+        const $cp = Report.time('Composition.Prepare');
+
+        //Only render to cameras with valid bounds
+        const cameras = this.cameras.toArray()
+            .filter(x => !!x.bounds.width && !!x.bounds.height);
+
+        //Determine the tiles we need to render across all cameras
+        const camTiles = KeyedSet.create(
+            [].concat(...cameras.map(x => tiling.for(x.area))) as TileRef[],
+            x => x.s
+        );
+
+        Report.time('Composition.BeginUpdate', () => composition2.beginUpdate());
+
+        camTiles.forEach(x => Report.time('Composition.AllocTile', () => this.composition2.tile(x)));
+        
+        sequence.climb(visual => 
+        {
+            const visTiles = tiling.for(visual.absoluteBounds);
+            
+            //If the tiles this visual appears in are not in the camTiles, we don't need to render this visual
+            if (!camTiles.hasAny(visTiles)) return true;
+
+            //Get object describing dirty state of visual
+            const visualState = (visual['__dirty'] || {}) as DirtyState;
+
+            //Get (allocate or recycle) element for visual
+            const $ea = Report.time('Element.Alloc');
+            const elmt = composition2.element(visual.id, visual.zIndex);
+            $ea();
+
+            //Compute global element bounds by inflating the visual.absoluteBounds; inflation prevents clipping of
+            //borders or other decoration outside of the visual bounds
+            Report.time('Element.Arrange', () => elmt.arrange(visual.absoluteBounds.inflate([5, 5])));
+
+            //If element is invalid or visual needs redrawing, then redraw
+            if (elmt.invalid || visualState.render)
+            {
+                Report.time('Element.Draw', () => 
+                    elmt.draw(gfx => {
+                        gfx.translate(5, 5);
+                        visual.render(gfx)
+                    })
+                );
+            }
+
+            visual['__dirty'] = {};
+            return true;
+        });
+
+        Report.time('Composition.EndUpdate', () => composition2.endUpdate());
+        $cp();
+        
+        const cdt = Report.time('Composition.Draw');
+        for (let c of cameras) 
+        {
+            composition2.render(view, c.bounds, c.vector);
+        }
         cdt();
     }
 
@@ -468,7 +534,7 @@ export class Surface extends SimpleEventEmitter
         this.propagateEvent(evt, stack);
     }
 
-    private onViewMouseDragEvent(me:MouseEvent, distance:Point):void
+    private onViewMouseDragEvent(me:MouseEvent, source:HTMLElement, distance:Point):void
     {
         let viewPt = new Point(me.clientX, me.clientY).subtract(cumulativeOffset(this.view));
         
