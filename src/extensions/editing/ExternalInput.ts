@@ -1,9 +1,9 @@
-//@no-export
 import { GridChangeEvent } from '../../core/events/GridChangeEvent';
 import { GridElement } from '../../core/GridElement';
 import { Selection } from '../../extensions/selector/SelectorExtension';
 import * as dom from '../../misc/Dom';
 
+//@no-export
 
 export class ExternalInput
 {
@@ -40,6 +40,7 @@ export class ExternalInput
         {
             const cell = grid.model.findCell(selection.from);
             input.value = cell.value;
+            dom.prop(input, 'readonly', !!cell['readonly']);
         }
         else
         {

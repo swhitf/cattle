@@ -29,6 +29,17 @@ export function css(e:HTMLElement, styles:ObjectMap<string>):HTMLElement
     return e;
 }
 
+export function prop(e:HTMLElement, name:string, val?:boolean):boolean
+{
+    if (val !== undefined)
+    {
+        if (val) e.setAttribute(name, 'true');
+        else e.removeAttribute(name);
+    }
+
+    return e.hasAttribute(name);
+}
+
 /** Events **/
 
 export function on(e:EventTarget, event:string, callback:EventListenerOrEventListenerObject):VoidCallback

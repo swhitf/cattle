@@ -53,7 +53,7 @@ state.grid = GridElement
     .mergeInterface()
 ;
 
-// state.grid.freezeMargin = new Point(2, 2);
+state.grid.freezeMargin = new Point(2, 2);
 
 //debug_events(grid);
 //debug_events(grid.surface);
@@ -71,6 +71,7 @@ console.dir(GridRef.unmake('BF250'));
 state.grid.model.beginUpdate();
 state.grid.model.cells.at(0).style = GridCellStyle.get('test');
 state.grid.model.cells.at(0).value = 'Test';
+state.grid.model.cells.at(0).readonly = true;
 state.grid.model.cells.at(1).valueType = GridValueTypes.number;
 state.grid.model.cells.at(2).valueType = GridValueTypes.date;
 state.grid.model.endUpdate();

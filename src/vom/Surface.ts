@@ -171,8 +171,8 @@ export class Surface extends SimpleEventEmitter
         if (this.dirtyRender)
         {
             this.performCompositionUpdates();
-            // this.performCompositionUpdates2();
-            didRender = true;
+            //this.performCompositionUpdates2();
+            didRender = true; 
         }
 
         this.dirtyRender = this.dirtySequence = this.dirtyTheming = false;
