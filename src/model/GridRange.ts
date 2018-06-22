@@ -103,7 +103,18 @@ export class GridRange implements GridRangeLike
      */
     public static fromPoints(model:GridModel, points:Point[])
     {
-        let refs = points.map(p => GridRef.make(p.x, p.y));
+        //Process points and wrap any that are out of bounds
+        const wrap = (pt:Point) => {
+            let x = pt.x;
+            if (x < 0) x = 0;
+            if (x >= model.width) x = model.width - 1;
+            let y = pt.y;
+            if (y < 0) y = 0;
+            if (y >= model.height) x = model.height - 1;
+            return { x, y };
+        };
+
+        let refs = points.map(wrap).map(p => GridRef.make(p.x, p.y));
         return GridRange.fromRefs(model, refs);
     }
     

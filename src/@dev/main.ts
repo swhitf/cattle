@@ -42,7 +42,7 @@ const click = (x, h) => {
 
 const state = {} as any;
 
-state.model = GridModel.create(26 * 5, 50 * 10); 
+state.model = GridModel.create(5, 50); 
 state.model.beginUpdate();
 state.model.cells.forEach(x => x.value = x.ref);
 state.model.endUpdate();
@@ -82,7 +82,7 @@ const lsnrs = [
     click('useExcel', () => state.grid.useTheme(MicrosoftExcelTheme)),
     click('useGoogle', () => state.grid.useTheme(GoogleSheetsTheme)),
     click('swap', () => {
-        state.model = GridModel.create(26 * 5, 50 * 10);
+        state.model = GridModel.create(5, 50);
         state.model.beginUpdate();
         state.model.cells.forEach(x => x.value = x.ref);
         state.grid.model.cells[0].value = 'Another';
