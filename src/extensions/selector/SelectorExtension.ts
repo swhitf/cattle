@@ -292,7 +292,10 @@ export class SelectorExtension extends AbstractDestroyable
             }
         }
 
-        this.scrollToCell(to);
+        if (to)
+        {
+            this.scrollToCell(to);
+        }
 
         grid.emit(new GridEvent('select', grid));
     }

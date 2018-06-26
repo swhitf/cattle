@@ -110,7 +110,7 @@ export class GridRange implements GridRangeLike
             if (x >= model.width) x = model.width - 1;
             let y = pt.y;
             if (y < 0) y = 0;
-            if (y >= model.height) x = model.height - 1;
+            if (y >= model.height) y = model.height - 1;
             return { x, y };
         };
 

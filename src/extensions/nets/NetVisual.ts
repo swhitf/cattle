@@ -61,10 +61,10 @@ export class NetVisual extends Visual
         gfx.stroke();
     }
 
-    protected visualStyleDidChange():void
-    {
-        this.doAnimateBorder();
-    }
+    // protected visualStyleDidChange():void
+    // {
+    //     this.doAnimateBorder();
+    // }
 
     protected visualWillMount():void 
     {
@@ -73,10 +73,10 @@ export class NetVisual extends Visual
 
     protected notifyChange(property:string)
     {
-        if (property == 'animateBorder')
-        {
-            this.doAnimateBorder();
-        }
+        // if (property == 'animateBorder')
+        // {
+        //     this.doAnimateBorder();
+        // }
 
         super.notifyChange(property);
     }
