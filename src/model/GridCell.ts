@@ -80,7 +80,7 @@ export class GridCell extends GridObject
     /**
      * The value of the cell.
      */
-    @Observable()
+    @Observable(undefined, 'filterValue')
     public value:string;
 
     /**
@@ -106,21 +106,30 @@ export class GridCell extends GridObject
         this.rowRef = params.rowRef;
         this.rowSpan = params.rowSpan || 1;
         this.style = GridCellStyle.get(...(params.style || []));
-        this.value = (params.value === undefined || params.value === null) ? '' : params.value;
         this.valueType = params.valueType || GridValueTypes.string;
-    }
-
-    /**
-     * Gets the formatted value of the cell.
-     */
-    public formattedValue():string {
-        return this.valueType.format(this.value, this.data);
+        this.value = (params.value === undefined || params.value === null) ? '' : params.value;
     }
 
     /**
      * Gets the typed value of the cell.
      */
-    public typedValue():any {
+    public typedValue():any 
+    {
         return this.valueType.convert(this.value, this.data);
+    }
+
+    protected notifyChange(property?:string):void
+    {
+        super.notifyChange(property);
+
+        if (property === 'valueType')
+        {
+            this.value = this.value;
+        }
+    }
+
+    private filterValue(val:string):string
+    {
+        return this.valueType.format(val, this.data);
     }
 }

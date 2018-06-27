@@ -69,10 +69,11 @@ window['vq'] = s => vq.select(state.grid.surface.root, s);
 console.dir(GridRef.unmake('BF250'));
 
 state.grid.model.beginUpdate();
-state.grid.model.cells.at(0).style = GridCellStyle.get('test');
-state.grid.model.cells.at(0).value = 'Test';
-state.grid.model.cells.at(0).readonly = true;
-state.grid.model.cells.at(1).valueType = GridValueTypes.number;
+state.grid.model.cells.at(1).style = GridCellStyle.get('test');
+state.grid.model.cells.at(1).value = 'Test';
+state.grid.model.cells.at(1).readonly = true;
+state.grid.model.cells.at(0).data.type = { precision: 1 };
+state.grid.model.cells.at(0).valueType = GridValueTypes.number;
 state.grid.model.cells.at(2).valueType = GridValueTypes.date;
 state.grid.model.endUpdate();
 

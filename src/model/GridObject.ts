@@ -27,6 +27,15 @@ export class GridObject
         return this.__version;
     }
 
+    protected notifyChange(property?:string):void
+    {
+        this.__version = next();
+        if (this.__model)
+        {
+            this.__model['notifyChange'](this);
+        }
+    }
+
     private connect(model:GridModel):void
     {
         if (this.__model) throw 'GridObject is already part of an existing GridModel.';
@@ -39,14 +48,5 @@ export class GridObject
         if (this.__model != model) throw 'Invalid GridObject.disconnect call.';
         this.__model = null;
         model['notifyChange'](this);
-    }
-
-    private notifyChange(property?:string):void
-    {
-        this.__version = next();
-        if (this.__model)
-        {
-            this.__model['notifyChange'](this);
-        }
     }
 }

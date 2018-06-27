@@ -37,11 +37,14 @@ export function Observable(defaultValue?:any, valueFilter?:ObservableValueFilter
 
                 if (valueFilter)
                 {
-                    const vf = typeof(valueFilter) === 'function' 
-                        ? valueFilter
-                        : this[valueFilter].bind(this);
-
-                    value = vf(value);                    
+                    if (typeof(valueFilter) === 'function')
+                    {
+                        value = valueFilter(value);                    
+                    }
+                    else
+                    {
+                        value = this[valueFilter](value);
+                    }
                 }
 
                 state[propertyKey] = value;

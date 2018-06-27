@@ -142,7 +142,7 @@ export class EditingExtension extends AbstractDestroyable
         }
         else
         {
-            inputHandle.val(cell.formattedValue());
+            inputHandle.val(cell.value);
         }
 
         inputHandle.goto(inputRect);
