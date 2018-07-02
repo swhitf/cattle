@@ -1,22 +1,82 @@
 import { AbstractDestroyable } from '../../base/AbstractDestroyable';
+import { Observable } from '../../base/Observable';
 import { GridElement } from '../../core/GridElement';
 import { GridKernel } from '../../core/GridKernel';
-import { Padding } from '../../geom/Padding';
 import { Point } from '../../geom/Point';
 import * as dom from '../../misc/Dom';
-import { coalesce } from '../../misc/Util';
+import { DragHelper } from '../../vom/input/DragHelper';
 
+
+const Template = `
+    <div class="scroll-container">
+        <div class="scroll-lane scroll-v">
+            <div class="scroll-bar"></div>
+        </div>
+        <div class="scroll-lane scroll-h">
+            <div class="scroll-bar"></div>
+        </div>
+    </div>
+`;
+
+const Style = `
+    .scroll-lane {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        background: gainsboro;
+        user-select: none;
+    }
+    
+    .scroll-lane .scroll-bar {
+        position: absolute;
+        background: #9c9c9c;
+        user-select: none;
+        border-radius: 2px;
+    }
+    
+    .scroll-lane.scroll-v {
+        top: 0px;
+        bottom: 12px;
+        width: 12px;
+        outline-top: solid 2px red;
+        outline-bottom: solid 2px red;
+    }
+    
+    .scroll-lane.scroll-v .scroll-bar {
+        left: 2px;
+        right: 2px;
+    }
+    
+    .scroll-lane.scroll-h {
+        left: 0;
+        right: 12px;
+        height: 12px;
+    }
+    
+    .scroll-lane.scroll-h .scroll-bar {
+        top: 2px;
+        bottom: 2px;
+    }
+`;
+
+if (document) {
+    const style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = Style;
+    document.head.appendChild(style);
+}
 
 export class ScrollerExtension extends AbstractDestroyable
 {
     private grid:GridElement;
     private wedge:HTMLElement;
 
-    constructor(private scrollerWidth?:number) 
+    private vScroll:ScrollController;
+    private hScroll:ScrollController;
+
+    constructor() 
     {
         super();
-
-        this.scrollerWidth = coalesce(scrollerWidth, detectNativeScrollerWidth());
     }
 
     public init(grid:GridElement, kernel:GridKernel)
@@ -24,16 +84,8 @@ export class ScrollerExtension extends AbstractDestroyable
         this.grid = grid;
         this.createElements();
 
-        //Set padding right and bottom to scroller width to prevent overlap
-        grid.padding = new Padding(
-            grid.padding.top,
-            grid.padding.right + this.scrollerWidth,
-            grid.padding.bottom + this.scrollerWidth,
-            grid.padding.left
-        );
-
+        grid.surface.on('resize', () => this.alignElements());
         grid.on('change', () => this.alignElements());
-        grid.on('scroll', () => this.alignElements());
     }
 
     public destroy():void
@@ -50,85 +102,159 @@ export class ScrollerExtension extends AbstractDestroyable
 
     private createElements():void
     {
-        console.log('createElements');
-        //ScrollerExtension is a special case, we need to modify the grid container element in order
-        //to reliability enable all scroll interaction without lots of emulation and buggy crap.  We
-        //inject a wedge element that simulates the overflow for the container scroll bars and then
-        //hold the grid in place while mirroring the scroll property against the container scorll 
-        //position. Vuala!
+        const { grid } = this;
 
-        const container = this.grid.container;        
-        dom.css(container, { overflow: 'auto' });
-        this.chain(dom.on(container, 'scroll', this.onContainerScroll.bind(this)));
+        const root = grid.container;        
+        dom.css(root, { overflow: 'hidden' });
 
-        const wedge = this.wedge = dom.create('div', { pointerEvents: 'none', });
-        container.appendChild(wedge);
+        const container = dom.parse(Template);
+        root.appendChild(container);
+
+        this.vScroll = new ScrollController(
+            'y',
+            container.children.item(0) as HTMLElement,
+            this.applyScroll.bind(this),
+        );
+
+        this.hScroll = new ScrollController(
+            'x',
+            container.children.item(1) as HTMLElement,
+            this.applyScroll.bind(this),
+        );
+
+        root.addEventListener('wheel', e => {
+            this.applyScrollStep('y', e.deltaY);
+        });
 
         this.alignElements();
     }
 
     private alignElements():void
     {
-        console.log('alignElements');
-        let grid = this.grid;
-        let container = grid.container;
+        const { grid, vScroll, hScroll } = this;
 
-        dom.css(grid.surface.view, {
-            position: 'absolute',
-            left: (grid.scroll.left) + 'px',
-            top: (grid.scroll.top) + 'px',
-        });
+        if (vScroll.total != grid.layout.height)
+            vScroll.total = grid.layout.height;
+        if (vScroll.view != grid.surface.height)
+            vScroll.view = grid.surface.height;
+        if (vScroll.position != grid.scroll.y)
+            vScroll.position = grid.scroll.y;
 
-        dom.css(this.wedge, {
-            width: `${grid.layout.width - this.scrollerWidth}px`,
-            height: `${grid.layout.height - this.scrollerWidth}px`,
-        });
-
-        if (container.scrollLeft != grid.scroll.left)
-        {
-            container.scrollLeft = grid.scroll.left;
-        }
-
-        if (container.scrollTop != grid.scroll.top)
-        {
-            container.scrollTop = grid.scroll.top;
-        }
+        if (hScroll.total != grid.layout.width)
+            hScroll.total = grid.layout.width;
+        if (hScroll.view != grid.surface.width)
+            hScroll.view = grid.surface.width;
+        if (hScroll.position != grid.scroll.x)
+            hScroll.position = grid.scroll.x;
     }
 
-    private onContainerScroll():void
-    {
-        let grid = this.grid;
-        let maxScroll = new Point(
-            Math.max(0, grid.layout.width - grid.surface.width),
-            Math.max(0, grid.layout.height - grid.surface.height),
-        );
+    private applyScroll(dim:ScrollDim, val:number):void
+    {   
+        const { grid } = this;
 
-        grid.scroll = new Point(grid.container.scrollLeft, grid.container.scrollTop)
-            .clamp(Point.empty, maxScroll);
+        const next = {
+            x: grid.scroll.x,
+            y: grid.scroll.y,
+        };
+
+        next[dim] = val;
+
+        grid.scroll = Point.create(next);
+    }
+
+    private applyScrollStep(dim:ScrollDim, val:number):void
+    {   
+        const { grid } = this;
+        const { model, layout } = grid;
+
+        const step = { x: 0, y: 0 };
+        
+        step[dim] = val;
+        
+        grid.scroll = grid.scroll.add(step);
     }
 }
 
-function detectNativeScrollerWidth() 
+type ScrollDim = 'x'|'y';
+
+class ScrollController extends AbstractDestroyable 
 {
-    var outer = document.createElement("div");
-    outer.style.visibility = "hidden";
-    outer.style.width = "100px";
-    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
-    document.body.appendChild(outer);
+    private lane:HTMLElement;
+    private bar:HTMLElement;
 
-    var widthNoScroll = outer.offsetWidth;
-    // force scrollbars
-    outer.style.overflow = "scroll";
+    public readonly dim:ScrollDim;
 
-    // add innerdiv
-    var inner = document.createElement("div");
-    inner.style.width = "100%";
-    outer.appendChild(inner);        
+    @Observable(0)
+    public total:number;
+    
+    @Observable(0)
+    public view:number;
 
-    var widthWithScroll = inner.offsetWidth;
+    @Observable(0)
+    public position:number;
 
-    // remove divs
-    outer.parentNode.removeChild(outer);
+    constructor(dim:ScrollDim, lane:HTMLElement, private callback:any) 
+    {
+        super();
+        this.dim = dim;
+        this.lane = lane;
+        this.bar = lane.firstElementChild as HTMLElement;
 
-    return widthNoScroll - widthWithScroll;
+        const dh1 = new DragHelper(this.bar, this.onBarDrag.bind(this));
+        const dh2 = new DragHelper(this.lane, this.onLaneDrag.bind(this));
+        
+        this.chain(dh1, dh2);
+    }
+
+    public get min():number
+    {
+        return 0;
+    }
+
+    public get max():number
+    {
+        return this.total - this.view;
+    }
+
+    public get ratio():number
+    {
+        return this.view / (this.total || 1);
+    }
+
+    private onBarDrag(me:MouseEvent, source:HTMLElement, dist:Point):void 
+    {
+        if (source != this.bar) return;
+
+        let np = this.position + (dist[this.dim] / this.ratio);
+        this.callback(this.dim, np);
+    }
+    
+    private onLaneDrag(me:MouseEvent, source:HTMLElement, dist:Point):void 
+    {
+        if (source != this.lane) return;
+        
+        const mpt = new Point(me.clientX, me.clientY)
+        const rpt = mpt.subtract(dom.cumulativeOffset(this.lane));
+
+        let np = (rpt[this.dim] / this.ratio) - (this.view / 2);
+        this.callback(this.dim, np);
+    }
+
+    private notifyChange(prop:string):void
+    {
+        if (this.dim === 'x') 
+        {
+            dom.css(this.bar, { 
+                left: (this.position * this.ratio) + 'px',
+                width: (this.lane.clientWidth * this.ratio) + 'px',
+            });
+        }
+        else 
+        {
+            dom.css(this.bar, { 
+                top: (this.position * this.ratio) + 'px',
+                height: (this.lane.clientHeight * this.ratio) + 'px',
+            });
+        }
+    }
 }

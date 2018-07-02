@@ -10,7 +10,7 @@ import { ClipboardExtension } from '../extensions/clipboard/ClipboardExtension';
 import { EditingExtension } from '../extensions/editing/EditingExtension';
 import { HistoryExtension } from '../extensions/history/HistoryExtension';
 import { NetExtension } from '../extensions/nets/NetExtension';
-import { ScrollerExtension2 } from '../extensions/scrolling/ScrollingExtension2';
+import { ScrollerExtension } from '../extensions/scrolling/ScrollingExtension';
 import { SelectorExtension } from '../extensions/selector/SelectorExtension';
 import { Padding } from '../geom/Padding';
 import { Point } from '../geom/Point';
@@ -58,7 +58,7 @@ export class GridElement extends SimpleEventEmitter
             .extend(new NetExtension())
             .extend(new SelectorExtension())
             .extend(new EditingExtension())
-            .extend(new ScrollerExtension2())
+            .extend(new ScrollerExtension())
             .extend(new ClipboardExtension())
             .extend(new HistoryExtension())
             .useTheme(GoogleSheetsTheme)
