@@ -1,6 +1,6 @@
 {
   "name": "cattle",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "A spreadsheet-like grid component library.",
   "main": "dist/lib/index.js",
   "typings": "dist/lib/index.d.ts",
