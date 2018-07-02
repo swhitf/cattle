@@ -84,14 +84,6 @@ export class ScrollerExtension2 extends AbstractDestroyable
         this.grid = grid;
         this.createElements();
 
-        //Set padding right and bottom to scroller width to prevent overlap
-        // grid.padding = new Padding(
-        //     grid.padding.top,
-        //     grid.padding.right - 12,
-        //     grid.padding.bottom + 12,
-        //     grid.padding.left
-        // );
-
         grid.surface.on('resize', () => this.alignElements());
         grid.on('change', () => this.alignElements());
     }
@@ -131,7 +123,7 @@ export class ScrollerExtension2 extends AbstractDestroyable
         );
 
         root.addEventListener('wheel', e => {
-            this.applyScrollStep('y', wheelStep(e.deltaY));
+            this.applyScrollStep('y', e.deltaY);
         });
 
         this.alignElements();
@@ -160,23 +152,25 @@ export class ScrollerExtension2 extends AbstractDestroyable
     {   
         const { grid } = this;
 
-        const step = dimVec(dim, val);
-        grid.scroll = Point.create(step);
+        const next = {
+            x: grid.scroll.x,
+            y: grid.scroll.y,
+        };
+
+        next[dim] = val;
+
+        grid.scroll = Point.create(next);
     }
 
     private applyScrollStep(dim:ScrollDim, val:number):void
     {   
         const { grid } = this;
         const { model, layout } = grid;
-        
-        const step = dimVec(dim, val);
-        
-        // const from = layout.pickCell(grid.scroll);
-        // const to = model.findCellNeighbor(from.ref, step);
-        
-        // const a = Point.create(layout.measureCell(from.ref));
-        // const b = Point.create(layout.measureCell(to.ref));
 
+        const step = { x: 0, y: 0 };
+        
+        step[dim] = val;
+        
         grid.scroll = grid.scroll.add(step);
     }
 }
@@ -263,19 +257,4 @@ class ScrollController extends AbstractDestroyable
             });
         }
     }
-}
-
-function dimVec(dim:ScrollDim, val:number):Point
-{
-    const xy = { x: 0, y: 0 };
-    xy[dim] = val;
-    return Point.create(xy);
-}
-
-function wheelStep(x) {
-    // var s = Math.round(Math.abs(x) / 40);
-    // if (s < 0) s = 1;
-    // if (s > 2) s = 2;
-    // return s * (x / Math.abs(x));
-    return x;
 }
