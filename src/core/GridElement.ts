@@ -175,13 +175,11 @@ export class GridElement extends SimpleEventEmitter
         this.surface.view.focus();
     }
 
-    // public forceUpdate():void
-    // {
-    //     if (this.destroyed) return;
-
-    //     this.updateSurface();
-    //     this.surface.render();
-    // }
+    public refresh():void
+    {
+        this.updateSurface();
+        this.surface.render();
+    }
 
     private initCameras():void
     {
