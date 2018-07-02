@@ -34,7 +34,8 @@ export class GridElement extends SimpleEventEmitter
     private autoBufferUpdateEnabled:boolean = true;
     private burden:Burden = new Burden();
     private cameraBuffers:ObjectMap<CameraBuffer> = {};
-    private destroyed:boolean = false;
+    private isDestroyed:boolean = false;
+    private isReady:boolean = false;
     private modelListener:Destroyable;
     private internal = {
         container: null as HTMLElement,
@@ -77,7 +78,6 @@ export class GridElement extends SimpleEventEmitter
         this.initCameras();        
         this.initSurface();
 
-        //Do this last to kick everything in...
         this.model = model;
 
         this.burden.add(enableAutoResize(container, surface));
@@ -122,10 +122,21 @@ export class GridElement extends SimpleEventEmitter
         return this.internal.surface;
     }
 
+    public ready():void
+    {
+        if (this.isReady) throw 'ready() has already been called.';
+
+        this.isReady = true;
+
+        this.updateLayout();
+        this.updateCameras();
+        this.updateSurface();
+    }
+
     public destroy():void
     {
-        if (this.destroyed) return;
-        this.destroyed = true;
+        if (this.isDestroyed) return;
+        this.isDestroyed = true;
         this.burden.destroy();
     }
 
@@ -171,7 +182,7 @@ export class GridElement extends SimpleEventEmitter
 
     public focus():void
     {
-        if (this.destroyed) return;
+        if (this.isDestroyed) return;
         this.surface.view.focus();
     }
 
@@ -211,12 +222,11 @@ export class GridElement extends SimpleEventEmitter
         
         surface.on('resize', () => this.updateCameras());
         surface.on('resize', () => this.updateSurface());
-        //surface.ticker.add('updateSurface', () => this.updateSurface());
     }
     
     private updateCameras():void
     {
-        if (this.destroyed) return;
+        if (this.isDestroyed) return;
 
         const { freezeMargin, layout, surface } = this;
         const scroll = this.alignScrollValue(this.scroll);
@@ -261,7 +271,7 @@ export class GridElement extends SimpleEventEmitter
 
     private updateSurface():void
     {
-        if (this.destroyed) return;
+        if (this.isDestroyed) return;
 
         Report.begin();
 
@@ -300,7 +310,7 @@ export class GridElement extends SimpleEventEmitter
 
     private updateLayout():void
     {
-        if (this.destroyed) return;
+        if (this.isDestroyed) return;
         this.internal.layout = GridLayout.compute(this.model, this.padding);
     }
 
@@ -336,23 +346,26 @@ export class GridElement extends SimpleEventEmitter
 
     private notifyChange(property:string):void
     {
-        if (property == 'model')
+        if (this.isReady) 
         {
-            if (this.modelListener) this.modelListener.destroy();
-            this.modelListener = this.model.on('change', () => {
+            if (property == 'model')
+            {
+                if (this.modelListener) this.modelListener.destroy();
+                this.modelListener = this.model.on('change', () => {
+                    this.updateSurface();
+                });
+            }
+
+            if (property == 'model' || property == 'freezeMargin' || property == 'padding')
+            {
+                this.updateLayout();
+            }
+
+            if (property == 'model' || property == 'freezeMargin' || property == 'padding' || property == 'scroll')
+            {
+                this.updateCameras();
                 this.updateSurface();
-            });
-        }
-
-        if (property == 'model' || property == 'freezeMargin' || property == 'padding')
-        {
-            this.updateLayout();
-        }
-
-        if (property == 'model' || property == 'freezeMargin' || property == 'padding' || property == 'scroll')
-        {
-            this.updateCameras();
-            this.updateSurface();
+            }
         }
 
         this.emit(new GridChangeEvent(this, property));

@@ -101,3 +101,5 @@ const lsnrs = [
         window['pt'] = null;
     }),
 ];
+
+state.grid.ready();
