@@ -167,7 +167,9 @@ export class GridLayout
         let lookup = this.cellLookup;
         let cols = this.captureColumns(region);
         let rows = this.captureRows(region);
+        
         let cells = [] as GridCell[];
+        let index = {} as any;
 
         for (let c of cols)
         {
@@ -179,7 +181,12 @@ export class GridLayout
                 if (!lookup[c.ref][r.ref])
                     continue;
 
-                cells.push(lookup[c.ref][r.ref]);
+                const x = lookup[c.ref][r.ref];
+                if (index[x.ref]) 
+                    continue;
+
+                cells.push(x);
+                index[x.ref] = true;
             }
         }
 

@@ -16,6 +16,7 @@ export class GridObject
 {
     private __model:GridModel;
     private __version:number = next();
+    private __props = {} as { [key:string]:any };
 
     /**
      * Gets a numerical value that represents the unique version of the element.  When an Observable()
@@ -25,6 +26,25 @@ export class GridObject
     public get version():number
     {
         return this.__version;
+    }
+
+    /**
+     * Gets or sets a prop value for the object.  When setting will return the previous value.
+     * 
+     * @param key 
+     * @param value 
+     */
+    public prop(key:string, value?:any):any
+    {
+        const ret = this.__props[key]; 
+
+        if (value !== undefined)
+        {
+            this.__props[key] = value;
+            this.notifyChange(`prop:${key}`);
+        }
+
+        return ret;
     }
 
     protected notifyChange(property?:string):void

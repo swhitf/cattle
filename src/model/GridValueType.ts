@@ -1,7 +1,7 @@
 import * as chrono from 'chrono-node';
 import * as moment from 'moment';
 
-import { GridCellData } from './GridCell';
+import { GridCell } from './GridCell';
 
 
 /**
@@ -19,13 +19,13 @@ export interface GridValueType {
      * value type.  If the input is not valid for this value type, the value will be reset
      * to a constant value appropriate for the value type.
      */
-    format(value:string, data:GridCellData):string;
+    format(value:string, cell:GridCell):string;
 
     /**
      * Accepts a raw string value and converts it to a typed value according to the value 
      * type.  Returns null if the input value is not valid.
      */
-    convert(value:string, data:GridCellData):any;
+    convert(value:string, cell:GridCell):any;
 }
 
 function parseFloatWithFallback(input:string, fallback:any):any
@@ -38,20 +38,20 @@ class NumberType implements GridValueType
 {
     public readonly name = 'number';
     
-    public format(value:string, data:GridCellData):string 
+    public format(value:string, cell:GridCell):string 
     {
         if (isNues(value)) return '';
         const num = parseFloat(value);
         if (isNaN(num)) return '';
         //Cell data can include a format object with instructions for formatting
-        const settings = data.type || {};        
-        return !!settings.precision ? num.toFixed(settings.precision) : num.toString();
+        const precision = cell.prop('type.precision') as number;
+        return !!precision ? num.toFixed(precision) : num.toString();
     }
 
-    public convert(value:string, data:GridCellData) 
+    public convert(value:string, cell:GridCell) 
     {
         if (isNues(value)) return 0;
-        const num = parseFloat(this.format(value, data));
+        const num = parseFloat(this.format(value, cell));
         return isNaN(num) ? 0 : num;
     }
 } 
@@ -60,18 +60,18 @@ class DateType implements GridValueType
 {
     public readonly name = 'date';
 
-    public format(value:string, data:GridCellData):string 
+    public format(value:string, cell:GridCell):string 
     {
         if (isNues(value)) return '';
         const dt = chrono.parseDate(value)
         if (!dt) return '';
         const mt = moment(dt);
         //Cell data can include a format object with instructions for formatting
-        const settings = data.type || {};        
-        return mt.format(settings.format || 'L');
+        const fmt = cell.prop('type.format') as string;
+        return mt.format(fmt || 'L');
     }
 
-    public convert(value:string, data:GridCellData) 
+    public convert(value:string, cell:GridCell) 
     {
         if (isNues(value)) return null;
         const dt = chrono.parseDate(value)

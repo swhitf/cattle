@@ -15,13 +15,10 @@ export interface GridCellParams
     value:string;
     valueType?:GridValueType
     style?:string[];
-    data?:GridCellData;
     type?:string;
     colSpan?:number;
     rowSpan?:number;
 }
-
-export type GridCellData = Readonly<{[key:string]:any}>;
 
 export interface GridCellRefParts
 {
@@ -66,12 +63,6 @@ export class GridCell extends GridObject
     public readonly rowSpan:number;
 
     /**
-     * A bag of readonly key value pairs assocated with the cell.
-     */
-    @Observable()
-    public data:GridCellData;
-
-    /**
      * The style of the cell.
      */
     @Observable()
@@ -100,7 +91,6 @@ export class GridCell extends GridObject
 
         this.ref = GridRef.make(params.colRef, params.rowRef);
         this.type = params.type || 'default';
-        this.data = params.data || {};
         this.colRef = params.colRef;
         this.colSpan = params.colSpan || 1;
         this.rowRef = params.rowRef;
@@ -115,7 +105,7 @@ export class GridCell extends GridObject
      */
     public typedValue():any 
     {
-        return this.valueType.convert(this.value, this.data);
+        return this.valueType.convert(this.value, this);
     }
 
     protected notifyChange(property?:string):void
@@ -130,6 +120,6 @@ export class GridCell extends GridObject
 
     private filterValue(val:string):string
     {
-        return this.valueType.format(val, this.data);
+        return this.valueType.format(val, this);
     }
 }

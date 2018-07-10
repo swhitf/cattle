@@ -6,9 +6,9 @@ import { GridElement } from '../core/GridElement';
 import { EditingExtension } from '../extensions/editing/EditingExtension';
 import { HintExtension } from '../extensions/hints/HintExtension';
 import { Point } from '../geom/Point';
+import { Rect } from '../geom/Rect';
 import { GridCellStyle } from '../model/GridCellStyle';
 import { GridModel } from '../model/GridModel';
-import { GridRef } from '../model/GridRef';
 import { GridValueTypes } from '../model/GridValueType';
 import { GoogleSheetsTheme } from '../themes/GoogleSheetsTheme';
 import { MicrosoftExcelTheme } from '../themes/MicrosoftExcelTheme';
@@ -42,7 +42,18 @@ const click = (x, h) => {
 
 const state = {} as any;
 
-state.model = GridModel.create(26, 250); 
+{
+    const model = GridModel.create(26, 250);
+
+    model.beginUpdate();
+    const e11 = model.findCell('A1');
+    (e11 as any).colSpan = 2;
+    model.cells.delete('B1');
+    model.endUpdate();
+
+    state.model = model; 
+}
+
 state.model.beginUpdate();
 state.model.cells.forEach(x => x.value = x.ref);
 state.model.endUpdate();
@@ -53,7 +64,7 @@ state.grid = GridElement
     .mergeInterface()
 ;
 
-state.grid.freezeMargin = new Point(2, 2);
+// state.grid.freezeMargin = new Point(2, 2);
 
 //debug_events(grid);
 //debug_events(grid.surface);
@@ -66,13 +77,11 @@ window['surface'] = state.grid.surface;
 window['pt'] = Point.create;
 window['vq'] = s => vq.select(state.grid.surface.root, s);
 
-console.dir(GridRef.unmake('BF250'));
-
 state.grid.model.beginUpdate();
 state.grid.model.cells.at(1).style = GridCellStyle.get('test');
 state.grid.model.cells.at(1).value = 'Test';
 state.grid.model.cells.at(1).readonly = true;
-state.grid.model.cells.at(0).data.type = { precision: 1 };
+state.grid.model.cells.at(0).prop('type.precision', 1);
 state.grid.model.cells.at(0).valueType = GridValueTypes.number;
 state.grid.model.cells.at(2).valueType = GridValueTypes.date;
 state.grid.model.endUpdate();
@@ -103,3 +112,7 @@ const lsnrs = [
 ];
 
 state.grid.ready();
+{
+    const x = state.grid.layout.captureCells(new Rect(0, 0, 200, 200));
+    console.dir(x);
+}

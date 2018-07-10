@@ -128,27 +128,18 @@ export class ClipboardExtension extends AbstractDestroyable implements GridExten
         if (!range.length)
             return;
 
-        let text = '';
-        let rr = range.ltr[0].rowRef;
 
-        for (let r = 0; r < range.height; r++)
+        const first = range.first();
+        const arr = (n:number) => new Array<string>(n).fill('');
+        const lines = arr(range.height)
+            .map(_ => arr(range.width));
+
+        for (const c of range.ltr)
         {
-            let x = range.width * r;
-
-            for (let c = 0; c < range.width; c++)
-            {
-                text += range.ltr[(x + c)].value;
-
-                if (c < (range.width - 1))
-                {
-                    text += delimiter;
-                }
-            }
-
-            text += NewLine;
+            lines[c.rowRef - first.rowRef][c.colRef - first.colRef] = c.value;
         }
 
-        return text;
+        return lines.map(x => x.join(delimiter)).join(NewLine);
     }
 
     private parsePastedText(pastedText:string):string[][]

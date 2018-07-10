@@ -270,23 +270,12 @@ class GridObjectSet<T extends GridObject> extends KeyedSet<T>
     public delete(key:number|string):boolean 
     {
         const value = this.get(key);
-        if (value && super.remove(value))
+        if (value && super.delete(key))
         {
             disconnect(this.model, value);
             return true;
         }
 
-        return false;
-    }
-
-    public remove(value:T):boolean 
-    {
-        if (super.remove(value))
-        {
-            disconnect(this.model, value);
-            return true;
-        }
-        
         return false;
     }
 }
