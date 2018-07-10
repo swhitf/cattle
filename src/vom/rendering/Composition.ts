@@ -33,6 +33,8 @@ export class Composition
 {
     private rootRegion = new Region(new Key('root'));
 
+    public baseColor:string = 'white';
+
     public get root():CompositionRegion
     {
         return this.rootRegion;
@@ -56,7 +58,9 @@ export class Composition
     public render(to:HTMLCanvasElement):void 
     {
         const gfx = to.getContext('2d');
-        gfx.clearRect(0, 0, to.width, to.height);
+        gfx.fillStyle = this.baseColor;
+        gfx.fillRect(0, 0, to.width, to.height);
+        // gfx.clearRect(0, 0, to.width, to.height);
 
         this.rootRegion.render(gfx);
     }

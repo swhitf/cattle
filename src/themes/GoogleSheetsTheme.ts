@@ -12,6 +12,10 @@ export const GoogleSheetsTheme = new Theme('GoogleSheets', {
         zIndex: -1,
     },
 
+    'cell.yo': {
+        border: new Border(3, 'dimgray'),
+    },
+
     'net.input': {
         border: new Border(2, '#4285f4'),
         zIndex: 2000,

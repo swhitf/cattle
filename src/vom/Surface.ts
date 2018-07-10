@@ -80,6 +80,9 @@ export class Surface extends SimpleEventEmitter
     public readonly view:HTMLCanvasElement;
 
     @Observable()
+    public background:string = 'white';
+
+    @Observable()
     public width:number;
 
     @Observable()
@@ -248,7 +251,9 @@ export class Surface extends SimpleEventEmitter
         const cameras = this.cameras.toArray()
             .filter(x => !!x.bounds.width && !!x.bounds.height)
 
-        Report.time('Composition.BeginUpdate', () => composition.beginUpdate());
+        composition.baseColor = this.background;
+
+        composition.beginUpdate();
 
         const rootRegion = composition.root;
         rootRegion.arrange(new Rect(0, 0, this.width, this.height));
@@ -482,6 +487,9 @@ export class Surface extends SimpleEventEmitter
     private notifyChange(property:string):void
     {
         switch (property) {
+            // case 'background':
+            //     this.dirtyRender = true;
+            //     break;
             case 'width':
             case 'height':
                 if (this.view) 

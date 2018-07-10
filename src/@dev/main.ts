@@ -49,7 +49,12 @@ const state = {} as any;
     const e11 = model.findCell('A1');
     (e11 as any).colSpan = 2;
     model.cells.delete('B1');
+    const d13 = model.cells.get('D13');
+    d13.style = d13.style.add('yo');
+
     model.endUpdate();
+
+
 
     state.model = model; 
 }

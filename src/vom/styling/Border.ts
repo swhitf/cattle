@@ -12,7 +12,7 @@ export class Border
     constructor(width?:number, color?:string, dash?:number[])
     {
         this.width = (width !== undefined) ? width : 1;
-        this.color = color || 'gainsboro';
+        this.color = color || 'black';
         this.dash = dash || []; 
     }
 

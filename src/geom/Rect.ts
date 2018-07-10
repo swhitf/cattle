@@ -95,6 +95,16 @@ export class Rect
     {
         return new Point(this.left, this.top);
     }
+
+    public topRight():Point
+    {
+        return new Point(this.right, this.top);
+    }
+
+    public bottomLeft():Point
+    {
+        return new Point(this.left, this.bottom);
+    }
     
     public bottomRight():Point
     {

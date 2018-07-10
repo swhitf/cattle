@@ -1,10 +1,12 @@
 import { Observable } from '../base/Observable';
 import { Padding } from '../geom/Padding';
+import { Rect } from '../geom/Rect';
 import { GridCell } from '../model/GridCell';
 import { Border } from '../vom/styling/Border';
 import { Font } from '../vom/styling/Font';
 import { Styleable } from '../vom/styling/Styleable';
 import { Visual } from '../vom/Visual';
+import * as draw from './Draw';
 
 
 export class CellVisual extends Visual
@@ -20,8 +22,20 @@ export class CellVisual extends Visual
     @Styleable('#fff')
     public background:string;
 
-    @Styleable(Border.default)
+    @Styleable()
     public border:Border;
+
+    @Styleable()
+    public borderLeft:Border;
+
+    @Styleable()
+    public borderTop:Border;
+
+    @Styleable()
+    public borderRight:Border;
+
+    @Styleable()
+    public borderBottom:Border;
 
     @Styleable('#111')
     public color:string;
@@ -32,8 +46,8 @@ export class CellVisual extends Visual
     @Styleable(Padding.hv(5, 0))
     public padding:Padding;
 
-    @Styleable('crop')
-    public textMode:'crop'|'fit';
+    @Styleable('left')
+    public textAlign:'left'|'right';
 
     @Observable()
     public text:string;
@@ -60,25 +74,25 @@ export class CellVisual extends Visual
     {
         //Paint background
         gfx.fillStyle = this.background;
-        gfx.fillRect(0, 0, this.width, this.height);
-
-        //Paint border
-        gfx.lineWidth = this.border.width;
-        gfx.strokeStyle = this.border.color;
-        gfx.setLineDash(this.border.dash);
-        gfx.lineDashOffset = this.border.offset;
-        gfx.strokeRect((gfx.lineWidth % 2) / 2, (gfx.lineWidth % 2) / 2, this.width, this.height);
+        gfx.fillRect(1, 1, this.width - 1, this.height - 1);
         
+        //Paint border
+        draw.border(gfx, new Rect(0, 0, this.width, this.height), [
+            this.border,
+            this.borderTop,
+            this.borderRight,
+            this.borderBottom,
+            this.borderLeft,
+        ]);
+
         //Paint text
-        gfx.strokeStyle = null;
-        gfx.fillStyle = this.color;
-        gfx.font = this.font.toString();
-        gfx.textBaseline = 'middle';
-        gfx.fillText(
+        draw.text(
+            gfx, 
             this.text, 
-            this.padding.left,
-            ((this.height - this.padding.vertical) / 2) + this.padding.top,
-            this.textMode == 'fit' ? this.width - this.padding.horizontal : 65535 
-        ); 
+            new Rect(this.padding.left, this.padding.top, this.width - this.padding.horizontal, this.height - this.padding.vertical),
+            this.font,
+            this.color,
+            this.textAlign
+        );
     }
 }
