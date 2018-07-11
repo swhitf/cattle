@@ -49,6 +49,9 @@ export class CellVisual extends Visual
     @Styleable('left')
     public textAlign:'left'|'right';
 
+    @Styleable(false)
+    public textStrike:boolean;
+
     @Observable()
     public text:string;
 
@@ -77,7 +80,7 @@ export class CellVisual extends Visual
         gfx.fillRect(1, 1, this.width - 1, this.height - 1);
         
         //Paint border
-        draw.border(gfx, new Rect(0, 0, this.width, this.height), [
+        draw.border(gfx, new Rect(0, 0, this.width + 1, this.height + 1), [
             this.border,
             this.borderTop,
             this.borderRight,
@@ -92,7 +95,8 @@ export class CellVisual extends Visual
             new Rect(this.padding.left, this.padding.top, this.width - this.padding.horizontal, this.height - this.padding.vertical),
             this.font,
             this.color,
-            this.textAlign
+            this.textAlign,
+            this.textStrike,
         );
     }
 }

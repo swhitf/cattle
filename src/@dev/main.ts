@@ -53,9 +53,6 @@ const state = {} as any;
     d13.style = d13.style.add('yo');
 
     model.endUpdate();
-
-
-
     state.model = model; 
 }
 

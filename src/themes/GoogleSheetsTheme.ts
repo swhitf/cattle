@@ -10,10 +10,7 @@ export const GoogleSheetsTheme = new Theme('GoogleSheets', {
 
     'cell': {
         zIndex: -1,
-    },
-
-    'cell.yo': {
-        border: new Border(3, 'dimgray'),
+        textStrike: true,
     },
 
     'net.input': {
