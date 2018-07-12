@@ -1,9 +1,6 @@
 
 declare namespace cattle {
 
-
-    
-    
     export class ClipboardExtension implements GridExtension {
         private grid;
         private layer;
@@ -385,7 +382,7 @@ declare namespace cattle {
         readonly shift: boolean;
         readonly key: number;
         readonly exclusive: boolean;
-        private constructor(keys, exclusive);
+        private constructor();
         matches(keyData: KeyExpression | KeyboardEvent): boolean;
     }
 
@@ -398,7 +395,7 @@ declare namespace cattle {
         private emitters;
         static for(...elmts: KeyMappable[]): KeyInput;
         private subs;
-        private constructor(emitters);
+        private constructor();
         on(exprs: string | string[], callback: KeyMapCallback): KeyInput;
         private createListener(ee, ke, callback);
     }
@@ -539,7 +536,7 @@ declare namespace cattle {
         readonly button: number;
         readonly keys: number[];
         readonly exclusive: boolean;
-        private constructor(cfg);
+        private constructor();
         matches(mouseData: MouseEvent): boolean;
     }
 
@@ -552,7 +549,7 @@ declare namespace cattle {
         private emitters;
         static for(...elmts: Mappable[]): MouseInput;
         private subs;
-        private constructor(emitters);
+        private constructor();
         on(expr: string, callback: MouseCallback): MouseInput;
         private createListener(target, expr, callback);
     }
@@ -562,9 +559,10 @@ declare namespace cattle {
         static str(str: string): Base26;
         readonly num: number;
         readonly str: string;
-        private constructor(num, str);
+        private constructor();
     }
 
+    
     export function parse(html: string): HTMLElement;
     export function css(e: HTMLElement, styles: ObjectMap<string>): HTMLElement;
     export function fit(e: HTMLElement, target: HTMLElement): HTMLElement;
@@ -572,6 +570,13 @@ declare namespace cattle {
     export function show(e: HTMLElement): HTMLElement;
     export function toggle(e: HTMLElement, visible: boolean): HTMLElement;
     export function singleTransition(e: HTMLElement, prop: string, millis: number, ease?: string): void;
+
+    export interface ObjectIndex<T> {
+        [index: number]: T;
+    }
+    export interface ObjectMap<T> {
+        [index: string]: T;
+    }
 
     export function ie_safe_create_mouse_event(type: string, source: MouseEvent): MouseEvent;
 
@@ -584,6 +589,7 @@ declare namespace cattle {
         static next(prefix?: string): string;
     }
 
+    
     export function coalesce<T>(...inputs: T[]): T;
     export function extend(target: any, data: any): any;
     export function index<T>(arr: T[], indexer: (tm: T) => number | string): ObjectMap<T>;
@@ -917,7 +923,7 @@ declare namespace cattle {
          */
         readonly length: number;
         private index;
-        private constructor(values);
+        private constructor();
         /**
          * Indicates whether or not a cell is included in the range.
          */
@@ -990,7 +996,6 @@ declare namespace cattle {
         constructor(params: StyledGridCellParams);
     }
 
-    
     /**
      * Do not use directly.
      */
@@ -1009,7 +1014,7 @@ declare namespace cattle {
      * @param name The optional command name
      * @returns decorator
      */
-    export function command(name?: string): MethodDecorator;
+    export function command(name?: string): any;
     /**
      * A decorator that defines the render function for a GridCell implementation, allowing custom cell types
      * to control their drawing behavior.
@@ -1017,7 +1022,7 @@ declare namespace cattle {
      * @param func
      * A decorator that marks a method
      */
-    export function renderer(func: Renderer): ClassDecorator;
+    export function renderer(func: Renderer): any;
     /**
      * A decorator that marks a method as a _routine_; a logic block that can be hooked into or overridden by other
      * modules.  A name for the routine can be optionally specified, otherwise the name of the method being exported
@@ -1025,7 +1030,7 @@ declare namespace cattle {
      * @param name The optional routine name
      * @returns decorator
      */
-    export function routine(name?: string): MethodDecorator;
+    export function routine(name?: string): any;
     /**
      * A decorator that marks a field as a _variable_; a readable and optionally writable value that can be consumed by
      * modules.  A name for the variable can be optionally specified, otherwise the name of the field being exported
@@ -1033,7 +1038,7 @@ declare namespace cattle {
      * @param name The optional variable name
      * @returns decorator
      */
-    export function variable(mutable: boolean): PropertyDecorator;
+    export function variable(mutable: boolean): any;
     export function variable(name?: string, mutable?: boolean): any;
     /**
      * A decorator for use within implementations of GridCell that marks a field as one that affects the visual
@@ -1042,7 +1047,7 @@ declare namespace cattle {
      *
      * @returns decorator
      */
-    export function visualize(): PropertyDecorator;
+    export function visualize(): any;
 
     
     
@@ -1086,7 +1091,7 @@ declare namespace cattle {
         private buffers;
         private visuals;
         private frame;
-        private constructor(canvas);
+        private constructor();
         readonly width: number;
         readonly height: number;
         readonly modelWidth: number;
@@ -1224,7 +1229,7 @@ declare namespace cattle {
         private columnIndex;
         private rowIndex;
         private cellIndex;
-        private constructor(width, height, columns, rows, cells, cellLookup);
+        private constructor();
         queryColumn(ref: number): RectLike;
         queryColumnRange(fromRef: number, toRefEx: number): RectLike;
         queryRow(ref: number): RectLike;
@@ -1299,25 +1304,6 @@ declare namespace cattle {
          */
         toggle(visible: boolean): void;
     }
-
-    /**
-     * Embedding of Clipboard.js - https://github.com/zenorocha/clipboard.js/
-     *
-     * After various attempts, I was unable to npm install including types effectively and because an index.js is not
-     * used I cannot use the TypeScript 2.1 unknown module import, so resorting to local embedded version.  Will remove
-     * in the future if possible.
-     *
-     * Modifications have been made to make the code compile:
-     * - Removed Promise polyfill (imported instead)
-     * - Restructured export and added typed interface
-     * - Some changes to prevent type checking where undesired
-     */
-    
-    export interface ClipboardObject {
-        copy(val: string | Element): Promise<void>;
-        paste(): Promise<string>;
-    }
-    export const Clipboard: any;
 
 
 }
