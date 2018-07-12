@@ -84,6 +84,7 @@ state.grid.model.cells.at(1).style = GridCellStyle.get('test');
 state.grid.model.cells.at(1).value = 'Test';
 state.grid.model.cells.at(1).readonly = true;
 state.grid.model.cells.at(0).prop('type.precision', 1);
+state.grid.model.cells.at(0).prop('type.zeroAs', '-');
 state.grid.model.cells.at(0).valueType = GridValueTypes.number;
 state.grid.model.cells.at(2).valueType = GridValueTypes.date;
 state.grid.model.endUpdate();

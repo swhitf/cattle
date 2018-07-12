@@ -40,12 +40,18 @@ class NumberType implements GridValueType
     
     public format(value:string, cell:GridCell):string 
     {
-        if (isNues(value)) return '';
-        const num = parseFloat(value);
-        if (isNaN(num)) return '';
-        //Cell data can include a format object with instructions for formatting
         const precision = cell.prop('type.precision') as number;
-        return !!precision ? num.toFixed(precision) : num.toString();
+        const zeroAs = cell.prop('type.zeroAs') as string;
+        if (isNues(value)) return zeroAs || '';
+        let num = parseFloat(value);
+        if (isNaN(num)) return zeroAs || '';
+        if (precision) {
+            const p = Math.pow(10, precision);
+            num = Math.round(num * p) / p;
+        }
+        return num === 0 && zeroAs
+            ? zeroAs
+            : num.toString();
     }
 
     public convert(value:string, cell:GridCell) 

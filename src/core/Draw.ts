@@ -39,14 +39,14 @@ export function line(gfx:CanvasRenderingContext2D, pts:Point[], width:number, co
     gfx.stroke();
 }
 
-export function text(gfx:CanvasRenderingContext2D, str:string, rect:Rect, font:Font, color:string, align:'left'|'right' = 'left', strike?:boolean)
+export function text(gfx:CanvasRenderingContext2D, str:string, rect:Rect, font:Font, color:string, align:'left'|'center'|'right' = 'left', strike?:boolean)
 {
     gfx.strokeStyle = null;
     gfx.fillStyle = color;
     gfx.font = font.toString();
     gfx.textBaseline = 'middle';
     gfx.textAlign = align;
-    gfx.fillText(str, rect[align], rect.height / 2);
+    gfx.fillText(str, rectAlign(rect, align), rect.height / 2);
 
     if (strike)
     {
@@ -55,8 +55,8 @@ export function text(gfx:CanvasRenderingContext2D, str:string, rect:Rect, font:F
         if (align === 'right') len *= -1;
  
         let pts = [
-            new Point(rect[align], rect.height / 2),
-            new Point(rect[align] + len, rect.height / 2),
+            new Point(rectAlign(rect, align), rect.height / 2),
+            new Point(rectAlign(rect, align) + len, rect.height / 2),
         ];
 
         line(gfx, pts, 1, color);
@@ -78,6 +78,17 @@ function borderEdge(rect:Rect, edge:'top'|'right'|'bottom'|'left')
         case 'right': return [ rect.topRight(), rect.bottomRight() ];
         case 'bottom': return [ rect.bottomRight(), rect.bottomLeft() ];
         case 'left': return [ rect.bottomLeft(), rect.topLeft() ];
+    }
+}
+
+function rectAlign(rect:Rect, align:'left'|'center'|'right') 
+{
+    switch (align)
+    {
+        default:
+        case 'left': return rect.left;
+        case 'center': return rect.left + (rect.width / 2);
+        case 'right': return rect.right;
     }
 }
 

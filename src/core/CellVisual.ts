@@ -47,7 +47,7 @@ export class CellVisual extends Visual
     public padding:Padding;
 
     @Styleable('left')
-    public textAlign:'left'|'right';
+    public textAlign:'left'|'center'|'right';
 
     @Styleable(false)
     public textStrike:boolean;
